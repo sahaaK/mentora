@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration | Mentora</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <link rel="stylesheet" href="components/sidebar.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        secondary: {
+                            400: '#d946ef',
+                            500: '#c026d3',
+                            600: '#a21caf',
+                            700: '#86198f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #10b981;     /* Emerald 500 */
+            --secondary: #c026d3;   /* Fuchsia 600 */
+            --bg: #0f172a;          /* Slate 900 */
+            --panel: rgba(255,255,255,0.06);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #e2e8f0;
+            min-height: 100vh;
+            margin-left: 92px; /* space for floating sidebar */
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-input {
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 0.875rem 1.25rem;
+            width: 100%;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                margin-left: 0;
+            }
+        }
+        
+        .image-slider {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.5rem;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        
+        .slide.active {
+            opacity: 1;
+        }
+        
+        .profile-picture-upload {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .profile-picture-upload:hover {
+            transform: scale(1.05);
+        }
+        
+        .profile-picture-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .profile-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.35);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.55);
+        }
+        
+        /* Utility: nicer number inputs */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <!-- Sidebar (injected from components/sidebar.js) -->
+    <div id="sidebar-root"></div>
+    <script src="components/sidebar.js"></script>
+
+    <!-- Main Container - Side by Side Layout -->
+    <div class="w-full max-w-[1200px] rounded-3xl overflow-hidden shadow-2xl glass-panel">
+        
+        <div class="flex flex-col lg:flex-row">
+            
+            <!-- Image Slider Section -->
+            <div class="lg:w-1/2 h-96 lg:h-auto relative ">
+                <div class="absolute inset-0 bg-gradient-to-r from-emerald-900/50 to-fuchsia-900/50 z-10"></div>
+
+                <div class="image-slider h-full">
+                    <!-- Slides -->
+                    <div class="slide active h-full">
+                        <div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center"></div>
+                    </div>
+                    <div class="slide h-full">
+                        <div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1571260899304-425eee4c7efc?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center"></div>
+                    </div>
+                    <div class="slide h-full">
+                        <div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center"></div>
+                    </div>
+                    
+                    <!-- Slide Indicators -->
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                        <div class="w-3 h-3 rounded-full bg-white/60 slide-indicator active" data-slide="0"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/60 slide-indicator" data-slide="1"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/60 slide-indicator" data-slide="2"></div>
+                    </div>
+                    
+                    <!-- Profile Picture Upload -->
+                    <div class="absolute top-6 right-6 z-20">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 glass-panel profile-picture-upload">
+                            <img id="profilePreview" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop" alt="Profile" class="profile-preview">
+                            <input type="file" id="profilePicture" accept="image/*">
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                                <i data-feather="camera" class="w-6 h-6 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Welcome Text -->
+                    <div class="absolute bottom-8 left-8 z-20">
+                        <h1 class="text-white text-3xl font-bold drop-shadow-lg">Welcome to Mentora</h1>
+                        <p class="text-emerald-300 mt-2">Register your profile</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <div class="lg:w-1/2 p-8 lg:p-10">
+                <div class="text-center mb-8">
+                    <div class="relative w-16 h-16 mx-auto mb-4">
+                        <div class="absolute inset-0 bg-emerald-600 rounded-full opacity-20 blur-lg animate-pulse"></div>
+                        <div class="relative z-10 w-16 h-16 rounded-full bg-emerald-600/20 flex items-center justify-center">
+                            <i data-feather="user-plus" class="w-8 h-8 text-emerald-300"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Student <span class="bg-gradient-to-r from-emerald-400 to-fuchsia-500 bg-clip-text text-transparent">Registration</span></h2>
+                    <p class="text-gray-400 mt-2">Fill all required fields</p>
+                </div>
+
+                <form id="studentForm" class="space-y-5" novalidate>
+                    <!-- Row 1: Name + Number -->
+                    <div class="form-grid">
+                        <div class="relative">
+                            <i data-feather="user" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                            <input type="text" name="fullName" placeholder="Full Name" required class="form-input pl-12">
+                        </div>
+                        <div class="relative">
+                            <i data-feather="phone" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <input type="tel" name="phone" placeholder="Phone Number" required class="form-input pl-12">
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Department + Faculty -->
+                    <div class="form-grid">
+                        <div class="relative">
+                            <i data-feather="book" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                            <select id="department" name="department" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select Department</option>
+                                <option value="medicine">Department of Medicine & Health Sciences</option>
+                                <option value="business">Department of Business & Management</option>
+                                <option value="social">Department of Social Science & Economics</option>
+                                <option value="marine">Department of Marine, Environment and Earth Sciences</option>
+                                <option value="agriculture">Department of Agriculture & Veterinary Science</option>
+                                <option value="technology">Department of Technology & Engineering</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div class="relative">
+                            <i data-feather="layers" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <select id="faculty" name="faculty" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select Faculty</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: School + Grade -->
+                    <div class="form-grid">
+                        <div class="relative">
+                            <i data-feather="home" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                            <input type="text" name="graduatedFrom" placeholder="School Graduated From" required class="form-input pl-12">
+                        </div>
+                        <div class="relative">
+                            <i data-feather="star" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <select name="grade" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select Grade</option>
+                                <option>1st Class Honors</option>
+                                <option>2nd Class Upper</option>
+                                <option>2nd Class Lower</option>
+                                <option>3rd Class</option>
+                                <option>Pass</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: City + Education Level -->
+                    <div class="form-grid">
+                        <div class="relative">
+                            <i data-feather="map-pin" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                            <select name="city" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select City</option>
+                                <option>Kampala</option>
+                                <option>Entebbe</option>
+                                <option>Jinja</option>
+                                <option>Mbarara</option>
+                                <option>Gulu</option>
+                                <option>Lira</option>
+                                <option>Mukono</option>
+                                <option>Masaka</option>
+                                <option>Kabale</option>
+                                <option>Arua</option>
+                                <option>Fort Portal</option>
+                                <option>Mbale</option>
+                                <option>Other</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div class="relative">
+                            <i data-feather="award" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <select name="education" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select Education Level</option>
+                                <option>High School</option>
+                                <option>Diploma</option>
+                                <option>Bachelor's Degree</option>
+                                <option>Master's Degree</option>
+                                <option>PhD</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Gender + Blood Type -->
+                    <div class="form-grid">
+                        <div class="relative">
+                            <i data-feather="users" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                            <select name="gender" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select Gender</option>
+                                <option>Male</option>
+                                <option>Female</option>
+                                <option>Other</option>
+                                <option>Prefer not to say</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div class="relative">
+                            <i data-feather="droplet" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <select name="bloodType" required class="form-input pl-12 appearance-none">
+                                <option value="" disabled selected>Select Blood Type</option>
+                                <option>A+</option><option>A-</option>
+                                <option>B+</option><option>B-</option>
+                                <option>AB+</option><option>AB-</option>
+                                <option>O+</option><option>O-</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: Age + Guardian Phone -->
+                    <div class="form-grid">
+                        <div class="relative">
+                            <i data-feather="hash" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                            <input type="number" name="age" placeholder="Age" min="10" max="99" required class="form-input pl-12">
+                        </div>
+                        <div class="relative">
+                            <i data-feather="phone-call" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <input type="tel" name="guardianPhone" placeholder="Guardian Phone Number" required class="form-input pl-12">
+                        </div>
+                    </div>
+
+                    <!-- Row 7: Guardian Name (full width) -->
+                    <div class="relative">
+                        <i data-feather="shield" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                        <input type="text" name="guardianName" placeholder="Guardian Name" required class="form-input pl-12">
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-fuchsia-600 hover:from-emerald-700 hover:to-fuchsia-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 group">
+                            <span class="flex items-center justify-center gap-2">
+                                <span>Register Student</span>
+                                <i data-feather="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        AOS.init();
+        feather.replace();
+
+        // Image slider functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const indicators = document.querySelectorAll('.slide-indicator');
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            indicators.forEach(indicator => indicator.classList.remove('active'));
+            
+            if (n >= slides.length) currentSlide = 0;
+            if (n < 0) currentSlide = slides.length - 1;
+            
+            slides[currentSlide].classList.add('active');
+            indicators[currentSlide].classList.add('active');
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        // Auto-advance slides every 5 seconds
+        setInterval(nextSlide, 5000);
+
+        // Click indicators to change slides
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => {
+                currentSlide = index;
+                showSlide(currentSlide);
+            });
+        });
+
+        // Profile picture upload functionality
+        const profileInput = document.getElementById('profilePicture');
+        const profilePreview = document.getElementById('profilePreview');
+
+        profileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Department -> Faculty mapping
+        const facultyOptions = {
+            medicine: [
+                "Bachelor of Medicine and Surgery (MBBS)",
+                "Bachelor of Clinical Medicine",
+                "Bachelor of Clinical Midwifery",
+                "Bachelor of Medical Laboratory",
+                "Bachelor of Nursing",
+                "Bachelor of Nutrition and Food Science",
+                "Bachelor of Health Service Management"
+            ],
+            business: [
+                "Bachelor of Business Administration",
+                "Bachelor of Accounting & Finance",
+                "Bachelor of Banking & Finance",
+                "Bachelor of Procurement & Supply Chain Management",
+                "Bachelor of Public Finance Management",
+                "Bachelor of Human Resources Management"
+            ],
+            social: [
+                "Bachelor of Public Administration",
+                "Bachelor of Social Work & Social Administration",
+                "Bachelor of Economics",
+                "Bachelor of Strategic and Security Studies"
+            ],
+            marine: [
+                "Bachelor of Climate Change and Environmental Studies"
+            ],
+            agriculture: [
+                "Bachelor of Science in Agriculture",
+                "Bachelor of Veterinary Medicine"
+            ],
+            technology: [
+                "Bachelor of Computer Science (Software Engineering)",
+                "Bachelor of Computer Science (Data Science)",
+                "Bachelor of Computer Science (Cyber Security)",
+                "Bachelor of Computer Science (Artificial Intelligence)",
+                "Bachelor of Computer Science (Networking)",
+                "Bachelor of Engineering (Electrical Engineering)",
+                "Bachelor of Engineering (Telecommunication Engineering)"
+            ]
+        };
+
+        document.getElementById('department').addEventListener('change', function() {
+            const facultySelect = document.getElementById('faculty');
+            const selected = this.value;
+            facultySelect.innerHTML = '<option value="" disabled selected>Select Faculty</option>';
+            if (selected && facultyOptions[selected]) {
+                facultyOptions[selected].forEach(faculty => {
+                    const option = document.createElement('option');
+                    option.value = faculty;
+                    option.textContent = faculty;
+                    facultySelect.appendChild(option);
+                });
+            }
+        });
+
+        // Form validation + demo submit
+        document.getElementById('studentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            if (!form.checkValidity()) {
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus({ preventScroll: false });
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+
+            const formData = Object.fromEntries(new FormData(form).entries());
+            console.log('Student Registration:', formData);
+            const btn = form.querySelector('button[type="submit"]');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="flex items-center justify-center gap-2"><span>Submitting...</span><div class="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin"></div></span>';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                alert('Student registration submitted successfully!');
+                form.reset();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

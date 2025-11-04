@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Sheet - MedGlass Cloud</title>
+    <link rel="stylesheet" href="style.css" />
+
+    
+    <!--
+      Color & Theme Customization:
+      - Primary color (replace UNDEFINED in classes like bg-undefined-500): e.g. indigo
+      - Secondary color (replace UNDEFINED in classes like bg-undefined-500): e.g. violet
+      - Theme mode: dark | light (body will have bg-slate-900 / bg-slate-50)
+      This file uses Tailwind. Update the classes or define CSS variables below if needed.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // Optional: set CSS vars for theme-aware components
+      document.documentElement.style.setProperty('--primary', 'indigo');   // replace UNDEFINED with your primary token
+      document.documentElement.style.setProperty('--secondary', 'violet'); // replace UNDEFINED with your secondary token
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || 'indigo',
+              secondary: getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim() || 'violet'
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: indigo;
+  --secondary: violet;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+/* Glass panel styles */
+.glass-card {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s ease;
+  border-radius: 16px;
+}
+
+.glass-card:hover {
+  background: rgba(15, 23, 42, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated gradient border */
+.gradient-border {
+  position: relative;
+  z-index: 1;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  /* background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899); */
+  z-index: -1;
+  border-radius: 18px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.glass-card:hover .gradient-border::before {
+  opacity: 1;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Bubble animation container */
+.bubble-container {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.05));
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  animation: float 20s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  33% {
+    transform: translateY(-100px) translateX(50px) scale(1.1);
+  }
+  66% {
+    transform: translateY(50px) translateX(-50px) scale(0.9);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* Animations */
+.animate-slide-up {
+  animation: slideInUp 0.6s ease forwards;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Form styles */
+.form-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.form-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+}
+
+/* Table rows */
+.table-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s ease;
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-present { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.25); }
+.status-absent { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.25); }
+.status-late { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.25); }
+.status-excused { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.25); }
+
+.blood-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Blood type colors */
+.blood-Aplus { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+.blood-Aminus { background: rgba(249, 115, 22, 0.2); color: #fdba74; border-color: rgba(249, 115, 22, 0.3); }
+.blood-Bplus { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: rgba(34, 197, 94, 0.3); }
+.blood-Bminus { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.3); }
+.blood-ABplus { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border-color: rgba(168, 85, 247, 0.3); }
+.blood-ABminus { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; border-color: rgba(236, 72, 153, 0.3); }
+.blood-Oplus { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+.blood-Ominus { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border-color: rgba(6, 182, 212, 0.3); }
+
+/* Responsive table tweaks */
+@media (max-width: 640px) {
+  .modal-content { padding: 1rem; }
+}
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 overflow-x-hidden">
+    <!-- Animated Background -->
+    <div class="bubble-container"></div>
+
+    <!-- Header -->
+    <header class="px-6 py-8">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white">
+              <span class="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">Attendance Sheet</span>
+            </h1>
+            <p class="text-gray-400">MedGlass Cloud - Faculty Attendance Tracker</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="exportCsvBtn" class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all">
+              <i data-feather="download-cloud"></i>
+              <span>Export CSV</span>
+            </button>
+            <div class="glass-card p-2 rounded-full">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 flex items-center justify-center text-white font-bold">FC</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+          <div class="p-3 rounded-lg bg-indigo-500/20">
+            <i data-feather="calendar" class="text-indigo-400"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Today's Session</h3>
+            <p class="text-sm text-gray-400" id="todaySessionLabel">Anatomy - 10:00 AM</p>
+          </div>
+        </div>
+        <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+          <div class="p-3 rounded-lg bg-emerald-500/20">
+            <i data-feather="check-circle" class="text-emerald-400"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Present</h3>
+            <p class="text-sm text-gray-400"><span id="presentCount">0</span> students</p>
+          </div>
+        </div>
+        <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+          <div class="p-3 rounded-lg bg-rose-500/20">
+            <i data-feather="x-circle" class="text-rose-400"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Absent</h3>
+            <p class="text-sm text-gray-400"><span id="absentCount">0</span> students</p>
+          </div>
+        </div>
+        <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+          <div class="p-3 rounded-lg bg-amber-500/20">
+            <i data-feather="clock" class="text-amber-400"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Late</h3>
+            <p class="text-sm text-gray-400"><span id="lateCount">0</span> students</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Sheet -->
+      <section class="glass-card gradient-border p-6 mb-8 animate-slide-up" style="animation-delay: 0.2s">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold">MBBS Year 1 - Semester 1</h2>
+            <p class="text-gray-400 text-sm">Mark attendance and track student presence</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative">
+              <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+              <input id="studentSearch" type="text" placeholder="Search students..." class="form-input pl-10 w-64" />
+            </div>
+            <select id="presentFilter" class="form-select w-40">
+              <option value="all">All</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="late">Late</option>
+              <option value="excused">Excused</option>
+            </select>
+            <select id="bloodFilter" class="form-select w-40">
+              <option value="">All Blood Types</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+            <button id="selectAllBtn" class="glass-card px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm">Select All</button>
+            <button id="clearSelectionBtn" class="glass-card px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm">Clear</button>
+          </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="overflow-x-auto rounded-xl border border-white/10">
+          <table class="min-w-full">
+            <thead class="bg-white/5">
+              <tr>
+                <th class="text-left p-4 font-semibold">
+                  <input type="checkbox" id="masterCheckbox" class="rounded border-white/20 bg-transparent text-indigo-500 focus:ring-indigo-500/50" />
+                </th>
+                <th class="text-left p-4 font-semibold">Student</th>
+                <th class="text-left p-4 font-semibold hidden md:table-cell">ID</th>
+                <th class="text-left p-4 font-semibold hidden lg:table-cell">Blood</th>
+                <th class="text-left p-4 font-semibold">Attendance</th>
+                <th class="text-left p-4 font-semibold">Status</th>
+                <th class="text-left p-4 font-semibold hidden sm:table-cell">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+              <!-- Rows injected by script.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between mt-4">
+          <div class="text-sm text-gray-400" id="selectionSummary">0 selected</div>
+          <div class="flex items-center gap-2">
+            <button id="markPresentBtn" class="glass-card px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-all">Mark Present</button>
+            <button id="markAbsentBtn" class="glass-card px-4 py-2 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition-all">Mark Absent</button>
+            <button id="markLateBtn" class="glass-card px-4 py-2 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all">Mark Late</button>
+            <button id="markExcusedBtn" class="glass-card px-4 py-2 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-all">Mark Excused</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics -->
+      <section class="glass-card gradient-border p-6 mb-8 animate-slide-up" style="animation-delay: 0.3s">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold">Analytics</h2>
+            <p class="text-gray-400 text-sm">Attendance overview and trends</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="col-span-1 lg:col-span-2">
+            <canvas id="attendanceChart" height="120"></canvas>
+          </div>
+          <div class="glass-card p-4 rounded-xl bg-white/5">
+            <h3 class="font-semibold mb-3">Summary</h3>
+            <ul class="space-y-2 text-sm">
+              <li class="flex items-center justify-between">
+                <span class="text-gray-400">Total Students</span>
+                <span id="totalStudents" class="font-semibold">0</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-gray-400">Present Today</span>
+                <span id="presentToday" class="font-semibold text-emerald-400">0</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-gray-400">Absent Today</span>
+                <span id="absentToday" class="font-semibold text-rose-400">0</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-gray-400">Late Today</span>
+                <span id="lateToday" class="font-semibold text-amber-400">0</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Student Detail Modal -->
+    <div id="studentModal" class="modal-overlay hidden">
+      <div class="modal-content max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold">Student Details</h2>
+          <button id="closeStudentModal" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+            <i data-feather="x"></i>
+          </button>
+        </div>
+        <div id="studentModalBody" class="space-y-6">
+          <!-- Student modal content injected by script -->
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+      // Initialize icons
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.feather) feather.replace();
+      });
+
+      
+    </script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

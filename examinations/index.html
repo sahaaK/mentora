@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examination Office System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+        -moz-appearance: textfield;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        /* Glass panel styles */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            border-radius: 20px;
+        }
+
+        .glass-card:hover {
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Animated gradient border */
+        .gradient-border {
+            position: relative;
+            z-index: 1;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #10b981, #f59e0b);
+            z-index: -1;
+            border-radius: 22px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .glass-card:hover .gradient-border::before {
+            opacity: 1;
+        }
+
+        /* Bubble animation container */
+        .bubble-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.05));
+            backdrop-filter: blur(1px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            33% {
+                transform: translateY(-100px) translateX(50px) scale(1.1);
+            }
+            66% {
+                transform: translateY(50px) translateX(-50px) scale(0.9);
+            }
+        }
+
+        /* Stats styling */
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Performance bar */
+        .performance-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .performance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #10b981);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+
+        /* Animation classes */
+        .animate-slide-up {
+            animation: slideInUp 0.6s ease forwards;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Table enhancements */
+        table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+            transform: scale(1.01);
+        }
+
+        /* Grade badges */
+        .grade-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .grade-a { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .grade-b { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .grade-c { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .grade-d { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .grade-f { background: rgba(220, 38, 38, 0.2); color: #dc2626; }
+
+        /* Score inputs */
+        .score-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .score-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Modal enhancements */
+        #editModal {
+            backdrop-filter: blur(8px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .glass-card {
+                margin: 0 10px;
+            }
+            
+            table {
+                font-size: 0.875rem;
+            }
+            
+            th, td {
+                padding: 8px 4px !important;
+            }
+        }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Success/Error states */
+        .success {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .error {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Progress indicators */
+        .progress-ring {
+            transition: stroke-dasharray 0.3s ease;
+        }
+
+        /* Interactive elements */
+        .interactive-row {
+            cursor: pointer;
+        }
+
+        .interactive-row:hover {
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Search and filter enhancements */
+        .search-input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(15, 23, 42, 0.9);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+    <!-- Animated Background -->
+    <div class="bubble-container"></div>
+
+    <!-- Header -->
+    <header class="px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">
+                        <span class="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">
+                            Examination Office
+                        </span>
+                    </h1>
+                    <p class="text-gray-400">University Management System - Grade Management</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all">
+                        <i data-feather="bell"></i>
+                        <span>Notifications</span>
+                    </button>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-emerald-400 flex items-center justify-center text-white font-bold">
+                            EO
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-indigo-500/20">
+                    <i data-feather="clipboard" class="text-indigo-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Exams</h3>
+                    <p class="text-sm text-gray-400">Manage examinations</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-emerald-500/20">
+                    <i data-feather="users" class="text-emerald-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Students</h3>
+                    <p class="text-sm text-gray-400">View student records</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-amber-500/20">
+                    <i data-feather="bar-chart-2" class="text-amber-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Analytics</h3>
+                    <p class="text-sm text-gray-400">Performance insights</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-rose-500/20">
+                    <i data-feather="download" class="text-rose-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Reports</h3>
+                    <p class="text-sm text-gray-400">Export results</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade Management Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+            <!-- Statistics Panel -->
+            <div class="glass-card gradient-border p-6 animate-slide-up" style="animation-delay: 0.1s">
+                <h2 class="text-xl font-bold mb-4">Grade Statistics</h2>
+                <div class="space-y-4">
+                    <div class="stat-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400">Average Quiz Score</span>
+                            <span class="text-sm font-bold text-white">84%</span>
+                        </div>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 84%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400">Midterm Success Rate</span>
+                            <span class="text-sm font-bold text-white">78%</span>
+                        </div>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 78%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400">Final Pass Rate</span>
+                            <span class="text-sm font-bold text-white">89%</span>
+                        </div>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 89%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400">Attendance Rate</span>
+                            <span class="text-sm font-bold text-white">92%</span>
+                        </div>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 92%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grade Distribution Chart -->
+            <div class="glass-card gradient-border p-6 lg:col-span-3 animate-slide-up" style="animation-delay: 0.2s">
+                <h2 class="text-xl font-bold mb-4">Grade Distribution Analysis</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card p-4 rounded-xl">
+                        <canvas id="gradeDistChart" height="200"></canvas>
+                    </div>
+                    <div class="glass-card p-4 rounded-xl">
+                        <canvas id="subjectPerfChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade Management Table -->
+        <div class="glass-card  p-6 mb-8 animate-slide-up" style="animation-delay: 0.3s">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Student Grade Spreadsheet</h2>
+                <div class="flex gap-3">
+                    <div class="relative">
+                        <select class="glass-card appearance-none pl-4 pr-10 py-2 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                            <option>Computer Science</option>
+                            <option>Mathematics</option>
+                            <option>Physics</option>
+                            <option>Engineering</option>
+                        </select>
+                        <i data-feather="chevron-down" class="absolute right-3 top-2.5 text-gray-400"></i>
+                    </div>
+                    <div class="relative">
+                        <select class="glass-card appearance-none pl-4 pr-10 py-2 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                            <option>Fall 2024</option>
+                            <option>Spring 2024</option>
+                            <option>Fall 2023</option>
+                        </select>
+                        <i data-feather="chevron-down" class="absolute right-3 top-2.5 text-gray-400"></i>
+                    </div>
+                    <button class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-emerald-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+                        <i data-feather="filter" class="w-4 h-4"></i>
+                        Filter
+                    </button>
+                    <button class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-indigo-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+                        <i data-feather="plus" class="w-4 h-4"></i>
+                        Add Grade
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-800 text-gray-400 text-left">
+                            <th class="pb-3">Student ID</th>
+                            <th class="pb-3">Student Name</th>
+                            <th class="pb-3">QUIZ</th>
+                            <th class="pb-3">MIDTERM</th>
+                            <th class="pb-3">FINAL</th>
+                            <th class="pb-3">ATTENDANCE</th>
+                            <th class="pb-3">ACTIVITIES</th>
+                            <th class="pb-3">PRESENTATIONS</th>
+                            <th class="pb-3">TOTAL</th>
+                            <th class="pb-3">GRADE</th>
+                            <th class="pb-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gradeTableBody">
+                        <!-- Table rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="flex justify-between items-center mt-6">
+                <div class="text-sm text-gray-400" id="tableInfo">
+                    Showing 1 to 10 of 156 students
+                </div>
+                <div class="flex gap-2" id="paginationControls">
+                    <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors" data-page="prev">
+                        <i data-feather="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    <button class="glass-card p-2 rounded-lg bg-indigo-500 text-white">1</button>
+                    <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">2</button>
+                    <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">3</button>
+                    <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors" data-page="next">
+                        <i data-feather="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment Categories Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up" style="animation-delay: 0.4s">
+            <div class="glass-card gradient-border p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 rounded-lg bg-indigo-500/20">
+                        <i data-feather="book" class="text-indigo-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Quiz Performance</h3>
+                        <p class="text-sm text-gray-400">Regular assessments</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Quiz Average</span>
+                        <span class="font-bold text-indigo-400">84%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Completed</span>
+                        <span class="font-bold">156/156</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Pending</span>
+                        <span class="font-bold text-amber-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card  p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 rounded-lg bg-emerald-500/20">
+                        <i data-feather="file-text" class="text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Midterm Exams</h3>
+                        <p class="text-sm text-gray-400">Semester assessments</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Midterm Average</span>
+                        <span class="font-bold text-emerald-400">78%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Completed</span>
+                        <span class="font-bold">142/156</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Pending</span>
+                        <span class="font-bold text-amber-400">14</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card  p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 rounded-lg bg-amber-500/20">
+                        <i data-feather="award" class="text-amber-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Final Examinations</h3>
+                        <p class="text-sm text-gray-400">End of term exams</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Final Average</span>
+                        <span class="font-bold text-amber-400">82%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Completed</span>
+                        <span class="font-bold">98/156</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Pending</span>
+                        <span class="font-bold text-rose-400">58</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Grade Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="glass-card p-6 rounded-xl max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Grade</h3>
+            <div id="modalContent">
+                <!-- Modal content will be populated by JavaScript -->
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button id="saveGradeBtn" class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-emerald-500 text-white font-medium hover:opacity-90 transition-opacity">
+                    Save Changes
+                </button>
+                <button id="cancelModalBtn" class="flex-1 glass-card py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <script>feather.replace();</script>
+    <script>
+        // Student data with grades
+    let studentsData = [
+        { id: 'CS2024001', name: 'Alice Johnson', quiz: 92, midterm: 85, final: 88, attendance: 96, activities: 89, presentations: 91 },
+        { id: 'CS2024002', name: 'Bob Smith', quiz: 78, midterm: 82, final: 79, attendance: 94, activities: 85, presentations: 80 },
+        { id: 'CS2024003', name: 'Carol Davis', quiz: 95, midterm: 91, final: 94, attendance: 98, activities: 93, presentations: 96 },
+        { id: 'CS2024004', name: 'David Wilson', quiz: 84, midterm: 78, final: 82, attendance: 89, activities: 86, presentations: 81 },
+        ];
+
+    // Global variables
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let filteredData = [...studentsData];
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', () => {
+        createBubbles();
+        renderTable();
+        initCharts();
+        animatePerformanceBars();
+        setupEventListeners();
+    });
+
+    // Create floating bubbles background
+    function createBubbles() {
+        const container = document.querySelector('.bubble-container');
+        const bubbleCount = 15;
+        
+        for (let i = 0; i < bubbleCount; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            
+            const size = Math.random() * 100 + 50;
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const delay = Math.random() * 10;
+            
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${left}%`;
+            bubble.style.top = `${top}%`;
+            bubble.style.animationDelay = `${delay}s`;
+            
+            container.appendChild(bubble);
+        }
+    }
+
+    // Calculate grade based on total score
+    function calculateGrade(total) {
+        if (total >= 90) return { grade: 'A', class: 'grade-a' };
+        if (total >= 80) return { grade: 'B', class: 'grade-b' };
+        if (total >= 70) return { grade: 'C', class: 'grade-c' };
+        if (total >= 60) return { grade: 'D', class: 'grade-d' };
+        return { grade: 'F', class: 'grade-f' };
+    }
+
+    // Calculate total score
+    function calculateTotal(student) {
+        // Weighted average: Quiz(15%), Midterm(25%), Final(30%), Attendance(10%), Activities(10%), Presentations(10%)
+        const total = (student.quiz * 0.15) + (student.midterm * 0.25) + (student.final * 0.30) + 
+                    (student.attendance * 0.10) + (student.activities * 0.10) + (student.presentations * 0.10);
+        return Math.round(total);
+    }
+
+    // Render the grade table
+    function renderTable() {
+        const tbody = document.getElementById('gradeTableBody');
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+        
+        tbody.innerHTML = '';
+        
+        pageData.forEach((student, index) => {
+            const total = calculateTotal(student);
+            const gradeInfo = calculateGrade(total);
+            
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-800 hover:bg-gray-800/30 transition-colors interactive-row';
+            row.style.animationDelay = `${index * 0.05}s`;
+            
+            row.innerHTML = `
+                <td class="py-4 font-medium">${student.id}</td>
+                <td class="py-4 font-medium">${student.name}</td>
+                <td class="py-4">
+                    <input type="number" class="score-input" value="${student.quiz}" min="0" max="100" 
+                        data-field="quiz" data-student="${student.id}" onchange="updateScore('${student.id}', 'quiz', this.value)">
+                </td>
+                <td class="py-4">
+                    <input type="number" class="score-input" value="${student.midterm}" min="0" max="100" 
+                        data-field="midterm" data-student="${student.id}" onchange="updateScore('${student.id}', 'midterm', this.value)"
+                        >
+                </td>
+                <td class="py-4">
+                    <input type="number" class="score-input" value="${student.final}" min="0" max="100" 
+                        data-field="final" data-student="${student.id}" onchange="updateScore('${student.id}', 'final', this.value)">
+                </td>
+                <td class="py-4">
+                    <input type="number" class="score-input" value="${student.attendance}" min="0" max="100" 
+                        data-field="attendance" data-student="${student.id}" onchange="updateScore('${student.id}', 'attendance', this.value)">
+                </td>
+                <td class="py-4">
+                    <input type="number" class="score-input" value="${student.activities}" min="0" max="100"  
+                        data-field="activities" data-student="${student.id}" onchange="updateScore('${student.id}', 'activities', this.value)">
+                </td>
+                <td class="py-4">
+                    <input type="number" class="score-input" value="${student.presentations}" min="0" max="100" 
+                        data-field="presentations" data-student="${student.id}" onchange="updateScore('${student.id}', 'presentations', this.value)">
+                </td>
+                <td class="py-4 font-bold text-center">${total}%</td>
+                <td class="py-4">
+                    <span class="grade-badge ${gradeInfo.class}">${gradeInfo.grade}</span>
+                </td>
+                <td class="py-4">
+                    <button class="p-1 rounded-md hover:bg-gray-700 transition-colors tooltip" 
+                            data-tooltip="Edit student grades" onclick="editStudent('${student.id}')">
+                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                    </button>
+                    <button class="p-1 rounded-md hover:bg-gray-700 transition-colors tooltip" 
+                            data-tooltip="View student details" onclick="viewStudent('${student.id}')">
+                        <i data-feather="eye" class="w-4 h-4"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+        updateTableInfo();
+        updatePagination();
+        feather.replace();
+    }
+
+    // Update student score
+    function updateScore(studentId, field, value) {
+        const student = studentsData.find(s => s.id === studentId);
+        if (student) {
+            const numericValue = parseFloat(value);
+            if (numericValue >= 0 && numericValue <= 100) {
+                student[field] = numericValue;
+                
+                // Animate the update
+                const input = event.target;
+                input.classList.add('success');
+                setTimeout(() => {
+                    input.classList.remove('success');
+                }, 1000);
+                
+                // Re-render the row
+                renderTable();
+            } else {
+                // Show error
+                input.classList.add('error');
+                setTimeout(() => {
+                    input.classList.remove('error');
+                }, 1000);
+            }
+        }
+    }
+
+    // Edit student grades
+    function editStudent(studentId) {
+        const student = studentsData.find(s => s.id === studentId);
+        if (!student) return;
+        
+        const modal = document.getElementById('editModal');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalContent.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Student ID</label>
+                    <input type="text" value="${student.id}" readonly 
+                        class="w-full glass-card p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Student Name</label>
+                    <input type="text" value="${student.name}" readonly 
+                        class="w-full glass-card p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Quiz Score</label>
+                        <input type="number" id="edit-quiz" value="${student.quiz}" min="0" max="100" 
+                            class="w-full glass-card p-3 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Midterm Score</label>
+                        <input type="number" id="edit-midterm" value="${student.midterm}" min="0" max="100" 
+                            class="w-full glass-card p-3 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Final Score</label>
+                        <input type="number" id="edit-final" value="${student.final}" min="0" max="100" 
+                            class="w-full glass-card p-3 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Attendance (%)</label>
+                        <input type="number" id="edit-attendance" value="${student.attendance}" min="0" max="100" 
+                            class="w-full glass-card p-3 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Activities Score</label>
+                        <input type="number" id="edit-activities" value="${student.activities}" min="0" max="100" 
+                            class="w-full glass-card p-3 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Presentations Score</label>
+                        <input type="number" id="edit-presentations" value="${student.presentations}" min="0" max="100" 
+                            class="w-full glass-card p-3 rounded-lg bg-transparent border border-gray-700 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+        
+        // Store student ID for saving
+        modal.dataset.studentId = studentId;
+    }
+
+    // View student details
+    function viewStudent(studentId) {
+        const student = studentsData.find(s => s.id === studentId);
+        if (!student) return;
+        
+        const total = calculateTotal(student);
+        const gradeInfo = calculateGrade(total);
+        
+        alert(`Student Details:\n\nID: ${student.id}\nName: ${student.name}\nQuiz: ${student.quiz}%\nMidterm: ${student.midterm}%\nFinal: ${student.final}%\nAttendance: ${student.attendance}%\nActivities: ${student.activities}%\nPresentations: ${student.presentations}%\n\nTotal: ${total}%\nGrade: ${gradeInfo.grade}`);
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+        // Modal controls
+        document.getElementById('saveGradeBtn').addEventListener('click', saveGradeChanges);
+        document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+        
+        // Close modal when clicking outside
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') {
+                closeModal();
+            }
+        });
+        
+        // Pagination
+        document.getElementById('paginationControls').addEventListener('click', (e) => {
+            if (e.target.closest('[data-page="prev"]')) {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            } else if (e.target.closest('[data-page="next"]')) {
+                const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                }
+            } else if (e.target.matches('.glass-card.p-2:not(.bg-indigo-500)')) {
+                currentPage = parseInt(e.target.textContent);
+                renderTable();
+            }
+        });
+    }
+
+    // Save grade changes from modal
+    function saveGradeChanges() {
+        const modal = document.getElementById('editModal');
+        const studentId = modal.dataset.studentId;
+        const student = studentsData.find(s => s.id === studentId);
+        
+        if (student) {
+            student.quiz = parseFloat(document.getElementById('edit-quiz').value) || 0;
+            student.midterm = parseFloat(document.getElementById('edit-midterm').value) || 0;
+            student.final = parseFloat(document.getElementById('edit-final').value) || 0;
+            student.attendance = parseFloat(document.getElementById('edit-attendance').value) || 0;
+            student.activities = parseFloat(document.getElementById('edit-activities').value) || 0;
+            student.presentations = parseFloat(document.getElementById('edit-presentations').value) || 0;
+            
+            closeModal();
+            renderTable();
+            
+            // Show success feedback
+            showNotification('Grade updated successfully!', 'success');
+        }
+    }
+
+    // Close modal
+    function closeModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+
+    // Update table info
+    function updateTableInfo() {
+        const startIndex = (currentPage - 1) * rowsPerPage + 1;
+        const endIndex = Math.min(startIndex + rowsPerPage - 1, filteredData.length);
+        const total = filteredData.length;
+        
+        document.getElementById('tableInfo').textContent = `Showing ${startIndex} to ${endIndex} of ${total} students`;
+    }
+
+    // Update pagination controls
+    function updatePagination() {
+        const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        const container = document.getElementById('paginationControls');
+        
+        // Clear existing page buttons except prev/next
+        const pageButtons = container.querySelectorAll('.glass-card.p-2:not([data-page])');
+        pageButtons.forEach(btn => btn.remove());
+        
+        // Add page buttons
+        const prevBtn = container.querySelector('[data-page="prev"]');
+        const nextBtn = container.querySelector('[data-page="next"]');
+        
+        // Insert page buttons before next
+        for (let i = 1; i <= Math.min(5, totalPages); i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `glass-card p-2 rounded-lg ${i === currentPage ? 'bg-indigo-500 text-white' : 'hover:bg-gray-700 transition-colors'}`;
+            pageBtn.textContent = i;
+            container.insertBefore(pageBtn, nextBtn);
+        }
+        
+        // Update prev/next button states
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 glass-card px-6 py-3 rounded-lg z-50 ${type === 'success' ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-indigo-500/20 border-indigo-500/50'}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        gsap.fromTo(notification, { opacity: 0, x: 100 }, { opacity: 1, x: 0, duration: 0.3 });
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            gsap.to(notification, { opacity: 0, x: 100, duration: 0.3, onComplete: () => {
+                document.body.removeChild(notification);
+            }});
+        }, 3000);
+    }
+
+    // Initialize charts
+    function initCharts() {
+        // Grade Distribution Chart
+        const gradeDistCtx = document.getElementById('gradeDistChart').getContext('2d');
+        new Chart(gradeDistCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['A Grade', 'B Grade', 'C Grade', 'D Grade', 'F Grade'],
+                datasets: [{
+                    data: [35, 42, 18, 4, 1],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(220, 38, 38, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(220, 38, 38, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#94a3b8',
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+
+        // Subject Performance Chart
+        const subjectPerfCtx = document.getElementById('subjectPerfChart').getContext('2d');
+        new Chart(subjectPerfCtx, {
+            type: 'radar',
+            data: {
+                labels: ['QUIZ', 'MIDTERM', 'FINAL', 'ATTENDANCE', 'ACTIVITIES', 'PRESENTATIONS'],
+                datasets: [{
+                    label: 'Average Performance',
+                    data: [84, 78, 82, 92, 85, 87],
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: 'rgb(99, 102, 241)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(99, 102, 241)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(99, 102, 241)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        pointLabels: {
+                            color: '#94a3b8'
+                        },
+                        ticks: {
+                            color: '#94a3b8',
+                            backdropColor: 'transparent'
+                        },
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    // Animate performance bars
+    function animatePerformanceBars() {
+        setTimeout(() => {
+            document.querySelectorAll('.performance-fill').forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 200);
+            });
+        }, 500);
+    }
+
+    // Filter functionality
+    function filterStudents(criteria) {
+        // Implement filtering logic based on criteria
+        // For now, just show all students
+        filteredData = [...studentsData];
+        currentPage = 1;
+        renderTable();
+    }
+
+    // Export grades (placeholder function)
+    function exportGrades() {
+        showNotification('Export functionality coming soon!', 'info');
+    }
+
+    // Add new student (placeholder function)
+    function addStudent() {
+        showNotification('Add student functionality coming soon!', 'info');
+    }
+    </script>
+</body>
+</html>

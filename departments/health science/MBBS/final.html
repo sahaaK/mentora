@@ -547,10 +547,13 @@
                     <label for="classType" class="form-label">Class Type</label>
                     <select id="classType" class="form-select" required>
                         <option value="">Select Type</option>
-                        <option>Core</option>
-                        <option>Lab</option>
-                        <option>Elective</option>
-                        <option>Clinical</option>
+                        <option>YEAR 1</option>
+                        <option>YEAR 2</option>
+                        <option>YEAR 3</option>
+                        <option>YEAR 4</option>
+                        <option>YEAR 5</option>
+                        <option>YEAR 6</option>
+                        
                     </select>
                 </div>
                 
@@ -655,9 +658,12 @@
                                         ${classData.semester}
                                     </p>
                                 </div>
-                                <span class="px-2 py-1 ${classData.type === 'Core' ? 'bg-indigo-500/20 text-indigo-300' : 
-                                                          classData.type === 'Lab' ? 'bg-emerald-500/20 text-emerald-300' :
-                                                          classData.type === 'Elective' ? 'bg-purple-500/20 text-purple-300' :
+                                <span class="px-2 py-1 ${classData.type === 'YEAR 1' ? 'bg-indigo-500/20 text-indigo-300' : 
+                                                          classData.type === 'YEAR 2' ? 'bg-emerald-500/20 text-emerald-300' :
+                                                          classData.type === 'YEAR 3' ? 'bg-purple-500/20 text-purple-300' :
+                                                          classData.type === 'YEAR 4' ? 'bg-rose-500/20 text-rose-300' :
+                                                          classData.type === 'YEAR 5' ? 'bg-amber-500/20 text-amber-300' :
+                                                          classData.type === 'YEAR 6' ? 'bg-amber-500/20 text-amber-300' :
                                                           'bg-amber-500/20 text-amber-300'} rounded-full text-xs">
                                     ${classData.type}
                                 </span>
@@ -781,6 +787,5 @@
         });
     </script>
     <script>feather.replace();</script>
-<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
 </body>
 </html>

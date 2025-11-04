@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+  />
+  <title>University Examination Office | Glass UI</title>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+          colors: {
+            primary: { DEFAULT: '#8b5cf6' }, // violet-500
+            secondary: { DEFAULT: '#22d3ee' }, // cyan-400
+          },
+          boxShadow: {
+            glow: '0 0 0 2px rgb(139 92 246 / 0.25), 0 10px 30px -10px rgb(34 211 238 / 0.25)',
+          },
+          backdropBlur: { xs: '2px' },
+        },
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    :root {
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-highlight: rgba(255,255,255,0.18);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --shadow: 0 8px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body.light {
+  --glass-bg: rgba(255,255,255,0.7);
+  --glass-border: rgba(255,255,255,0.9);
+  --glass-highlight: rgba(255,255,255,0.95);
+  --text: #0b1220;
+  --muted: #475569;
+  background: linear-gradient(180deg, #dbeafe 0%, #f1f5f9 100%);
+  color: var(--text);
+}
+
+/* Glass panel */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: var(--shadow);
+}
+
+/* Buttons */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  border: 1px solid transparent;
+}
+.btn-ghost:hover {
+  border-color: var(--glass-highlight);
+}
+
+/* KPI */
+.kpi .icon-wrap {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Nav link */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text);
+  border: 1px solid transparent;
+}
+.nav-link:hover { background: rgba(255,255,255,0.06); }
+.nav-link.active { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.35); }
+.nav-link i { width: 18px; height: 18px; }
+
+/* Quick action buttons */
+.qa-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+}
+.qa-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* Table */
+table th, table td { white-space: nowrap; }
+tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+tbody tr:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+/* Status tags */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+}
+.badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+/* Bubble background */
+.bubble {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(120px 120px at 30% 30%, rgba(139,92,246,0.35), transparent 60%),
+              radial-gradient(180px 180px at 70% 70%, rgba(34,211,238,0.25), transparent 60%);
+  filter: blur(14px);
+  opacity: 0.45;
+  animation: floatY 14s ease-in-out infinite, floatX 22s linear infinite;
+  will-change: transform;
+}
+.b1 { width: 300px; height: 300px; left: -80px; top: 30%; animation-delay: 0s, 0s; }
+.b2 { width: 240px; height: 240px; right: -60px; top: 15%; animation-delay: 2s, 1s; }
+.b3 { width: 200px; height: 200px; left: 10%; bottom: -60px; animation-delay: 1s, 3s; }
+.b4 { width: 320px; height: 320px; right: 20%; bottom: -80px; animation-delay: 3s, 2s; }
+.b5 { width: 180px; height: 180px; left: 45%; top: -40px; animation-delay: 4s, 1.5s; }
+.b6 { width: 260px; height: 260px; right: 35%; top: 40%; animation-delay: 2.5s, 0.5s; }
+.b7 { width: 220px; height: 220px; left: 60%; bottom: 10%; animation-delay: 1.5s, 2.2s; }
+.b8 { width: 340px; height: 340px; right: -90px; bottom: -100px; animation-delay: 0.8s, 3.4s; }
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-22px); }
+}
+@keyframes floatX {
+  0% { margin-left: 0px; }
+  50% { margin-left: 20px; }
+  100% { margin-left: 0px; }
+}
+
+/* Modal open */
+#createModal.show { display: flex; }
+
+/* Scrollbar */
+::-webkit-scrollbar { height: 8px; width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 selection:bg-primary/30 selection:text-white min-h-screen">
+  <!-- Background bubbles -->
+  <div class="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
+    <div class="bubble b1"></div>
+    <div class="bubble b2"></div>
+    <div class="bubble b3"></div>
+    <div class="bubble b4"></div>
+    <div class="bubble b5"></div>
+    <div class="bubble b6"></div>
+    <div class="bubble b7"></div>
+    <div class="bubble b8"></div>
+  </div>
+
+  <!-- App shell -->
+  <div class="max-w-[1600px] mx-auto px-4 md:px-6 py-6 md:py-8">
+    <!-- Top bar -->
+    <header class="mb-6 md:mb-8">
+      <div class="glass rounded-2xl px-4 md:px-6 py-3 md:py-4 flex items-center gap-4 md:gap-6">
+        <button id="btnSidebar" class="md:hidden btn-ghost p-2 rounded-lg hover:bg-white/10" aria-label="Toggle navigation">
+          <i data-feather="menu"></i>
+        </button>
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-1 ring-white/10">
+            <i data-feather="award" class="text-primary"></i>
+          </div>
+          <div>
+            <div class="text-lg md:text-xl font-semibold tracking-tight">University Examination Office</div>
+            <div class="text-xs md:text-sm text-slate-400">Glass Dashboard • v1.0</div>
+          </div>
+        </div>
+
+        <div class="hidden md:flex flex-1 max-w-xl mx-auto items-center">
+          <div class="relative w-full">
+            <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style="width:16px;height:16px"></i>
+            <input id="globalSearch" type="text" placeholder="Search exams, departments, halls... (Ctrl+/)"
+                   class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent placeholder:text-slate-500" />
+          </div>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2 md:gap-3">
+          <button id="themeToggle" class="btn-ghost p-2 rounded-lg hover:bg-white/10" aria-label="Toggle theme">
+            <i data-feather="sun"></i>
+          </button>
+          <button id="btnCreate" class="btn-ghost p-2 rounded-lg hover:bg-white/10 relative" aria-label="Create exam (N)">
+            <i data-feather="plus"></i>
+            <span class="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 rounded-full bg-gradient-to-br from-primary to-secondary text-[10px] font-bold text-black flex items-center justify-center">N</span>
+          </button>
+          <div class="h-8 w-px bg-white/10 hidden md:block"></div>
+          <div class="hidden md:flex items-center gap-3">
+            <div class="text-right leading-tight">
+              <div class="text-sm font-semibold">Admin</div>
+              <div class="text-xs text-slate-400">Head Examiner</div>
+            </div>
+            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 ring-1 ring-white/10 flex items-center justify-center">
+              <i data-feather="user"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Layout grid -->
+    <div class="grid grid-cols-12 gap-6">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="hidden md:block col-span-12 md:col-span-3 lg:col-span-2">
+        <nav class="glass rounded-2xl p-3 md:p-4 h-full">
+          <div class="text-xs uppercase tracking-widest text-slate-400 px-2 mb-2">Navigation</div>
+          <div class="space-y-1">
+            <a href="#" class="nav-link active"><i data-feather="home"></i><span>Dashboard</span></a>
+            <a href="#" class="nav-link"><i data-feather="calendar"></i><span>Exam Management</span></a>
+            <a href="#" class="nav-link"><i data-feather="book"></i><span>Question Bank</span></a>
+            <a href="#" class="nav-link"><i data-feather="users"></i><span>Invigilators</span></a>
+            <a href="#" class="nav-link"><i data-feather="map-pin"></i><span>Rooms & Halls</span></a>
+            <a href="#" class="nav-link"><i data-feather="clipboard"></i><span>Results</span></a>
+            <a href="#" class="nav-link"><i data-feather="bar-chart-2"></i><span>Analytics</span></a>
+            <a href="#" class="nav-link"><i data-feather="settings"></i><span>Settings</span></a>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-white/10">
+            <div class="text-xs uppercase tracking-widest text-slate-400 px-2 mb-2">Quick Actions</div>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="qa-btn" id="qaCreate"><i data-feather="plus-circle"></i><span>Create Exam</span></button>
+              <button class="qa-btn" id="qaInvigilators"><i data-feather="user-check"></i><span>Assign Staff</span></button>
+              <button class="qa-btn" id="qaPublish"><i data-feather="send"></i><span>Publish Result</span></button>
+              <button class="qa-btn" id="qaExport"><i data-feather="download-cloud"></i><span>Export</span></button>
+            </div>
+          </div>
+
+          <div class="mt-5 text-xs text-slate-500 px-2">
+            Tip: Press Ctrl+/ to search. Press N to create.
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main -->
+      <main class="col-span-12 md:col-span-9 lg:col-span-7">
+        <!-- KPIs -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="kpi glass">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-slate-400">Total Exams</div>
+                <div id="kpiTotal" class="text-2xl font-bold mt-1">0</div>
+              </div>
+              <div class="icon-wrap bg-primary/15 text-primary"><i data-feather="book-open"></i></div>
+            </div>
+            <div class="mt-3 text-xs text-slate-400">This semester</div>
+          </div>
+          <div class="kpi glass">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-slate-400">Active Invigilators</div>
+                <div id="kpiInvig" class="text-2xl font-bold mt-1">0</div>
+              </div>
+              <div class="icon-wrap bg-secondary/15 text-secondary"><i data-feather="user-check"></i></div>
+            </div>
+            <div class="mt-3 text-xs text-slate-400">On duty</div>
+          </div>
+          <div class="kpi glass">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-slate-400">Rooms</div>
+                <div id="kpiRooms" class="text-2xl font-bold mt-1">0</div>
+              </div>
+              <div class="icon-wrap bg-emerald-500/15 text-emerald-400"><i data-feather="home"></i></div>
+            </div>
+            <div class="mt-3 text-xs text-slate-400">Total capacity</div>
+          </div>
+          <div class="kpi glass">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-slate-400">Upcoming</div>
+                <div id="kpiUpcoming" class="text-2xl font-bold mt-1">0</div>
+              </div>
+              <div class="icon-wrap bg-amber-500/15 text-amber-400"><i data-feather="clock"></i></div>
+            </div>
+            <div class="mt-3 text-xs text-slate-400">Next 7 days</div>
+          </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="glass rounded-2xl p-4 mb-6">
+          <div class="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <i data-feather="sliders" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style="width:16px;height:16px"></i>
+                <select id="filterDept" class="pl-9 pr-9 py-2 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option value="">All Departments</option>
+                </select>
+              </div>
+              <div class="relative">
+                <i data-feather="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style="width:16px;height:16px"></i>
+                <input id="filterDate" type="date" class="pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btnReset" class="btn-ghost px-3 py-2 rounded-lg hover:bg-white/10"><i data-feather="rotate-ccw"></i><span class="hidden sm:inline">Reset</span></button>
+              <button id="btnExport" class="btn-ghost px-3 py-2 rounded-lg hover:bg-white/10"><i data-feather="download"></i><span class="hidden sm:inline">Export CSV</span></button>
+              <button id="btnCreate2" class="px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-black font-semibold shadow-glow"><i data-feather="plus"></i><span class="hidden sm:inline">Create</span></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Exams table -->
+        <section class="glass rounded-2xl overflow-hidden">
+          <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i data-feather="list" class="text-primary"></i>
+              <div>
+                <div class="font-semibold">Active Examinations</div>
+                <div class="text-xs text-slate-400" id="resultsCount">0 results</div>
+              </div>
+            </div>
+            <div class="text-xs text-slate-400">Last updated: <span id="lastUpdated">--:--</span></div>
+          </div>
+          <div class="overflow-auto">
+            <table class="w-full min-w-[900px]">
+              <thead class="bg-white/5 text-slate-300 text-xs uppercase tracking-widest">
+                <tr>
+                  <th class="text-left px-4 py-3">Exam</th>
+                  <th class="text-left px-4 py-3">Department</th>
+                  <th class="text-left px-4 py-3">Date</th>
+                  <th class="text-left px-4 py-3">Time</th>
+                  <th class="text-left px-4 py-3">Hall</th>
+                  <th class="text-left px-4 py-3">Invigilator</th>
+                  <th class="text-left px-4 py-3">Status</th>
+                  <th class="text-right px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="examTableBody" class="text-sm"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <!-- Right rail -->
+      <aside class="col-span-12 lg:col-span-3 space-y-6">
+        <section class="glass rounded-2xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="icon-wrap bg-primary/15 text-primary"><i data-feather="activity"></i></div>
+            <div>
+              <div class="font-semibold">System Health</div>
+              <div class="text-xs text-slate-400">Realtime telemetry</div>
+            </div>
+          </div>
+          <div class="mt-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-slate-300">Server Load</div>
+              <div class="text-sm font-semibold" id="serverLoad">--%</div>
+            </div>
+            <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+              <div id="serverBar" class="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 w-[35%]"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+              <div class="bg-white/5 rounded-lg p-3">
+                <div class="text-xs text-slate-400">Latency</div>
+                <div class="text-lg font-semibold" id="latency">-- ms</div>
+              </div>
+              <div class="bg-white/5 rounded-lg p-3">
+                <div class="text-xs text-slate-400">Uptime</div>
+                <div class="text-lg font-semibold" id="uptime">--d</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass rounded-2xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="icon-wrap bg-secondary/15 text-secondary"><i data-feather="bell"></i></div>
+            <div>
+              <div class="font-semibold">Announcements</div>
+              <div class="text-xs text-slate-400">Notice board</div>
+            </div>
+          </div>
+          <ul class="mt-3 space-y-2" id="announcements"></ul>
+        </section>
+
+        <section class="glass rounded-2xl p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="icon-wrap bg-amber-500/15 text-amber-400"><i data-feather="check-square"></i></div>
+              <div>
+                <div class="font-semibold">To-Do</div>
+                <div class="text-xs text-slate-400">Pending tasks</div>
+              </div>
+            </div>
+            <button id="todoClear" class="text-xs text-slate-400 hover:text-white">Clear done</button>
+          </div>
+          <div class="mt-3 space-y-2" id="todoList"></div>
+          <div class="mt-3 flex gap-2">
+            <input id="todoInput" type="text" placeholder="Add task..." class="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <button id="todoAdd" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20"><i data-feather="plus"></i></button>
+          </div>
+        </section>
+
+        <section class="glass rounded-2xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="icon-wrap bg-emerald-500/15 text-emerald-400"><i data-feather="bar-chart"></i></div>
+            <div>
+              <div class="font-semibold">Weekly Summary</div>
+              <div class="text-xs text-slate-400">Scheduled exams</div>
+            </div>
+          </div>
+          <div class="mt-4 h-32 w-full bg-white/5 rounded-lg flex items-end gap-2 p-2" id="weeklyBars">
+            <!-- bars inserted by JS -->
+          </div>
+          <div class="mt-3 grid grid-cols-7 text-[10px] text-slate-400" id="weeklyLabels"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Create Modal -->
+  <div id="createModal" class="fixed inset-0 hidden items-center justify-center p-4 z-50">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative glass rounded-2xl w-full max-w-xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="icon-wrap bg-primary/15 text-primary"><i data-feather="plus-circle"></i></div>
+          <div>
+            <div class="font-semibold">Create Examination</div>
+            <div class="text-xs text-slate-400">Fill in details</div>
+          </div>
+        </div>
+        <button id="closeModal" class="btn-ghost p-2 rounded-lg hover:bg-white/10"><i data-feather="x"></i></button>
+      </div>
+      <form id="createForm" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-400">Exam Title</label>
+            <input name="title" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="e.g., Data Structures" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Department</label>
+            <select name="dept" id="modalDept" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30"></select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Date</label>
+            <input name="date" type="date" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs text-slate-400">Start</label>
+              <input name="start" type="time" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">End</label>
+              <input name="end" type="time" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Hall</label>
+            <select name="hall" id="modalHall" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30"></select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Invigilator</label>
+            <select name="invigilator" id="modalInvigilator" required class="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30"></select>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button type="button" id="cancelModal" class="btn-ghost px-4 py-2 rounded-lg hover:bg-white/10">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-secondary text-black font-semibold shadow-glow">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  
+  <script>feather.replace();</script>
+  <script>
+    // Data
+const DEPARTMENTS = [
+  'Computer Science',
+  'Electrical Engineering',
+  'Mechanical Engineering',
+  'Mathematics',
+  'Physics',
+  'Chemistry',
+];
+const INVIGILATORS = [
+  'Dr. Alan Monroe',
+  'Prof. Sarah Wells',
+  'Dr. Naveen Rao',
+  'Ms. Lila Chen',
+  'Mr. Omar Haddad',
+];
+const HALLS = [
+  { name: 'Hall A', cap: 120 },
+  { name: 'Hall B', cap: 160 },
+  { name: 'Hall C', cap: 90 },
+  { name: 'Main Auditorium', cap: 300 },
+  { name: 'Lab 1', cap: 60 },
+];
+
+const initialExams = [
+  {
+    id: cryptoRandomId(),
+    title: 'Data Structures',
+    dept: 'Computer Science',
+    date: daysFromNow(3),
+    time: '10:00-12:00',
+    hall: 'Hall B',
+    invigilator: 'Dr. Alan Monroe',
+    status: 'Scheduled',
+  },
+  {
+    id: cryptoRandomId(),
+    title: 'Linear Algebra',
+    dept: 'Mathematics',
+    date: daysFromNow(5),
+    time: '14:00-16:00',
+    hall: 'Main Auditorium',
+    invigilator: 'Prof. Sarah Wells',
+    status: 'Scheduled',
+  },
+  {
+    id: cryptoRandomId(),
+    title: 'Thermodynamics',
+    dept: 'Mechanical Engineering',
+    date: daysFromNow(2),
+    time: '09:30-11:30',
+    hall: 'Hall C',
+    invigilator: 'Ms. Lila Chen',
+    status: 'Scheduled',
+  },
+  {
+    id: cryptoRandomId(),
+    title: 'Digital Circuits',
+    dept: 'Electrical Engineering',
+    date: daysFromNow(9),
+    time: '11:00-13:00',
+    hall: 'Hall A',
+    invigilator: 'Dr. Naveen Rao',
+    status: 'Scheduled',
+  },
+  {
+    id: cryptoRandomId(),
+    title: 'Quantum Mechanics',
+    dept: 'Physics',
+    date: daysFromNow(1),
+    time: '15:00-17:00',
+    hall: 'Main Auditorium',
+    invigilator: 'Mr. Omar Haddad',
+    status: 'Scheduled',
+  },
+];
+
+const ANNOUNCEMENTS = [
+  { text: 'Invigilator roster updated for next week.', time: '2h ago' },
+  { text: 'Result publication portal will undergo maintenance on Sunday.', time: '5h ago' },
+  { text: 'New LMS integration for question bank is live.', time: '1d ago' },
+  { text: 'Reminder: Submit Seating Plan by Friday.', time: '2d ago' },
+];
+
+// State
+const state = {
+  exams: loadExams(),
+  search: '',
+  filterDept: '',
+  filterDate: '',
+  todos: loadTodos(),
+};
+
+// DOM
+const dom = {
+  search: document.getElementById('globalSearch'),
+  filterDept: document.getElementById('filterDept'),
+  filterDate: document.getElementById('filterDate'),
+  btnReset: document.getElementById('btnReset'),
+  btnExport: document.getElementById('btnExport'),
+  resultsCount: document.getElementById('resultsCount'),
+  lastUpdated: document.getElementById('lastUpdated'),
+  tableBody: document.getElementById('examTableBody'),
+  kpiTotal: document.getElementById('kpiTotal'),
+  kpiInvig: document.getElementById('kpiInvig'),
+  kpiRooms: document.getElementById('kpiRooms'),
+  kpiUpcoming: document.getElementById('kpiUpcoming'),
+  announcements: document.getElementById('announcements'),
+  serverLoad: document.getElementById('serverLoad'),
+  serverBar: document.getElementById('serverBar'),
+  latency: document.getElementById('latency'),
+  uptime: document.getElementById('uptime'),
+  weeklyBars: document.getElementById('weeklyBars'),
+  weeklyLabels: document.getElementById('weeklyLabels'),
+  sidebar: document.getElementById('sidebar'),
+  btnSidebar: document.getElementById('btnSidebar'),
+  themeToggle: document.getElementById('themeToggle'),
+  btnCreate: document.getElementById('btnCreate'),
+  btnCreate2: document.getElementById('btnCreate2'),
+  qaCreate: document.getElementById('qaCreate'),
+  qaInvigilators: document.getElementById('qaInvigilators'),
+  qaPublish: document.getElementById('qaPublish'),
+  qaExport: document.getElementById('qaExport'),
+  createModal: document.getElementById('createModal'),
+  closeModal: document.getElementById('closeModal'),
+  cancelModal: document.getElementById('cancelModal'),
+  createForm: document.getElementById('createForm'),
+  modalDept: document.getElementById('modalDept'),
+  modalHall: document.getElementById('modalHall'),
+  modalInvigilator: document.getElementById('modalInvigilator'),
+  todoList: document.getElementById('todoList'),
+  todoInput: document.getElementById('todoInput'),
+  todoAdd: document.getElementById('todoAdd'),
+  todoClear: document.getElementById('todoClear'),
+};
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  populateFilters();
+  renderAll();
+  attachEvents();
+  tickTime();
+  startTelemetry();
+  feather.replace();
+});
+
+// Utilities
+function cryptoRandomId() {
+  if (window.crypto?.getRandomValues) {
+    const arr = new Uint32Array(2);
+    window.crypto.getRandomValues(arr);
+    return [...arr].map(n => n.toString(16)).join('');
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+function daysFromNow(d) {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + d);
+  return dt.toISOString().slice(0, 10);
+}
+function fmtTime(dt = new Date()) {
+  return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function loadExams() {
+  const saved = localStorage.getItem('exams');
+  return saved ? JSON.parse(saved) : initialExams;
+}
+function saveExams() {
+  localStorage.setItem('exams', JSON.stringify(state.exams));
+}
+function loadTodos() {
+  const saved = localStorage.getItem('todos');
+  return saved ? JSON.parse(saved) : [
+    { id: cryptoRandomId(), text: 'Approve hall allocations', done: false },
+    { id: cryptoRandomId(), text: 'Upload midterm answer keys', done: true },
+    { id: cryptoRandomId(), text: 'Review invigilator schedule', done: false },
+  ];
+}
+function saveTodos() {
+  localStorage.setItem('todos', JSON.stringify(state.todos));
+}
+function download(filename, text) {
+  const el = document.createElement('a');
+  el.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  el.setAttribute('download', filename);
+  el.style.display = 'none';
+  document.body.appendChild(el);
+  el.click();
+  document.body.removeChild(el);
+}
+function filterExams() {
+  return state.exams.filter((e) => {
+    const matchesDept = !state.filterDept || e.dept === state.filterDept;
+    const matchesDate = !state.filterDate || e.date === state.filterDate;
+    const q = state.search.trim().toLowerCase();
+    const matchesSearch = !q || [
+      e.title, e.dept, e.hall, e.invigilator, e.status, e.time, e.date
+    ].some(v => v.toLowerCase().includes(q));
+    return matchesDept && matchesDate && matchesSearch;
+  }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+}
+
+// Render
+function renderAll() {
+  renderKPIs();
+  renderTable();
+  renderAnnouncements();
+  renderWeekly();
+  renderTodos();
+  updateResultsCount();
+  dom.lastUpdated.textContent = fmtTime();
+  populateModalOptions();
+}
+function renderKPIs() {
+  const upcoming = state.exams.filter(e => {
+    const today = new Date();
+    const d = new Date(e.date);
+    const diff = (d - today) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  }).length;
+  dom.kpiTotal.textContent = state.exams.length;
+  dom.kpiInvig.textContent = INVIGILATORS.length;
+  dom.kpiRooms.textContent = HALLS.reduce((s, h) => s + h.cap, 0);
+  dom.kpiUpcoming.textContent = upcoming;
+}
+function renderTable() {
+  const rows = filterExams().map(e => {
+    const statusColor = {
+      Scheduled: 'bg-amber-500',
+      Draft: 'bg-slate-500',
+      Completed: 'bg-emerald-500',
+      Cancelled: 'bg-rose-500',
+    }[e.status] || 'bg-slate-500';
+    return `
+      <tr>
+        <td class="px-4 py-3">
+          <div class="font-semibold">${escapeHtml(e.title)}</div>
+          <div class="text-xs text-slate-400">ID: ${e.id.slice(0, 8)}</div>
+        </td>
+        <td class="px-4 py-3">${escapeHtml(e.dept)}</td>
+        <td class="px-4 py-3">${e.date}</td>
+        <td class="px-4 py-3">${e.time}</td>
+        <td class="px-4 py-3">${escapeHtml(e.hall)}</td>
+        <td class="px-4 py-3">${escapeHtml(e.invigilator)}</td>
+        <td class="px-4 py-3">
+          <span class="badge"><span class="dot ${statusColor}"></span>${e.status}</span>
+        </td>
+        <td class="px-4 py-3 text-right">
+          <div class="flex items-center justify-end gap-2">
+            <button class="p-2 rounded-lg hover:bg-white/10" title="View" aria-label="View" onclick="viewExam('${e.id}')">
+              <i data-feather="eye"></i>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-white/10" title="Edit" aria-label="Edit" onclick="editExam('${e.id}')">
+              <i data-feather="edit-2"></i>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-white/10 text-rose-400" title="Delete" aria-label="Delete" onclick="deleteExam('${e.id}')">
+              <i data-feather="trash-2"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  dom.tableBody.innerHTML = rows || `
+    <tr>
+      <td colspan="8" class="px-4 py-8 text-center text-slate-400">
+        No exams found. Try adjusting filters or create a new exam.
+      </td>
+    </tr>
+  `;
+  feather.replace();
+}
+function renderAnnouncements() {
+  dom.announcements.innerHTML = ANNOUNCEMENTS.map(a => `
+    <li class="p-3 rounded-xl bg-white/5 border border-white/10">
+      <div class="text-sm">${escapeHtml(a.text)}</div>
+      <div class="text-xs text-slate-500 mt-1">${a.time}</div>
+    </li>
+  `).join('');
+}
+function renderWeekly() {
+  // Compute counts for next 7 days
+  const labels = [];
+  const data = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString([], { weekday: 'short' }));
+    data.push(state.exams.filter(e => e.date === key).length);
+  }
+  const max = Math.max(5, ...data);
+  dom.weeklyBars.innerHTML = data.map(n => `
+    <div class="flex-1 flex items-end justify-center">
+      <div class="w-6 rounded-t-lg bg-gradient-to-t from-primary to-secondary opacity-90"
+           style="height: ${Math.max(8, Math.round((n / max) * 100))}%"></div>
+    </div>
+  `).join('');
+  dom.weeklyLabels.innerHTML = labels.map(l => `<div class="text-center">${l}</div>`).join('');
+}
+function renderTodos() {
+  dom.todoList.innerHTML = state.todos.map(t => `
+    <div class="flex items-center gap-3 p-2 rounded-lg ${t.done ? 'bg-white/5' : 'bg-white/[0.08]'} border border-white/10">
+      <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)" class="accent-primary" />
+      <div class="flex-1 ${t.done ? 'line-through text-slate-400' : ''}">${escapeHtml(t.text)}</div>
+      <button class="p-1 rounded hover:bg-white/10 text-rose-400" onclick="removeTodo('${t.id}')" aria-label="Remove">
+        <i data-feather="x"></i>
+      </button>
+    </div>
+  `).join('');
+  feather.replace();
+}
+function updateResultsCount() {
+  const n = filterExams().length;
+  dom.resultsCount.textContent = `${n} result${n !== 1 ? 's' : ''}`;
+}
+
+// Events
+function attachEvents() {
+  dom.search.addEventListener('input', (e) => { state.search = e.target.value; renderTable(); updateResultsCount(); });
+  dom.filterDept.addEventListener('change', (e) => { state.filterDept = e.target.value; renderTable(); updateResultsCount(); });
+  dom.filterDate.addEventListener('change', (e) => { state.filterDate = e.target.value; renderTable(); updateResultsCount(); });
+  dom.btnReset.addEventListener('click', () => {
+    state.search = '';
+    state.filterDept = '';
+    state.filterDate = '';
+    dom.search.value = '';
+    dom.filterDept.value = '';
+    dom.filterDate.value = '';
+    renderTable(); updateResultsCount();
+  });
+  dom.btnExport.addEventListener('click', exportCSV);
+  dom.btnCreate.addEventListener('click', openCreate);
+  dom.btnCreate2.addEventListener('click', openCreate);
+  dom.qaCreate.addEventListener('click', openCreate);
+  dom.qaInvigilators.addEventListener('click', () => toast('Opening Invigilators...', 'info'));
+  dom.qaPublish.addEventListener('click', () => toast('Publish workflow started', 'success'));
+  dom.qaExport.addEventListener('click', exportCSV);
+  dom.closeModal.addEventListener('click', closeCreate);
+  dom.cancelModal.addEventListener('click', closeCreate);
+  dom.createForm.addEventListener('submit', onCreateSubmit);
+  // sidebar visibility is controlled via responsive classes (hidden md:block)
+  dom.btnSidebar.addEventListener('click', () => dom.sidebar.classList.toggle('hidden'));
+  dom.themeToggle.addEventListener('click', toggleTheme);
+  dom.todoAdd.addEventListener('click', addTodo);
+  dom.todoClear.addEventListener('click', () => {
+    state.todos = state.todos.filter(t => !t.done);
+    saveTodos(); renderTodos(); toast('Cleared completed tasks', 'info');
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === '/') { e.preventDefault(); dom.search.focus(); }
+    if (e.key.toLowerCase() === 'n' && !isTyping(e)) openCreate();
+    if (e.key === 'Escape' && dom.createModal.classList.contains('show')) closeCreate();
+  });
+}
+
+// Modal
+function populateModalOptions() {
+  dom.modalDept.innerHTML = `<option value="" disabled selected>Select department</option>` + DEPARTMENTS.map(d => `<option>${d}</option>`).join('');
+  dom.modalHall.innerHTML = `<option value="" disabled selected>Select hall</option>` + HALLS.map(h => `<option>${h.name} (${h.cap})</option>`).join('');
+  dom.modalInvigilator.innerHTML = `<option value="" disabled selected>Select invigilator</option>` + INVIGILATORS.map(i => `<option>${i}</option>`).join('');
+}
+function openCreate() {
+  dom.createModal.classList.add('show');
+}
+function closeCreate() {
+  dom.createModal.classList.remove('show');
+}
+function onCreateSubmit(e) {
+  e.preventDefault();
+  const fd = new FormData(dom.createForm);
+  const title = fd.get('title').toString().trim();
+  const dept = fd.get('dept').toString();
+  const date = fd.get('date').toString();
+  const start = fd.get('start').toString();
+  const end = fd.get('end').toString();
+  const hall = fd.get('hall').toString().split(' (')[0];
+  const invigilator = fd.get('invigilator').toString();
+
+  if (!title || !dept || !date || !start || !end || !hall || !invigilator) {
+    toast('Please fill all fields', 'error'); return;
+  }
+
+  const exam = {
+    id: cryptoRandomId(),
+    title, dept, date,
+    time: `${start}-${end}`,
+    hall, invigilator, status: 'Scheduled',
+  };
+  state.exams.push(exam);
+  saveExams();
+  closeCreate();
+  renderAll();
+  toast('Exam created', 'success');
+}
+
+// Actions
+window.viewExam = function(id) {
+  const e = state.exams.find(x => x.id === id);
+  if (!e) return;
+  toast(`Viewing: ${e.title}`, 'info');
+};
+window.editExam = function(id) {
+  const e = state.exams.find(x => x.id === id);
+  if (!e) return;
+  toast(`Edit mode not implemented (${e.title})`, 'info');
+};
+window.deleteExam = function(id) {
+  const idx = state.exams.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  if (confirm('Delete this exam?')) {
+    state.exams.splice(idx, 1);
+    saveExams();
+    renderAll();
+    toast('Exam deleted', 'warning');
+  }
+};
+
+// Todos
+window.toggleTodo = function(id, done) {
+  const t = state.todos.find(x => x.id === id);
+  if (t) { t.done = !!done; saveTodos(); renderTodos(); }
+};
+window.removeTodo = function(id) {
+  state.todos = state.todos.filter(t => t.id !== id);
+  saveTodos(); renderTodos();
+};
+function addTodo() {
+  const v = dom.todoInput.value.trim();
+  if (!v) return;
+  state.todos.push({ id: cryptoRandomId(), text: v, done: false });
+  dom.todoInput.value = '';
+  saveTodos(); renderTodos();
+}
+
+// CSV export
+function exportCSV() {
+  const rows = [['Title','Department','Date','Time','Hall','Invigilator','Status']];
+  filterExams().forEach(e => rows.push([e.title, e.dept, e.date, e.time, e.hall, e.invigilator, e.status]));
+  const csv = rows.map(r => r.map(s => `"${String(s).replace(/"/g, '""')}"`).join(',')).join('\n');
+  download('exams.csv', csv);
+  toast('CSV exported', 'success');
+}
+
+// Telemetry
+function startTelemetry() {
+  setInterval(() => {
+    const load = Math.round(25 + Math.random() * 55);
+    const lat = Math.round(40 + Math.random() * 80);
+    dom.serverLoad.textContent = `${load}%`;
+    dom.serverBar.style.width = `${load}%`;
+    dom.latency.textContent = `${lat} ms`;
+    dom.uptime.textContent = `${Math.round(8 + Math.random() * 30)}d`;
+  }, 2000);
+}
+function tickTime() {
+  dom.lastUpdated.textContent = fmtTime();
+  setInterval(() => dom.lastUpdated.textContent = fmtTime(), 10_000);
+}
+
+// Filters
+function populateFilters() {
+  dom.filterDept.innerHTML = `<option value="">All Departments</option>` + DEPARTMENTS.map(d => `<option>${d}</option>`).join('');
+}
+
+// Theme
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  toast(isLight ? 'Light mode' : 'Dark mode', 'info');
+  feather.replace();
+}
+(function restoreTheme() {
+  const t = localStorage.getItem('theme');
+  if (t === 'light') document.body.classList.add('light');
+})();
+
+// Toast
+let toastTimeout;
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `fixed z-[60] top-4 right-4 glass rounded-xl px-4 py-2 border ${
+    type === 'success' ? 'border-emerald-400/30' :
+    type === 'warning' ? 'border-amber-400/30' :
+    type === 'error' ? 'border-rose-400/30' : 'border-primary/30'
+  } text-sm`;
+  el.innerHTML = `<div class="flex items-center gap-2">
+    <i data-feather="${iconForToast(type)}" class="text-${colorForToast(type)}"></i>
+    <div>${escapeHtml(msg)}</div>
+  </div>`;
+  document.body.appendChild(el);
+  feather.replace();
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.remove(), 2200);
+}
+function iconForToast(t) {
+  return t === 'success' ? 'check-circle' : t === 'warning' ? 'alert-triangle' : t === 'error' ? 'x-circle' : 'info';
+}
+function colorForToast(t) {
+  return t === 'success' ? 'emerald-400' : t === 'warning' ? 'amber-400' : t === 'error' ? 'rose-400' : 'primary';
+}
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function isTyping(e) {
+  const t = e.target;
+  return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+}
+  </script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

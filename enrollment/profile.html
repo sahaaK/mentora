@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Mentora</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <link rel="stylesheet" href="components/sidebar.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        secondary: {
+                            400: '#d946ef',
+                            500: '#c026d3',
+                            600: '#a21caf',
+                            700: '#86198f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #10b981;     /* Emerald 500 */
+            --secondary: #c026d3;   /* Fuchsia 600 */
+            --bg: #0f172a;          /* Slate 900 */
+            --panel: rgba(255,255,255,0.06);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #e2e8f0;
+            min-height: 100vh;
+            margin-left: 92px; /* space for floating sidebar */
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.35);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.55);
+        }
+        
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <!-- Sidebar (injected from components/sidebar.js) -->
+    <div id="sidebar-root"></div>
+    <script src="components/sidebar.js"></script>
+
+    <!-- Main Card -->
+    <div class="w-full max-w-[1200px] rounded-3xl overflow-hidden shadow-2xl glass-panel">
+        <div class="flex flex-col">
+            <!-- Hero / Top Bar -->
+            <div class="relative h-64 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/30 to-fuchsia-900/30 z-10"></div>
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center transition-all duration-1000 ease-in-out"></div>
+                <div class="absolute bottom-8 left-8 z-20">
+                    <h1 class="text-white text-4xl font-bold drop-shadow-lg">User Profile</h1>
+                    <p class="text-emerald-300 mt-2">View and manage your account</p>
+                </div>
+                <div class="absolute top-8 right-8 z-20 flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                    <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse animation-delay-200"></div>
+                    <div class="w-3 h-3 rounded-full bg-fuchsia-400 animate-pulse animation-delay-400"></div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-8 lg:p-10">
+                <div class="text-center mb-8">
+                    <div class="relative w-16 h-16 mx-auto mb-4">
+                        <div class="absolute inset-0 bg-emerald-600 rounded-full opacity-20 blur-lg animate-pulse"></div>
+                        <div class="relative z-10 w-16 h-16 rounded-full bg-emerald-600/20 flex items-center justify-center">
+                            <i data-feather="user" class="w-8 h-8 text-emerald-300"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Account <span class="bg-gradient-to-r from-emerald-400 to-fuchsia-500 bg-clip-text text-transparent">Information</span></h2>
+                    <p class="text-gray-400 mt-2">Manage your profile and preferences</p>
+                </div>
+
+                <!-- Placeholder for profile content -->
+                <div class="bg-slate-900/30 rounded-xl p-8 text-center border border-dashed border-slate-700/50">
+                    <i data-feather="user" class="w-12 h-12 mx-auto text-slate-500 mb-4"></i>
+                    <h3 class="text-xl font-medium text-slate-300 mb-2">Profile Details</h3>
+                    <p class="text-slate-500">This section will display user profile information and account settings.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        AOS.init();
+        feather.replace();
+        // sidebar active logic moved to components/sidebar.js
+    </script>
+</body>
+</html>

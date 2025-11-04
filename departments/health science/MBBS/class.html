@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedGlass Cloud - MBBS Faculty Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+/* Glass panel styles */
+.glass-card {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
+    border-radius: 16px;
+}
+
+.glass-card:hover {
+    background: rgba(15, 23, 42, 0.8);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated gradient border */
+.gradient-border {
+    position: relative;
+    z-index: 1;
+}
+
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+    z-index: -1;
+    border-radius: 18px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.glass-card:hover .gradient-border::before {
+    opacity: 1;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Performance bar */
+.performance-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.performance-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+
+/* Bubble animation container */
+.bubble-container {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.05));
+    backdrop-filter: blur(1px);
+    animation: float 20s infinite ease-in-out;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) translateX(0) scale(1);
+    }
+    33% {
+        transform: translateY(-100px) translateX(50px) scale(1.1);
+    }
+    66% {
+        transform: translateY(50px) translateX(-50px) scale(0.9);
+    }
+}
+
+
+.glass-card:hover .class-img img {
+    transform: scale(1.05);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.5);
+}
+
+/* Animation classes */
+.animate-slide-up {
+    animation: slideInUp 0.6s ease forwards;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pulse animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glass-card {
+        margin: 0 10px;
+    }
+    
+    .class-img {
+        height: 200px;
+    }
+}
+
+/* Form styles */
+.form-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+
+/* Student Card Styles */
+.student-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.student-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(147, 51, 234, 0.5), rgba(236, 72, 153, 0.5));
+    border-radius: 18px;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.student-card:hover::before {
+    opacity: 1;
+}
+
+.student-avatar {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(147, 51, 234, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #e2e8f0;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.blood-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.progress-ring {
+    width: 48px;
+    height: 48px;
+}
+
+.progress-ring circle {
+    fill: none;
+    stroke-width: 4;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    stroke-linecap: round;
+}
+
+.progress-bg {
+    stroke: rgba(255, 255, 255, 0.1);
+}
+
+.progress-fill {
+    stroke: url(#grad-attendance);
+    transition: stroke-dashoffset 1s ease;
+}
+
+.progress-fill.exam {
+    stroke: url(#grad-exam);
+}
+
+.stat-pill {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-pill:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.grade-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.floating-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: all 0.3s ease;
+}
+
+.student-card:hover .floating-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Blood type colors */
+.blood-Aplus { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+.blood-Aminus { background: rgba(249, 115, 22, 0.2); color: #fdba74; border-color: rgba(249, 115, 22, 0.3); }
+.blood-Bplus { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: rgba(34, 197, 94, 0.3); }
+.blood-Bminus { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.3); }
+.blood-ABplus { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border-color: rgba(168, 85, 247, 0.3); }
+.blood-ABminus { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; border-color: rgba(236, 72, 153, 0.3); }
+.blood-Oplus { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+.blood-Ominus { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border-color: rgba(6, 182, 212, 0.3); }
+
+/* Color-coded progress bars */
+.progress-fill.green { stroke: #22c55e; }
+.progress-fill.yellow { stroke: #f59e0b; }
+.progress-fill.red { stroke: #ef4444; }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-slate-900 text-slate-100">
+    <!-- Animated Background -->
+    <div class="bubble-container"></div>
+
+    <!-- Header -->
+    <header class="px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">
+                        <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                            MedGlass Cloud
+                        </span>
+                    </h1>
+                    <p class="text-gray-400">MBBS Faculty Management Portal</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all">
+                        <i data-feather="bell"></i>
+                        <span>Notifications</span>
+                    </button>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold">
+                            DR
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card gradiant-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-indigo-500/20">
+                    <i data-feather="book-open" class="text-indigo-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Classes</h3>
+                    <p class="text-sm text-gray-400">8 Active Classes</p>
+                </div>
+            </div>
+            <div class="glass-card gradiant-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-emerald-500/20">
+                    <i data-feather="users" class="text-emerald-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Students</h3>
+                    <p class="text-sm text-gray-400">248 Total Students</p>
+                </div>
+            </div>
+            <div class="glass-card gradiant-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-amber-500/20">
+                    <i data-feather="calendar" class="text-amber-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Sessions</h3>
+                    <p class="text-sm text-gray-400">12 This Week</p>
+                </div>
+            </div>
+            <div class="glass-card gradiant-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-rose-500/20">
+                    <i data-feather="activity" class="text-rose-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Performance</h3>
+                    <p class="text-sm text-gray-400">89% Avg Score</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Grid Section (Inside Class) -->
+        <div class="glass-card gradiant-border p-6 mb-8 animate-slide-up" style="animation-delay: 0.3s">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold">Students - MBBS Year 1 (Semester 1)</h2>
+                    <p class="text-gray-400 text-sm">Beautiful glassmorphism animated student cards with color-coded performance bars</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input id="studentSearch" type="text" placeholder="Search students..." class="form-input pl-10 w-64">
+                    </div>
+                    <select id="bloodFilter" class="form-select w-40">
+                        <option value="">All Blood Types</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Student Grid -->
+            <div id="studentsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Student Cards Injected by script.js -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Student Detail Modal -->
+    <div id="studentModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Student Details</h2>
+                <button id="closeStudentModal" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <div id="studentModalBody" class="space-y-6">
+                <!-- Student modal content injected by script -->
+            </div>
+        </div>
+    </div>
+<!-- 
+    <script src="script.js"></script> -->
+    <script>
+// Create bubbles
+function createBubbles() {
+    const container = document.querySelector('.bubble-container');
+    const bubbleCount = 15;
+    
+    for (let i = 0; i < bubbleCount; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        
+        const size = Math.random() * 100 + 50;
+        const left = Math.random() * 100;
+        const top = Math.random() * 100;
+        const delay = Math.random() * 10;
+        
+        bubble.style.width = `${size}px`;
+        bubble.style.height = `${size}px`;
+        bubble.style.left = `${left}%`;
+        bubble.style.top = `${top}%`;
+        bubble.style.animationDelay = `${delay}s`;
+        
+        container.appendChild(bubble);
+    }
+}
+
+// Mock students data
+const mockStudents = [
+    { id: 1, name: "Aisha Khan", studentNumber: "MBBS2024001", bloodType: "A+", attendance: 96, examPerformance: 88, avatar: "https://i.pravatar.cc/150?img=1", grade: "A" },
+    { id: 2, name: "Rahul Sharma", studentNumber: "MBBS2024002", bloodType: "O+", attendance: 89, examPerformance: 92, avatar: "https://i.pravatar.cc/150?img=2", grade: "A+" },
+    { id: 3, name: "Emily Chen", studentNumber: "MBBS2024003", bloodType: "B-", attendance: 78, examPerformance: 81, avatar: "https://i.pravatar.cc/150?img=3", grade: "B+" },
+    { id: 4, name: "Mohammed Ali", studentNumber: "MBBS2024004", bloodType: "AB+", attendance: 94, examPerformance: 95, avatar: "https://i.pravatar.cc/150?img=4", grade: "A+" },
+    ];
+
+// Utility functions
+function getInitials(name) {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getBloodClass(bloodType) {
+    return `blood-${bloodType.replace('+', 'plus').replace('-', 'minus')}`;
+}
+
+function getPerformanceClass(value) {
+    if (value >= 85) return 'green';
+    if (value >= 70) return 'yellow';
+    return 'red';
+}
+
+function getCircumference(radius = 20) {
+    return 2 * Math.PI * radius;
+}
+
+// Render student card
+function createStudentCard(student) {
+    const attendanceCirc = getCircumference(20);
+    const examCirc = getCircumference(20);
+    const attendanceOffset = attendanceCirc - (student.attendance / 100) * attendanceCirc;
+    const examOffset = examCirc - (student.examPerformance / 100) * examCirc;
+
+    return `
+        <div class="glass-card gradiant-border p-6 student-card relative animate-slide-up" style="animation-delay: ${Math.random() * 0.3}s" data-student-id="${student.id}">
+            <!-- Floating Actions -->
+            <div class="floating-actions">
+                <button class="action-btn view-student" data-id="${student.id}" title="View Details">
+                    <i data-feather="eye" class="w-4 h-4"></i>
+                </button>
+                <button class="action-btn message-student" data-id="${student.id}" title="Message">
+                    <i data-feather="mail" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-4 mb-4">
+                <div class="student-avatar">
+                    ${student.avatar ? `<img src="${student.avatar}" alt="${student.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                    <div class="w-full h-full flex items-center justify-center" ${student.avatar ? 'style="display:none;"' : ''}>${getInitials(student.name)}</div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-bold truncate">${student.name}</h3>
+                    <p class="text-gray-400 text-sm">${student.studentNumber}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 mb-4">
+                <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+                <span class="grade-badge">${student.grade}</span>
+            </div>
+
+            <!-- Progress Rings -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col items-center gap-1">
+                    <svg class="progress-ring" viewBox="0 0 48 48">
+                        <defs>
+                            <linearGradient id="grad-attendance" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="progress-bg" cx="24" cy="24" r="20" stroke-width="4"></circle>
+                        <circle class="progress-fill attendance ${getPerformanceClass(student.attendance)}" cx="24" cy="24" r="20" stroke-width="4" 
+                                stroke-dasharray="${attendanceCirc}" stroke-dashoffset="${attendanceOffset}"></circle>
+                    </svg>
+                    <span class="metric-label">Attendance</span>
+                    <span class="metric-value">${student.attendance}%</span>
+                </div>
+
+                <div class="flex flex-col items-center gap-1">
+                    <svg class="progress-ring" viewBox="0 0 48 48">
+                        <defs>
+                            <linearGradient id="grad-exam" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="progress-bg" cx="24" cy="24" r="20" stroke-width="4"></circle>
+                        <circle class="progress-fill exam ${getPerformanceClass(student.examPerformance)}" cx="24" cy="24" r="20" stroke-width="4" 
+                                stroke-dasharray="${examCirc}" stroke-dashoffset="${examOffset}"></circle>
+                    </svg>
+                    <span class="metric-label">Exam</span>
+                    <span class="metric-value">${student.examPerformance}%</span>
+                </div>
+            </div>
+
+            <!-- Additional Stats -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="stat-pill">
+                    <div class="metric-label">Attendance</div>
+                    <div class="metric-value ${student.attendance >= 85 ? 'text-emerald-400' : student.attendance >= 70 ? 'text-amber-400' : 'text-rose-400'}">${student.attendance}%</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="metric-label">Exam</div>
+                    <div class="metric-value ${student.examPerformance >= 85 ? 'text-indigo-400' : student.examPerformance >= 70 ? 'text-amber-400' : 'text-rose-400'}">${student.examPerformance}%</div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button class="w-full glass-card mt-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 view-student-btn" data-id="${student.id}">
+                <i data-feather="user" class="w-4 h-4"></i>
+                View Profile
+            </button>
+        </div>
+    `;
+}
+
+// Render students grid
+function renderStudents(students = mockStudents) {
+    const grid = document.getElementById('studentsGrid');
+    grid.innerHTML = '';
+    
+    if (!students.length) {
+        grid.innerHTML = `
+            <div class="glass-card p-8 text-center col-span-full">
+                <i data-feather="users" class="w-12 h-12 text-rose-400 mx-auto mb-4"></i>
+                <h3 class="text-xl font-bold mb-2">No Students Found</h3>
+                <p class="text-gray-400">Try adjusting your search or filters</p>
+            </div>
+        `;
+        feather.replace();
+        return;
+    }
+
+    students.forEach(student => {
+        grid.innerHTML += createStudentCard(student);
+    });
+
+    feather.replace();
+}
+
+// Filter students
+function filterStudents() {
+    const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+    const bloodFilter = document.getElementById('bloodFilter').value;
+
+    let filtered = mockStudents.filter(student => {
+        const matchesSearch = student.name.toLowerCase().includes(searchTerm) || 
+                            student.studentNumber.toLowerCase().includes(searchTerm);
+        const matchesBlood = !bloodFilter || student.bloodType === bloodFilter;
+        return matchesSearch && matchesBlood;
+    });
+
+    renderStudents(filtered);
+}
+
+// Student modal
+function openStudentModal(studentId) {
+    const student = mockStudents.find(s => s.id == studentId);
+    if (!student) return;
+
+    const modalBody = document.getElementById('studentModalBody');
+    modalBody.innerHTML = `
+        <div class="flex items-center gap-6">
+            <div class="student-avatar w-20 h-20 text-2xl">
+                ${student.avatar ? `<img src="${student.avatar}" alt="${student.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                <div class="w-full h-full flex items-center justify-center" ${student.avatar ? 'style="display:none;"' : ''}>${getInitials(student.name)}</div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-bold">${student.name}</h3>
+                <p class="text-gray-400">${student.studentNumber}</p>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+                    <span class="grade-badge">${student.grade}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="stat-item">
+                <div class="flex items-center gap-2">
+                    <i data-feather="check-circle" class="text-emerald-400"></i>
+                    <span>Attendance</span>
+                </div>
+                <p class="text-2xl font-bold mt-2">${student.attendance}%</p>
+                <div class="performance-bar mt-2">
+                    <div class="performance-fill ${getPerformanceClass(student.attendance)}" style="width: ${student.attendance}%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="flex items-center gap-2">
+                    <i data-feather="file-text" class="text-indigo-400"></i>
+                    <span>Exam Performance</span>
+                </div>
+                <p class="text-2xl font-bold mt-2">${student.examPerformance}%</p>
+                <div class="performance-bar mt-2">
+                    <div class="performance-fill exam ${getPerformanceClass(student.examPerformance)}" style="width: ${student.examPerformance}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+            <div class="stat-pill">
+                <div class="metric-label">Overall</div>
+                <div class="metric-value">${Math.round((student.attendance + student.examPerformance) / 2)}%</div>
+            </div>
+            <div class="stat-pill">
+                <div class="metric-label">Status</div>
+                <div class="metric-value ${student.attendance >= 85 && student.examPerformance >= 85 ? 'text-emerald-400' : student.attendance >= 70 && student.examPerformance >= 70 ? 'text-amber-400' : 'text-rose-400'}">
+                    ${student.attendance >= 85 && student.examPerformance >= 85 ? 'Excellent' : student.attendance >= 70 && student.examPerformance >= 70 ? 'Good' : 'Needs Attention'}
+                </div>
+            </div>
+            <div class="stat-pill">
+                <div class="metric-label">Risk</div>
+                <div class="metric-value ${student.attendance < 70 || student.examPerformance < 70 ? 'text-rose-400' : 'text-emerald-400'}">
+                    ${student.attendance < 70 || student.examPerformance < 70 ? 'High' : 'Low'}
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+            <button class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <i data-feather="mail" class="w-4 h-4"></i>
+                Message
+            </button>
+            <button class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <i data-feather="download" class="w-4 h-4"></i>
+                Export
+            </button>
+        </div>
+    `;
+
+    document.getElementById('studentModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    feather.replace();
+}
+
+function closeStudentModal() {
+    document.getElementById('studentModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    createBubbles();
+    renderStudents();
+
+    // Event listeners for filters
+    document.getElementById('studentSearch').addEventListener('input', filterStudents);
+    document.getElementById('bloodFilter').addEventListener('change', filterStudents);
+
+    // Delegate events for dynamically added student buttons
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.view-student') || e.target.closest('.view-student-btn')) {
+            const id = e.target.closest('[data-student-id]')?.dataset.studentId || 
+                       e.target.dataset.id;
+            openStudentModal(id);
+        }
+
+        if (e.target.closest('.message-student')) {
+            const id = e.target.closest('[data-student-id]')?.dataset.studentId;
+            console.log('Message student:', id);
+            // Implement messaging logic here
+        }
+    });
+
+    // Close modal events
+    document.getElementById('closeStudentModal').addEventListener('click', closeStudentModal);
+    document.getElementById('studentModal').addEventListener('click', (e) => {
+        if (e.target.id === 'studentModal') {
+            closeStudentModal();
+        }
+    });
+
+    // Escape key to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeStudentModal();
+        }
+    });
+});
+    </script>
+    <script>feather.replace();</script>
+</body>
+</html>

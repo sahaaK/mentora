@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>MedGlass - Finance Office Portal</title>
+    <link rel="stylesheet" href="style.css"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { inter: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        primary: {
+                            DEFAULT: '#6366F1', // bg-undefined-500 fallback when using undefined-500 in class names
+                            50: '#EEF2FF',
+                            100: '#E0E7FF',
+                            200: '#C7D2FE',
+                            300: '#A5B4FC',
+                            400: '#818CF8',
+                            500: '#6366F1',
+                            600: '#4F46E5',
+                            700: '#4338CA',
+                            800: '#3730A3',
+                            900: '#312E81'
+                        },
+                        secondary: {
+                            DEFAULT: '#EC4899', // bg-undefined-500 fallback when using undefined-500 in class names
+                            50: '#FDF2F8',
+                            100: '#FCE7F3',
+                            200: '#FBCFE8',
+                            300: '#F9A8D4',
+                            400: '#F472B6',
+                            500: '#EC4899',
+                            600: '#DB2777',
+                            700: '#BE185D',
+                            800: '#9D174D',
+                            900: '#831843'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #6366F1; /* Fallback for undefined-500 */
+  --secondary: #EC4899; /* Fallback for undefined-500 */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { background: #0f172a; color: #e2e8f0; }
+
+body { font-family: 'Inter', system-ui, sans-serif; }
+
+/* Glass panel styles */
+.glass-card {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(15, 23, 42, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+/* Gradient animated border */
+.gradient-border {
+  position: relative;
+  z-index: 1;
+}
+
+.gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+            z-index: -1;
+            border-radius: 18px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+.glass-card:hover .gradient-border::before { opacity: 1; }
+
+/* Animated background bubbles */
+.bubble-container {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0; left: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.06));
+  backdrop-filter: blur(1px);
+  animation: float 22s infinite ease-in-out;
+  opacity: 0.7;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+  33% { transform: translateY(-120px) translateX(60px) scale(1.1); }
+  66% { transform: translateY(60px) translateX(-60px) scale(0.9); }
+}
+
+/* Chip filters */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.chip:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
+.chip.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(236, 72, 153, 0.2));
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* Table styling */
+table { border-collapse: separate; border-spacing: 0; }
+thead th {
+  font-weight: 600;
+  color: #cbd5e1;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+tbody tr { transition: background 0.2s ease; }
+tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+/* Progress bars */
+.progress {
+  position: relative;
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  width: 0%;
+  transition: width 0.8s ease;
+}
+.progress-fill.secondary {
+  background: linear-gradient(90deg, #ec4899, #f97316);
+}
+
+/* Status badge */
+.status-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.status-full { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.status-partial { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.status-overdue { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(99, 102, 241, 0.1); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
+
+/* Modal animation */
+#feeModal.show { display: flex; animation: modalFade 0.25s ease forwards; }
+@keyframes modalFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Utility animations */
+.animate-slide-up {
+  animation: slideInUp 0.6s ease forwards;
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .glass-card { margin: 0 8px; }
+  thead th, tbody td { padding: 10px; }
+}
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-slate-900 text-slate-100 font-inter">
+    <!-- Animated Background -->
+    <div class="bubble-container"></div>
+
+    <!-- Header -->
+    <header class="px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">
+                        <span class="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+                            MedGlass Finance
+                        </span>
+                    </h1>
+                    <p class="text-slate-400">Fee Collection & Accounts Office</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-500/10 transition-all">
+                        <i data-feather="bell"></i>
+                        <span>Alerts</span>
+                    </button>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-400 to-secondary-400 flex items-center justify-center text-white font-bold">
+                            FI
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- KPI Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-primary-500/20">
+                    <i data-feather="dollar-sign" class="text-primary-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Total Due</h3>
+                    <p class="text-sm text-slate-400">$1,245,000</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-emerald-500/20">
+                    <i data-feather="trending-up" class="text-emerald-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Collected</h3>
+                    <p class="text-sm text-slate-400">$845,000</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-amber-500/20">
+                    <i data-feather="alert-circle" class="text-amber-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Overdue</h3>
+                    <p class="text-sm text-slate-400">$132,500</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-secondary-500/20">
+                    <i data-feather="percent" class="text-secondary-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Collection Rate</h3>
+                    <p class="text-sm text-slate-400">68%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-card gradient-border p-4 md:p-6 mb-6">
+            <div class="flex flex-col gap-4">
+                <!-- Discipline chips -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="text-slate-400 mr-2 self-center">Discipline:</span>
+                    <button class="chip active" data-discipline="all">
+                        <i data-feather="grid" class="w-4 h-4"></i>
+                        All
+                    </button>
+                    <button class="chip" data-discipline="health">
+                        <i data-feather="activity" class="w-4 h-4"></i>
+                        Health Science
+                    </button>
+                    <button class="chip" data-discipline="social">
+                        <i data-feather="users" class="w-4 h-4"></i>
+                        Social Science
+                    </button>
+                    <button class="chip" data-discipline="computer">
+                        <i data-feather="cpu" class="w-4 h-4"></i>
+                        Computer Science
+                    </button>
+                    <button class="chip" data-discipline="sharia">
+                        <i data-feather="book" class="w-4 h-4"></i>
+                        Sharia Science
+                    </button>
+                    <button class="chip" data-discipline="business">
+                        <i data-feather="briefcase" class="w-4 h-4"></i>
+                        Business
+                    </button>
+                    <button class="chip" data-discipline="agriculture">
+                        <i data-feather="leaf" class="w-4 h-4"></i>
+                        Agriculture
+                    </button>
+                    <button class="chip" data-discipline="engineering">
+                        <i data-feather="tool" class="w-4 h-4"></i>
+                        Engineering
+                    </button>
+                </div>
+
+                <!-- Subfilters + Search -->
+                <div class="flex flex-col md:flex-row gap-3 md:items-center justify-between">
+                    <div class="flex flex-wrap gap-3">
+                        <div class="relative">
+                            <select class="glass-card appearance-none pl-4 pr-10 py-2 rounded-lg bg-transparent border border-slate-700 focus:border-primary-500 focus:outline-none" id="facultyFilter">
+                                <option value="all">All Faculties</option>
+                                <option value="Medicine">Medicine</option>
+                                <option value="Pharmacy">Pharmacy</option>
+                                <option value="Sociology">Sociology</option>
+                                <option value="Psychology">Psychology</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Law">Law</option>
+                                <option value="Business Admin">Business Admin</option>
+                                <option value="Agronomy">Agronomy</option>
+                                <option value="Mechanical Eng">Mechanical Eng</option>
+                                <option value="Civil Eng">Civil Eng</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-3 top-2.5 text-slate-400"></i>
+                        </div>
+
+                        <div class="relative">
+                            <select class="glass-card appearance-none pl-4 pr-10 py-2 rounded-lg bg-transparent border border-slate-700 focus:border-primary-500 focus:outline-none" id="yearFilter">
+                                <option value="all">All Years</option>
+                                <option value="1">Year 1</option>
+                                <option value="2">Year 2</option>
+                                <option value="3">Year 3</option>
+                                <option value="4">Year 4</option>
+                                <option value="5">Year 5</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-3 top-2.5 text-slate-400"></i>
+                        </div>
+
+                        <div class="relative">
+                            <select class="glass-card appearance-none pl-4 pr-10 py-2 rounded-lg bg-transparent border border-slate-700 focus:border-primary-500 focus:outline-none" id="semesterFilter">
+                                <option value="all">All Semesters</option>
+                                <option value="1">Semester 1</option>
+                                <option value="2">Semester 2</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-3 top-2.5 text-slate-400"></i>
+                        </div>
+
+                        <button id="resetFilters" class="glass-card px-4 py-2 rounded-lg hover:bg-slate-700/40 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+
+                    <div class="relative w-full md:w-80">
+                        <input id="searchInput" type="text" placeholder="Search by name, ID or discipline..." class="w-full glass-card pl-11 pr-4 py-2 rounded-lg bg-transparent border border-slate-700 focus:border-primary-500 focus:outline-none"/>
+                        <i data-feather="search" class="absolute left-3 top-2.5 text-slate-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="glass-card gradient-border p-0 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[900px]">
+                    <thead class="bg-slate-900/40 backdrop-blur border-b border-slate-700/60">
+                        <tr class="text-left text-slate-300">
+                            <th class="px-6 py-4 cursor-pointer sortable" data-sort="name">
+                                Student <i data-feather="chevron-up" class="inline w-3 h-3 ml-1 opacity-60"></i>
+                            </th>
+                            <th class="px-6 py-4 cursor-pointer sortable" data-sort="id">ID</th>
+                            <th class="px-6 py-4 cursor-pointer sortable" data-sort="discipline">
+                                Discipline <i data-feather="chevron-up" class="inline w-3 h-3 ml-1 opacity-60"></i>
+                            </th>
+                            <th class="px-6 py-4">Faculty</th>
+                            <th class="px-6 py-4 cursor-pointer" data-sort="year">Year</th>
+                            <th class="px-6 py-4 cursor-pointer" data-sort="semester">Semester</th>
+                            <th class="px-6 py-4">Fee Status</th>
+                            <th class="px-6 py-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTbody" class="divide-y divide-slate-800/60">
+                        <!-- Rows injected by script.js -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-center items-center mt-6 gap-2 p-4 border-t border-slate-800/60">
+                <button class="glass-card p-2 rounded-lg hover:bg-slate-700 transition-colors" id="prevPage">
+                    <i data-feather="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <button class="glass-card p-2 rounded-lg bg-primary-500 text-white" id="page1">1</button>
+                <button class="glass-card p-2 rounded-lg hover:bg-slate-700 transition-colors" id="page2">2</button>
+                <button class="glass-card p-2 rounded-lg hover:bg-slate-700 transition-colors" id="nextPage">
+                    <i data-feather="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Fee Details Modal -->
+    <div id="feeModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative z-10 w-[92%] max-w-3xl glass-card gradient-border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Fee Details</h3>
+                <button id="closeModal" class="p-2 rounded-lg hover:bg-slate-700/50">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Filled by script -->
+            </div>
+        </div>
+    </div>
+
+    
+    <script>feather.replace();</script>
+    <script>
+        // Data model
+const STUDENTS = [
+  {
+    id: 'MED2022001',
+    name: 'Aisha Khan',
+    discipline: 'Health',
+    faculty: 'Medicine',
+    year: 2, semester: 2,
+    photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=200&q=60',
+    payments: { quiz: 300, midterm: 0, final: 0 },
+    totalFee: 1000,
+    dueDates: { quiz: '2025-03-15', midterm: '2025-04-25', final: '2025-06-10' }
+  },
+  {
+    id: 'MED2021045',
+    name: 'Omar Ali',
+    discipline: 'Health',
+    faculty: 'Medicine',
+    year: 3, semester: 1,
+    photo: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=200&q=60',
+    payments: { quiz: 400, midterm: 300, final: 0 },
+    totalFee: 1000,
+    dueDates: { quiz: '2025-02-20', midterm: '2025-03-30', final: '2025-05-18' }
+  },
+  {
+    id: 'PHA2023007',
+    name: 'Layla Ahmed',
+    discipline: 'Health',
+    faculty: 'Pharmacy',
+    year: 1, semester: 2,
+    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=60',
+    payments: { quiz: 0, midterm: 0, final: 0 },
+    totalFee: 900,
+    dueDates: { quiz: '2025-03-20', midterm: '2025-04-28', final: '2025-06-14' }
+  },
+  {
+    id: 'SOC2021009',
+    name: 'Yusuf Ibrahim',
+    discipline: 'Social',
+    faculty: 'Sociology',
+    year: 4, semester: 1,
+    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=60',
+    payments: { quiz: 300, midterm: 300, final: 300 },
+    totalFee: 900,
+    dueDates: { quiz: '2025-02-18', midterm: '2025-03-28', final: '2025-05-20' }
+  },
+
+];
+
+const FEE_SCHEDULE_RATIOS = {
+  quiz: 0.40,
+  midterm: 0.30,
+  final: 0.30,
+};
+
+// State
+let filtered = [...STUDENTS];
+let currentPage = 1;
+const pageSize = 8;
+let sortKey = 'name';
+let sortDir = 'asc';
+let activeDiscipline = 'all';
+
+// Helpers
+const fmt = n => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
+const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
+const statusClass = (paidRatio, hasOverdue) => {
+  if (paidRatio >= 1 && !hasOverdue) return 'status-full';
+  if (hasOverdue) return 'status-overdue';
+  return 'status-partial';
+};
+const paidRatio = (p) => (p.quiz + p.midterm + p.final) / (p.quiz + p.midterm + p.final + 1); // Avoid division by zero
+const progressWidth = (p, total) => `${(p.paidSoFar / p.total) * 100}%`;
+const scheduleOf = (s) => ({
+  quiz: Math.round(s.totalFee * FEE_SCHEDULE_RATIOS.quiz),
+  midterm: Math.round(s.totalFee * FEE_SCHEDULE_RATIOS.midterm),
+  final: Math.round(s.totalFee * FEE_SCHEDULE_RATIOS.final),
+});
+const todayISO = () => new Date().toISOString().slice(0,10);
+
+// Animation: bubble background
+function createBubbles() {
+  const container = document.querySelector('.bubble-container');
+  const count = 16;
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random() * 120 + 60;
+    b.style.width = `${size}px`;
+    b.style.height = `${size}px`;
+    b.style.left = `${Math.random() * 100}%`;
+    b.style.top = `${Math.random() * 100}%`;
+    b.style.animationDelay = `${Math.random() * 20}s`;
+    b.style.animationDuration = `${18 + Math.random() * 10}s`;
+    container.appendChild(b);
+  }
+}
+
+// Derived properties for a student
+function deriveStudentView(s) {
+  const schedule = scheduleOf(s);
+  const paid = s.payments.quiz + s.payments.midterm + s.payments.final;
+  const total = s.totalFee;
+  const ratio = paid / total;
+
+  // Overdue detection (quiz overdue if paid < schedule.quiz and due date < today)
+  const overdueQuiz = s.dueDates.quiz < todayISO() && s.payments.quiz < schedule.quiz;
+  const overdueMid = s.dueDates.midterm < todayISO() && s.payments.midterm < schedule.midterm;
+  const overdueFinal = s.dueDates.final < todayISO() && s.payments.final < schedule.final;
+  const hasOverdue = overdueQuiz || overdueMid || overdueFinal;
+
+  const status = ratio >= 1 ? 'Full Paid' : (hasOverdue ? 'Overdue' : 'Partial');
+  const statusCls = statusClass(ratio, hasOverdue);
+
+  return { schedule, paid, total, ratio, status, statusCls, overdue: {overdueQuiz, overdueMid, overdueFinal} };
+}
+
+function renderTable() {
+  const tbody = document.getElementById('studentsTbody');
+  tbody.innerHTML = '';
+
+  const start = (currentPage - 1) * pageSize;
+  const pageData = filtered.slice(start, start + pageSize);
+
+  pageData.forEach((s) => {
+    const v = deriveStudentView(s);
+    const tr = document.createElement('tr');
+    tr.className = 'animate-slide-up';
+    tr.innerHTML = `
+      <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary-500/40">
+            <img src="${s.photo}" alt="${s.name}" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <div class="font-semibold">${s.name}</div>
+            <div class="text-xs text-slate-400">${s.faculty}</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4 text-slate-300">${s.id}</td>
+      <td class="px-6 py-4">
+        <span class="px-2 py-1 rounded-full text-xs bg-primary-500/20 text-primary-200">${s.discipline}</span>
+      </td>
+      <td class="px-6 py-4 text-slate-300">${s.faculty}</td>
+      <td class="px-6 py-4">${s.year}</td>
+      <td class="px-6 py-4">${s.semester}</td>
+      <td class="px-6 py-4">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <div class="progress w-40">
+              <div class="progress-fill ${deriveStatusAlt(v.ratio)}" style="width:${(v.paid / v.total)*100}%"></div>
+            </div>
+            <span class="text-xs text-slate-300">${fmt(v.paid)} / ${fmt(v.total)}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="status-badge ${v.statusCls}">${v.status}</span>
+            <span class="text-xs text-slate-400">${Math.round(v.ratio * 100)}%</span>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <div class="flex items-center gap-2">
+          <button class="glass-card px-3 py-1 rounded-lg hover:bg-slate-700/50 text-sm" data-view="${s.id}">
+            <i data-feather="eye" class="w-4 h-4 inline mr-1"></i>View
+          </button>
+          <button class="glass-card px-3 py-1 rounded-lg hover:bg-primary-500/20 text-sm text-primary-300" data-pay="${s.id}">
+            <i data-feather="dollar-sign" class="w-4 h-4 inline mr-1"></i>Collect
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  feather.replace();
+  animateProgressBars();
+}
+
+function deriveStatusAlt(ratio) {
+  return ratio >= 1 ? '' : (ratio > 0 ? '' : 'secondary');
+}
+
+function animateProgressBars() {
+  // Use GSAP for smoother fills
+  gsap.utils.toArray('.progress-fill').forEach((el) => {
+    const w = el.style.width;
+    el.style.width = '0%';
+    gsap.to(el, { width: w, duration: 0.8, ease: 'power2.out' });
+  });
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const faculty = document.getElementById('facultyFilter').value;
+  const year = document.getElementById('yearFilter').value;
+  const semester = document.getElementById('semesterFilter').value;
+
+  filtered = STUDENTS.filter(s => {
+    if (activeDiscipline !== 'all' && s.discipline.toLowerCase() !== activeDiscipline) return false;
+    if (faculty !== 'all' && s.faculty !== faculty) return false;
+    if (year !== 'all' && String(s.year) !== year) return false;
+    if (semester !== 'all' && String(s.semester) !== semester) return false;
+    if (q) {
+      const text = `${s.name} ${s.id} ${s.discipline} ${s.faculty}`.toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    return true;
+  });
+
+  sortFiltered();
+  currentPage = 1;
+  renderTable();
+}
+
+function sortFiltered() {
+  filtered.sort((a, b) => {
+    const A = a[sortKey];
+    const B = b[sortKey];
+    if (typeof A === 'number' && typeof B === 'number') {
+      return sortDir === 'asc' ? A - B : B - A;
+    }
+    const al = (A || '').toString().toLowerCase();
+    const bl = (B || '').toString().toLowerCase();
+    return sortDir === 'asc' ? al.localeCompare(bl) : bl.localeCompare(al);
+  });
+}
+
+function openModal(studentId) {
+  const s = STUDENTS.find(x => x.id === studentId);
+  if (!s) return;
+  const v = deriveStudentView(s);
+  const sched = v.schedule;
+
+  const modal = document.getElementById('feeModal');
+  const container = document.getElementById('modalContent');
+
+  container.innerHTML = `
+    <div class="md:col-span-1 glass-card p-4 rounded-xl">
+      <div class="flex items-center gap-3">
+        <img src="${s.photo}" class="w-14 h-14 rounded-full object-cover ring-2 ring-primary-500/40" alt="${s.name}"/>
+        <div>
+          <div class="text-lg font-semibold">${s.name}</div>
+          <div class="text-xs text-slate-400">${s.id} • ${s.faculty}</div>
+          <div class="mt-2">
+            <span class="px-2 py-1 rounded-full text-xs bg-primary-500/20 text-primary-200">${s.discipline}</span>
+            <span class="ml-2 px-2 py-1 rounded-full text-xs bg-secondary-500/20 text-secondary-200">Y${s.year} S${s.semester}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300">Paid</span>
+          <span class="font-semibold">${fmt(v.paid)}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300">Total Fee</span>
+          <span class="font-semibold">${fmt(v.total)}</span>
+        </div>
+        <div class="mt-2">
+          <div class="progress">
+            <div class="progress-fill" style="width:${(v.paid / v.total)*100}%"></div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-400 mt-1">
+            <span>Progress</span>
+            <span>${Math.round(v.ratio * 100)}%</span>
+          </div>
+        </div>
+        <div class="mt-3">
+          <span class="status-badge ${v.statusCls}">${v.status}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="md:col-span-2 glass-card p-4 rounded-xl">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        ${renderInstallmentCard(s, 'quiz', sched.quiz, v)}
+        ${renderInstallmentCard(s, 'midterm', sched.midterm, v)}
+        ${renderInstallmentCard(s, 'final', sched.final, v)}
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  modal.classList.add('show');
+  feather.replace();
+}
+
+function renderInstallmentCard(s, key, amount, v) {
+  const paid = s.payments[key];
+  const remaining = Math.max(amount - paid, 0);
+  const due = s.dueDates[key];
+  const overdue = due < todayISO() && remaining > 0;
+
+  const statusText = remaining === 0 ? 'Paid' : overdue ? 'Overdue' : 'Unpaid';
+  const statusCls = remaining === 0 ? 'status-full' : overdue ? 'status-overdue' : 'status-partial';
+
+  return `
+    <div class="glass-card p-4 rounded-xl border border-slate-700/60">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-semibold capitalize">${key} (${(FEE_SCHEDULE_RATIOS[key]*100).toFixed(0)}%)</div>
+          <div class="text-xs text-slate-400">Due: ${due}</div>
+        </div>
+        <span class="status-badge ${statusCls}">${statusText}</span>
+      </div>
+
+      <div class="mt-3">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-300">Paid</span>
+          <span>${fmt(paid)}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm mt-1">
+          <span class="text-slate-300">Amount</span>
+          <span>${fmt(amount)}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm mt-1">
+          <span class="text-slate-300">Remaining</span>
+          <span class="${remaining > 0 ? 'text-amber-300' : 'text-emerald-300'}">${fmt(remaining)}</span>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <div class="progress">
+          <div class="progress-fill ${remaining === 0 ? '' : 'secondary'}" style="width:${amount ? (paid/amount)*100 : 0}%"></div>
+        </div>
+      </div>
+
+      <div class="mt-3 flex gap-2">
+        <button class="flex-1 glass-card py-2 rounded-lg hover:bg-slate-700/50 text-sm" data-add="${s.id}" data-inst="${key}" data-amt="${Math.ceil(amount/5)}">
+          + Add ${fmt(Math.ceil(amount/5))}
+        </button>
+        <button class="flex-1 glass-card py-2 rounded-lg hover:bg-primary-500/20 text-sm text-primary-300" data-fullpay="${s.id}" data-inst="${key}" ${remaining === 0 ? 'disabled' : ''}>
+          Pay All
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function closeModal() {
+  const modal = document.getElementById('feeModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('show');
+}
+
+// Event bindings
+function bindEvents() {
+  // Discipline chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeDiscipline = chip.dataset.discipline || 'all';
+      applyFilters();
+    });
+  });
+
+  // Filters
+  ['facultyFilter','yearFilter','semesterFilter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+  document.getElementById('resetFilters').addEventListener('click', () => {
+    document.getElementById('facultyFilter').value = 'all';
+    document.getElementById('yearFilter').value = 'all';
+    document.getElementById('semesterFilter').value = 'all';
+    document.getElementById('searchInput').value = '';
+    activeDiscipline = 'all';
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('.chip[data-discipline="all"]').classList.add('active');
+    applyFilters();
+  });
+  document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 200));
+
+  // Table events (view/pay)
+  document.getElementById('studentsTbody').addEventListener('click', (e) => {
+    const view = e.target.closest('[data-view]');
+    const pay = e.target.closest('[data-pay]');
+    if (view) openModal(view.dataset.view);
+    if (pay) openModal(pay.dataset.pay);
+  });
+
+  // Modal events
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('feeModal').addEventListener('click', (e) => {
+    if (e.target.id === 'feeModal') closeModal();
+  });
+
+  document.getElementById('feeModal').addEventListener('click', (e) => {
+    const add = e.target.closest('[data-add]');
+    const full = e.target.closest('[data-fullpay]');
+    if (add) {
+      const id = add.dataset.add;
+      const inst = add.dataset.inst;
+      const inc = Number(add.dataset.amt);
+      addPayment(id, inst, inc);
+    }
+    if (full) {
+      const id = full.dataset.fullpay;
+      const inst = full.dataset.inst;
+      makeFullPayment(id, inst);
+    }
+  });
+
+  // Sorting
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = 'asc'; }
+      sortFiltered();
+      renderTable();
+    });
+  });
+
+  // Pagination
+  document.getElementById('prevPage').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderTable(); }
+  });
+  document.getElementById('nextPage').addEventListener('click', () => {
+    const maxPage = Math.ceil(filtered.length / pageSize);
+    if (currentPage < maxPage) { currentPage++; renderTable(); }
+  });
+  document.getElementById('page1').addEventListener('click', () => { currentPage = 1; renderTable(); });
+  document.getElementById('page2').addEventListener('click', () => { currentPage = 2; renderTable(); });
+}
+
+function addPayment(id, inst, amount) {
+  const s = STUDENTS.find(x => x.id === id);
+  if (!s) return;
+  const sched = scheduleOf(s);
+  const remaining = Math.max(sched[inst] - s.payments[inst], 0);
+  const addAmt = clamp(amount, 0, remaining);
+  s.payments[inst] += addAmt;
+  openModal(id); // re-render
+  renderTable(); // update list
+}
+
+function makeFullPayment(id, inst) {
+  const s = STUDENTS.find(x => x.id === id);
+  if (!s) return;
+  const sched = scheduleOf(s);
+  const remaining = Math.max(sched[inst] - s.payments[inst], 0);
+  s.payments[inst] += remaining;
+  openModal(id);
+  renderTable();
+}
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(null, args), ms);
+  };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  createBubbles();
+  bindEvents();
+  sortFiltered();
+  renderTable();
+});
+    </script>
+</body>
+</html>

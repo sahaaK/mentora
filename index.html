@@ -223,6 +223,17 @@ body {
     });
     
     // Form submission
+    // const loginForm = document.getElementById('loginForm');
+    // if (loginForm) {
+    //     loginForm.addEventListener('submit', (e) => {
+    //         e.preventDefault();
+    //         const department = loginForm.querySelector('select').value;
+    //         if (department) {
+    //             window.location.href = `${department}.html`;
+    //         }
+    //     });
+    // }
+
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
@@ -231,7 +242,7 @@ body {
             if (department) {
                 window.location.href = `${department}.html`;
             }
-        });
+        })
     }
 });
     </script>
