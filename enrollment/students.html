@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Students List | Mentora</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <!-- Firebase compat SDKs (required for existing firebase.firestore()/firebase.storage() usage) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
-    <link rel="stylesheet" href="components/sidebar.css">
+    <link rel="stylesheet" href="/enrollment/components/sidebar.css" />
+    
     <script>
         tailwind.config = {
             theme: {
@@ -38,22 +43,19 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
         :root {
             --primary: #10b981;     /* Emerald 500 */
             --secondary: #c026d3;   /* Fuchsia 600 */
             --bg: #0f172a;          /* Slate 900 */
             --panel: rgba(255,255,255,0.06);
         }
-        
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #0f172a, #1e293b);
             color: #e2e8f0;
             min-height: 100vh;
-            margin-left: 92px; /* space for floating sidebar */
+            margin-left: 92px;
         }
-        
         .glass-panel {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(12px);
@@ -61,41 +63,107 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
-        
         .glass-panel:hover {
             background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
-        
-        
-        
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
-        
         ::-webkit-scrollbar-track {
             background: rgba(99, 102, 241, 0.1);
         }
-        
         ::-webkit-scrollbar-thumb {
             background: rgba(16, 185, 129, 0.35);
             border-radius: 4px;
         }
-        
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(16, 185, 129, 0.55);
         }
-        
         @media (max-width: 1024px) {
-            body {
-                margin-left: 0;
-            }
+            body { margin-left: 0; }
+        }
+        /* Additional glassmorphism utility cards inside modal */
+        .glass-card {
+            @apply rounded-xl p-4 border border-white/10 bg-white/5 backdrop-blur;
+            transition: all 0.25s ease;
+        }
+        .glass-card:hover {
+            @apply bg-white/8;
+            transform: translateY(-1px);
+        }
+
+        /* Row hover animation */
+        .table-row {
+            transition: transform 0.15s ease, background 0.2s ease;
+        }
+        .table-row:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Status grade badges */
+        .badge {
+            @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold;
+        }
+        .badge-grade-a {
+            @apply bg-emerald-500/20 text-emerald-300 border border-emerald-400/30;
+        }
+        .badge-grade-b {
+            @apply bg-sky-500/20 text-sky-300 border border-sky-400/30;
+        }
+        .badge-grade-c {
+            @apply bg-amber-500/20 text-amber-300 border border-amber-400/30;
+        }
+        .badge-grade-d {
+            @apply bg-rose-500/20 text-rose-300 border border-rose-400/30;
+        }
+
+        /* Department color helpers (color-coded left border) */
+        .border-dept-medicine { @apply border-l-emerald-400; }
+        .border-dept-business { @apply border-l-fuchsia-400; }
+        .border-dept-social { @apply border-l-indigo-400; }
+        .border-dept-marine { @apply border-l-sky-400; }
+        .border-dept-agriculture { @apply border-l-lime-400; }
+        .border-dept-technology { @apply border-l-cyan-400; }
+
+        /* Modal animations */
+        #studentModal {
+            animation: modalIn 200ms ease-out;
+        }
+        #studentModal.hidden {
+            animation: modalOut 180ms ease-in forwards;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes modalOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        #modalCard {
+            animation: slideIn 260ms cubic-bezier(.2,.8,.2,1);
+        }
+        @keyframes slideIn {
+            from { transform: translateY(8px) scale(.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* Shimmer loading for table rows */
+        .skeleton {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+            background-size: 200% 100%;
+            animation: shimmer 1.3s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
-
     <!-- Sidebar (injected from components/sidebar.js) -->
     <div id="sidebar-root"></div>
     <script src="components/sidebar.js"></script>
@@ -106,7 +174,7 @@
             <!-- Hero / Top Bar -->
             <div class="relative h-64 overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/30 to-fuchsia-900/30 z-10"></div>
-                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center transition-all duration-1000 ease-in-out"></div>
+                <div class="absolute inset-0 bg-[url('https://png.pngtree.com/thumb_back/fh260/background/20230617/pngtree-d-illustration-of-a-graduation-hat-being-thrown-by-a-hand-image_3628023.jpg?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center transition-all duration-1000 ease-in-out"></div>
                 <div class="absolute bottom-8 left-8 z-20">
                     <h1 class="text-white text-4xl font-bold drop-shadow-lg">Students List</h1>
                     <p class="text-emerald-300 mt-2">View and manage all registered students</p>
@@ -131,38 +199,243 @@
                     <p class="text-gray-400 mt-2">All registered students in the system</p>
                 </div>
 
-                <!-- Search and Filter -->
+                <!-- Search and Filters -->
                 <div class="flex flex-col md:flex-row gap-4 mb-6">
                     <div class="relative flex-1">
                         <i data-feather="search" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
-                        <input type="text" placeholder="Search students..." class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                        <input type="text" id="searchInput" placeholder="Search students..." class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" />
                     </div>
-                    <div class="relative">
-                        <i data-feather="filter" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
-                        <select class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent appearance-none">
-                            <option>All Departments</option>
-                            <option>Medicine & Health Sciences</option>
-                            <option>Business & Management</option>
-                            <option>Social Science & Economics</option>
-                            <option>Technology & Engineering</option>
-                        </select>
-                        <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                    <div class="flex gap-3">
+                        <div class="relative min-w-[180px]">
+                            <i data-feather="filter" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                            <select id="departmentFilter" class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent appearance-none">
+                                <option value="">All Departments</option>
+                                <option value="medicine">Medicine & Health Sciences</option>
+                                <option value="business">Business & Management</option>
+                                <option value="social">Social Science & Economics</option>
+                                <option value="marine">Marine & Environmental Studies</option>
+                                <option value="agriculture">Agriculture & Veterinary Medicine</option>
+                                <option value="technology">Technology & Engineering</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div class="relative min-w-[220px]">
+                            <i data-feather="sliders" class="absolute left-4 top-4 text-sky-400 z-10"></i>
+                            <select id="facultyFilter" class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent appearance-none">
+                                <option value="">All Faculties</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div class="relative min-w-[160px]">
+                            <i data-feather="award" class="absolute left-4 top-4 text-amber-400 z-10"></i>
+                            <select id="gradeFilter" class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none">
+                                <option value="">All Grades</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div class="relative min-w-[150px]">
+                            <i data-feather="trending-up" class="absolute left-4 top-4 text-indigo-400 z-10"></i>
+                            <select id="sortSelect" class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none">
+                                <option value="name-asc">Name A → Z</option>
+                                <option value="name-desc">Name Z → A</option>
+                                <option value="grade-desc">Grade Best</option>
+                                <option value="grade-asc">Grade Worst</option>
+                                <option value="age-desc">Age High</option>
+                                <option value="age-asc">Age Low</option>
+                            </select>
+                            <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Placeholder for student table -->
-                <div class="bg-slate-900/30 rounded-xl p-8 text-center border border-dashed border-slate-700/50">
-                    <i data-feather="database" class="w-12 h-12 mx-auto text-slate-500 mb-4"></i>
-                    <h3 class="text-xl font-medium text-slate-300 mb-2">Students Table</h3>
-                    <p class="text-slate-500">This section will display all registered students in a sortable, filterable table.</p>
+                <!-- Table -->
+                <div class="bg-slate-900/30 rounded-xl border border-slate-700/50 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-slate-800/50 backdrop-blur">
+                                <tr class="text-slate-300 uppercase text-xs tracking-wider">
+                                    <th class="text-left p-4">
+                                        <button id="sortName" class="inline-flex items-center gap-1 hover:text-white">
+                                            <span>Name</span>
+                                            <i data-feather="chevron-up" class="w-3 h-3 opacity-60"></i>
+                                        </button>
+                                    </th>
+                                    <th class="text-left p-4">Phone</th>
+                                    <th class="text-left p-4">Department</th>
+                                    <th class="text-left p-4">Faculty</th>
+                                    <th class="text-left p-4">
+                                        <button id="sortGrade" class="inline-flex items-center gap-1 hover:text-white">
+                                            <span>Grade</span>
+                                            <i data-feather="chevron-up" class="w-3 h-3 opacity-60"></i>
+                                        </button>
+                                    </th>
+                                    <th class="text-left p-4">City</th>
+                                    <th class="text-left p-4">
+                                        <button id="sortAge" class="inline-flex items-center gap-1 hover:text-white">
+                                            <span>Age</span>
+                                            <i data-feather="chevron-up" class="w-3 h-3 opacity-60"></i>
+                                        </button>
+                                    </th>
+                                    <th class="text-left p-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="divide-y divide-slate-700/50">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="tableFooter" class="flex items-center justify-between px-4 py-3 bg-slate-800/30">
+                        <div class="text-sm text-slate-400">
+                            <span id="studentsCount">0</span> student(s)
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="prevPage" class="px-3 py-1 rounded-md bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700/50 transition">Prev</button>
+                            <span id="pageInfo" class="text-sm text-slate-400">Page 1 of 1</span>
+                            <button id="nextPage" class="px-3 py-1 rounded-md bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700/50 transition">Next</button>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <script>
-        AOS.init();
-        feather.replace();
-    </script>
+    <!-- View Student Modal -->
+    <div id="studentModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative z-10 max-w-4xl mx-auto my-12">
+            <div class="rounded-2xl glass-panel border border-white/10 overflow-hidden shadow-2xl" id="modalCard">
+                <!-- Header -->
+                <div class="relative h-40 overflow-hidden">
+                    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center"></div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/30 to-fuchsia-900/30"></div>
+                    <div class="absolute -top-12 -right-12 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl"></div>
+                    <button id="closeModal" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur">
+                        <i data-feather="x" class="w-5 h-5"></i>
+                    </button>
+                    <div class="absolute left-6 bottom-6 flex items-end gap-4">
+                        <img id="modalAvatar" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop" alt="Profile" class="w-20 h-20 rounded-xl border-2 border-white/20 shadow-lg object-cover" />
+                        <div>
+                            <h3 id="modalName" class="text-2xl font-bold text-white drop-shadow">Student Name</h3>
+                            <p id="modalFaculty" class="text-emerald-300">Faculty</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Key Info -->
+                    <div class="col-span-1">
+                        <div class="space-y-4">
+                            <div class="glass-card">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                        <i data-feather="phone" class="w-5 h-5 text-emerald-300"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-400 text-xs">Phone</div>
+                                        <div id="modalPhone" class="text-white font-medium">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center">
+                                        <i data-feather="map-pin" class="w-5 h-5 text-sky-300"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-400 text-xs">City</div>
+                                        <div id="modalCity" class="text-white font-medium">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                                        <i data-feather="award" class="w-5 h-5 text-amber-300"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-400 text-xs">Grade</div>
+                                        <div id="modalGrade" class="text-white font-medium">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                                        <i data-feather="calendar" class="w-5 h-5 text-indigo-300"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-400 text-xs">Age</div>
+                                        <div id="modalAge" class="text-white font-medium">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-fuchsia-500/20 flex items-center justify-center">
+                                        <i data-feather="droplet" class="w-5 h-5 text-fuchsia-300"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-400 text-xs">Blood Type</div>
+                                        <div id="modalBlood" class="text-white font-medium">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full Details -->
+                    <div class="col-span-2 space-y-6">
+                        <div class="glass-card">
+                            <h4 class="text-white font-semibold mb-4 flex items-center gap-2">
+                                <i data-feather="user" class="w-4 h-4 text-emerald-300"></i>
+                                Personal & Academic Details
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <div class="text-slate-400">Department</div>
+                                    <div id="modalDepartment" class="text-slate-200 font-medium">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-slate-400">Guardian</div>
+                                    <div id="modalGuardian" class="text-slate-200 font-medium">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-slate-400">Guardian Phone</div>
+                                    <div id="modalGuardianPhone" class="text-slate-200 font-medium">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-slate-400">Graduated From</div>
+                                    <div id="modalGraduatedFrom" class="text-slate-200 font-medium">-</div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <div class="text-slate-400">Education</div>
+                                    <div id="modalEducation" class="text-slate-200 font-medium">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-between px-6 py-4 bg-slate-800/30">
+                    <div class="text-slate-400 text-sm">
+                        Updated <span id="modalUpdated">-</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="closeModalFooter" class="px-4 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-200">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/enrollment/components/students.js"></script>
 </body>
 </html>

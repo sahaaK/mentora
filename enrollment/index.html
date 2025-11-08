@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration | Mentora</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
-    <link rel="stylesheet" href="components/sidebar.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -38,153 +44,225 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --primary: #10b981;     /* Emerald 500 */
-            --secondary: #c026d3;   /* Fuchsia 600 */
-            --bg: #0f172a;          /* Slate 900 */
-            --panel: rgba(255,255,255,0.06);
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: #e2e8f0;
-            min-height: 100vh;
-            margin-left: 92px; /* space for floating sidebar */
-        }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .glass-panel:hover {
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-        
-        .form-input {
-            background: rgba(15, 23, 42, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
-            padding: 0.875rem 1.25rem;
-            width: 100%;
-            color: #e2e8f0;
-            transition: all 0.3s ease;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
-        }
-        
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-        }
-        
-        @media (max-width: 1024px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            body {
-                margin-left: 0;
-            }
-        }
-        
-        .image-slider {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1.5rem;
-        }
-        
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-        }
-        
-        .slide.active {
-            opacity: 1;
-        }
-        
-        .profile-picture-upload {
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .profile-picture-upload:hover {
-            transform: scale(1.05);
-        }
-        
-        .profile-picture-upload input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-        
-        .profile-preview {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(99, 102, 241, 0.1);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: rgba(16, 185, 129, 0.35);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(16, 185, 129, 0.55);
-        }
-        
-        /* Utility: nicer number inputs */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type="number"] { -moz-appearance: textfield; }
+
+:root {
+    --primary: #10b981;     /* Emerald 500 */
+    --secondary: #c026d3;   /* Fuchsia 600 */
+    --bg: #0f172a;          /* Slate 900 */
+    --panel: rgba(255,255,255,0.06);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+    min-height: 100vh;
+}
+
+body {
+    margin-left: 92px; /* space for floating sidebar */
+    margin-right: 330px; /* space for right quick actions */
+}
+
+/* Glass Panel */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.glass-panel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Form inputs */
+.form-input {
+    background: rgba(15, 23, 42, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    width: 100%;
+    color: #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    body {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+/* Image Slider */
+.image-slider {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.slide.active {
+    opacity: 1;
+}
+
+/* Profile Picture */
+.profile-picture-upload {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profile-picture-upload:hover {
+    transform: scale(1.05);
+}
+
+.profile-picture-upload input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.profile-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Quick Actions */
+.quick-actions-wrap {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    width: 300px;
+    z-index: 50;
+}
+
+.icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #e2e8f0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+    transition: all .25s ease;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.action-btn:hover {
+    background: rgba(255,255,white,0.1);
+    border-color: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.35);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.55);
+}
+
+/* Utility: nicer number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Toast */
+#toast.show {
+    opacity: 1 !important;
+    transform: translateY(0);
+}
+
+/* Small screens */
+@media (max-width: 1280px) {
+    .quick-actions-wrap {
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 100%;
+        margin-top: 16px;
+    }
+    body {
+        margin-right: 0;
+    }
+}
     </style>
+    <link rel="stylesheet" href="components/sidebar.css">
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
 
-    <!-- Sidebar (injected from components/sidebar.js) -->
+    <!-- Sidebar -->
     <div id="sidebar-root"></div>
     <script src="components/sidebar.js"></script>
 
     <!-- Main Container - Side by Side Layout -->
     <div class="w-full max-w-[1200px] rounded-3xl overflow-hidden shadow-2xl glass-panel">
-        
         <div class="flex flex-col lg:flex-row">
             
             <!-- Image Slider Section -->
-            <div class="lg:w-1/2 h-96 lg:h-auto relative ">
+            <div class="lg:w-1/2 h-96 lg:h-auto relative">
                 <div class="absolute inset-0 bg-gradient-to-r from-emerald-900/50 to-fuchsia-900/50 z-10"></div>
 
                 <div class="image-slider h-full">
@@ -210,7 +288,8 @@
                     <div class="absolute top-6 right-6 z-20">
                         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 glass-panel profile-picture-upload">
                             <img id="profilePreview" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop" alt="Profile" class="profile-preview">
-                            <input type="file" id="profilePicture" accept="image/*">
+                            <!-- Associate the file input with the form so it can be triggered from inside the form and included in FormData if needed -->
+                            <input type="file" id="profilePicture" name="profileImage" accept="image/*" form="studentForm" aria-label="Upload profile image">
                             <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
                                 <i data-feather="camera" class="w-6 h-6 text-white"></i>
                             </div>
@@ -375,6 +454,18 @@
                         <input type="text" name="guardianName" placeholder="Guardian Name" required class="form-input pl-12">
                     </div>
 
+                    <!-- Profile chooser in form: visible controls to pick/clear image and a small preview -->
+                    <div class="flex items-center gap-4">
+                        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white/10">
+                            <img id="formProfilePreview" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop" alt="Profile preview" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="btnChooseProfile" class="py-2 px-3 bg-emerald-600 rounded text-white">Choose Image</button>
+                            <button type="button" id="btnClearProfile" class="py-2 px-3 bg-gray-600 rounded text-white">Clear</button>
+                            <small class="text-gray-400">PNG/JPG/WEBP, max 2MB</small>
+                        </div>
+                    </div>
+
                     <div class="pt-2">
                         <button type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-fuchsia-600 hover:from-emerald-700 hover:to-fuchsia-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 group">
                             <span class="flex items-center justify-center gap-2">
@@ -386,142 +477,73 @@
                 </form>
             </div>
         </div>
+
+        <div class="quick-actions-wrap">
+        <div class="glass-panel rounded-2xl p-4 w-[300px]">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-wrap bg-primary/15 text-primary"><i data-feather="zap"></i></div>
+                <div>
+                    <div class="font-semibold text-white">Quick Actions</div>
+                  <div class="text-xs text-slate-400">Bulk ops & tools</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button id="btnImport" class="action-btn w-full">
+                    <i data-feather="upload-cloud" class="w-4 h-4"></i>
+                    <span>Import</span>
+                </button>
+                <button id="btnExport" class="action-btn w-full">
+                    <i data-feather="download-cloud" class="w-4 h-4"></i>
+                    <span>Export</span>
+                </button>
+            </div>
+
+            <input type="file" id="bulkFileInput" accept=".xlsx,.xls,.csv" class="hidden" />
+
+            <!-- System Health -->
+             <section class="glass rounded-2xl p-4 mt-4">
+                <div class="flex items-center gap-3">
+                    <div class="icon-wrap bg-primary/15 text-primary"><i data-feather="activity"></i></div>
+                    <div>
+                        <div class="font-semibold text-white">System Health</div>
+                        <div class="text-xs text-slate-400">Realtime telemetry</div>
+                    </div>
+                </div>
+                <div class="mt-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-slate-300">Server Load</div>
+                        <div class="text-sm font-semibold" id="serverLoad">--%</div>
+                    </div>
+                    <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div id="serverBar" class="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 w-[35%]"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <div class="bg-white/5 rounded-lg p-3">
+                            <div class="text-xs text-slate-400">Latency</div>
+                            <div class="text-lg font-semibold" id="latency">-- ms</div>
+                        </div>
+                        <div class="bg-white/5 rounded-lg p-3">
+                            <div class="text-xs text-slate-400">Uptime</div>
+                            <div class="text-lg font-semibold" id="uptime">--d</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+      
     </div>
 
-    <script>
-        AOS.init();
-        feather.replace();
 
-        // Image slider functionality
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.slide');
-        const indicators = document.querySelectorAll('.slide-indicator');
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 right-4 glass-panel rounded-lg p-3 text-sm text-white shadow-lg opacity-0 pointer-events-none transition-all duration-300">
+        <div class="flex items-center gap-2">
+            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            <span id="toastText">Action completed</span>
+        </div>
+    </div>
 
-        function showSlide(n) {
-            slides.forEach(slide => slide.classList.remove('active'));
-            indicators.forEach(indicator => indicator.classList.remove('active'));
-            
-            if (n >= slides.length) currentSlide = 0;
-            if (n < 0) currentSlide = slides.length - 1;
-            
-            slides[currentSlide].classList.add('active');
-            indicators[currentSlide].classList.add('active');
-        }
-
-        function nextSlide() {
-            currentSlide++;
-            showSlide(currentSlide);
-        }
-
-        // Auto-advance slides every 5 seconds
-        setInterval(nextSlide, 5000);
-
-        // Click indicators to change slides
-        indicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', () => {
-                currentSlide = index;
-                showSlide(currentSlide);
-            });
-        });
-
-        // Profile picture upload functionality
-        const profileInput = document.getElementById('profilePicture');
-        const profilePreview = document.getElementById('profilePreview');
-
-        profileInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profilePreview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Department -> Faculty mapping
-        const facultyOptions = {
-            medicine: [
-                "Bachelor of Medicine and Surgery (MBBS)",
-                "Bachelor of Clinical Medicine",
-                "Bachelor of Clinical Midwifery",
-                "Bachelor of Medical Laboratory",
-                "Bachelor of Nursing",
-                "Bachelor of Nutrition and Food Science",
-                "Bachelor of Health Service Management"
-            ],
-            business: [
-                "Bachelor of Business Administration",
-                "Bachelor of Accounting & Finance",
-                "Bachelor of Banking & Finance",
-                "Bachelor of Procurement & Supply Chain Management",
-                "Bachelor of Public Finance Management",
-                "Bachelor of Human Resources Management"
-            ],
-            social: [
-                "Bachelor of Public Administration",
-                "Bachelor of Social Work & Social Administration",
-                "Bachelor of Economics",
-                "Bachelor of Strategic and Security Studies"
-            ],
-            marine: [
-                "Bachelor of Climate Change and Environmental Studies"
-            ],
-            agriculture: [
-                "Bachelor of Science in Agriculture",
-                "Bachelor of Veterinary Medicine"
-            ],
-            technology: [
-                "Bachelor of Computer Science (Software Engineering)",
-                "Bachelor of Computer Science (Data Science)",
-                "Bachelor of Computer Science (Cyber Security)",
-                "Bachelor of Computer Science (Artificial Intelligence)",
-                "Bachelor of Computer Science (Networking)",
-                "Bachelor of Engineering (Electrical Engineering)",
-                "Bachelor of Engineering (Telecommunication Engineering)"
-            ]
-        };
-
-        document.getElementById('department').addEventListener('change', function() {
-            const facultySelect = document.getElementById('faculty');
-            const selected = this.value;
-            facultySelect.innerHTML = '<option value="" disabled selected>Select Faculty</option>';
-            if (selected && facultyOptions[selected]) {
-                facultyOptions[selected].forEach(faculty => {
-                    const option = document.createElement('option');
-                    option.value = faculty;
-                    option.textContent = faculty;
-                    facultySelect.appendChild(option);
-                });
-            }
-        });
-
-        // Form validation + demo submit
-        document.getElementById('studentForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            if (!form.checkValidity()) {
-                const firstInvalid = form.querySelector(':invalid');
-                if (firstInvalid) {
-                    firstInvalid.focus({ preventScroll: false });
-                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                return;
-            }
-
-            const formData = Object.fromEntries(new FormData(form).entries());
-            console.log('Student Registration:', formData);
-            const btn = form.querySelector('button[type="submit"]');
-            const original = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="flex items-center justify-center gap-2"><span>Submitting...</span><div class="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin"></div></span>';
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = original;
-                alert('Student registration submitted successfully!');
-                form.reset();
-            }, 1000);
-        });
-    </script>
+    <script src="components/script.js"></script>
 </body>
 </html>

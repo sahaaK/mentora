@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Students List | Mentora</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"/>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+
+    <!-- Project Styles -->
+    <link rel="stylesheet" href="style.css"/>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            400: '#34d399',
+                            500: 'var(--primary-500)',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        secondary: {
+                            400: '#d946ef',
+                            500: 'var(--secondary-500)',
+                            600: '#a21caf',
+                            700: '#86198f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+    /* Theme and Colors - update these values to control the theme globally */
+    /* Primary and Secondary will fallback to emerald/fuchsia if undefined */
+    --primary-500: #10b981; /* Emerald 500 */
+    --secondary-500: #c026d3; /* Fuchsia 600 */
+    --bg: #0f172a; /* Slate 900 */
+    --panel: rgba(255,255,255,0.06);
+    --text: #e2e8f0; /* Slate 200 */
+    --muted: #94a3b8; /* Slate 400 */
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: var(--text);
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Glass panel utility */
+.glass-panel {
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all .25s ease;
+}
+
+.glass-panel:hover {
+    background: rgba(255,255,255,0.10);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(99, 102, 241, 0.1); }
+::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.35); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.55); }
+
+/* Animation delays for pulsing dots */
+.animation-delay-200 { animation-delay: .2s; }
+.animation-delay-400 { animation-delay: .4s; }
+
+/* Bubbles background */
+.bubbles-bg {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.18;
+    filter: blur(8px);
+    will-change: transform;
+}
+
+/* Table rows subtle hover */
+tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+/* Tabs */
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.tab-btn:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+}
+.tab-btn.active {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.06);
+}
+
+/* Progress bars */
+.progress {
+    height: 10px;
+    width: 100%;
+    background: rgba(148,163,184,0.15);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(148,163,184,0.18);
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+}
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        45deg,
+        rgba(255,255,255,.12) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255,255,255,.12) 50%,
+        rgba(255,255,255,.12) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 16px 16px;
+    animation: move 2s linear infinite;
+}
+@keyframes move {
+    to { background-position: 16px 0; }
+}
+
+/* Modal animation */
+.animate-modal-in {
+    animation: modalIn .25s ease forwards;
+}
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Status pills */
+.status-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.status-active { background: rgba(16,185,129,.18); color: #34d399; border: 1px solid rgba(16,185,129,.25); }
+.status-suspended { background: rgba(239,68,68,.18); color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+.status-inactive { background: rgba(148,163,184,.18); color: #cbd5e1; border: 1px solid rgba(148,163,184,.25); }
+
+/* Gradient text utility */
+.gradient-text {
+    background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Avatar styles */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    width: 40px;
+    height: 40px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+
+/* Utility shadows */
+.shadow-glow {
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.18), 0 10px 25px rgba(0,0,0,0.25);
+}
+
+/* Buttons subtle glow */
+button:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+}
+
+/* Mobile tweaks */
+@media (max-width: 1024px) {
+    body { margin-left: 0; }
+}
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 font-inter">
+
+    <!-- Animated bubbles background -->
+    <div class="bubbles-bg" aria-hidden="true"></div>
+
+    <!-- Sidebar anchor (optional if sidebar.js provided) -->
+    <div id="sidebar-root"></div>
+
+    <!-- Main Card -->
+    <div class="w-full max-w-[1200px] rounded-3xl overflow-hidden shadow-2xl glass-panel" data-aos="zoom-in" data-aos-duration="600">
+        <div class="flex flex-col">
+            <!-- Hero / Top Bar -->
+            <div class="relative h-64 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/30 to-fuchsia-900/30 z-10"></div>
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center transition-all duration-1000 ease-in-out"></div>
+                <div class="absolute bottom-8 left-8 z-20">
+                    <h1 class="text-white text-4xl font-bold drop-shadow-lg">Students List</h1>
+                    <p class="text-emerald-300 mt-2">View and manage all registered students</p>
+                </div>
+                <div class="absolute top-8 right-8 z-20 flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                    <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse animation-delay-200"></div>
+                    <div class="w-3 h-3 rounded-full bg-fuchsia-400 animate-pulse animation-delay-400"></div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-8 lg:p-10">
+                <div class="text-center mb-8">
+                    <div class="relative w-16 h-16 mx-auto mb-4">
+                        <div class="absolute inset-0 bg-emerald-600 rounded-full opacity-20 blur-lg animate-pulse"></div>
+                        <div class="relative z-10 w-16 h-16 rounded-full bg-emerald-600/20 flex items-center justify-center">
+                            <i data-feather="list" class="w-8 h-8 text-emerald-300"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Student <span class="bg-gradient-to-r from-emerald-400 to-fuchsia-500 bg-clip-text text-transparent">Database</span></h2>
+                    <p class="text-gray-400 mt-2">All registered students in the system</p>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="relative flex-1">
+                        <i data-feather="search" class="absolute left-4 top-4 text-emerald-400 z-10"></i>
+                        <input id="searchInput" type="text" placeholder="Search by name, ID, email or department..."
+                               class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"/>
+                    </div>
+
+                    <div class="relative flex-1">
+                        <i data-feather="briefcase" class="absolute left-4 top-4 text-fuchsia-400 z-10"></i>
+                        <select id="filterDepartment" class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent appearance-none">
+                            <option value="all">All Departments</option>
+                            <option value="medicine">Medicine & Health Sciences</option>
+                            <option value="business">Business & Management</option>
+                            <option value="social">Social Science & Economics</option>
+                            <option value="tech">Technology & Engineering</option>
+                        </select>
+                        <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                    </div>
+
+                    <div class="relative">
+                        <i data-feather="calendar" class="absolute left-4 top-4 text-sky-400 z-10"></i>
+                        <select id="filterBatch" class="w-full bg-slate-900/30 border border-slate-700/50 rounded-xl py-3 px-12 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent appearance-none">
+                            <option value="all">All Batches</option>
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                            <option value="2023">2023</option>
+                            <option value="2024">2024</option>
+                        </select>
+                        <i data-feather="chevron-down" class="absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="toggleViewBtn" class="glass-panel px-4 py-3 rounded-xl text-white hover:bg-white/10 transition flex items-center gap-2">
+                            <i data-feather="grid" class="w-5 h-5 text-emerald-400"></i>
+                            <span class="hidden sm:inline text-sm">Cards</span>
+                        </button>
+                        <button id="exportBtn" class="glass-panel px-4 py-3 rounded-xl text-white hover:bg-white/10 transition flex items-center gap-2">
+                            <i data-feather="download-cloud" class="w-5 h-5 text-fuchsia-400"></i>
+                            <span class="hidden sm:inline text-sm">Export</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results summary -->
+                <div id="resultsSummary" class="text-sm text-slate-400 mb-4">Showing 0 of 0 students</div>
+
+                <!-- Views -->
+                <div id="tableView" class="block">
+                    <div class="overflow-x-auto rounded-xl border border-slate-700/50">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-slate-900/50 backdrop-blur text-slate-300">
+                                <tr>
+                                    <th class="text-left py-4 px-4">Student</th>
+                                    <th class="text-left py-4 px-4">ID</th>
+                                    <th class="text-left py-4 px-4">Department</th>
+                                    <th class="text-left py-4 px-4">Year</th>
+                                    <th class="text-left py-4 px-4">GPA</th>
+                                    <th class="text-left py-4 px-4">Attendance</th>
+                                    <th class="text-left py-4 px-4">Status</th>
+                                    <th class="text-right py-4 px-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="divide-y divide-slate-800/60">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="cardsView" class="hidden">
+                    <div id="studentsGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div id="emptyState" class="hidden bg-slate-900/30 rounded-xl p-10 text-center border border-dashed border-slate-700/50">
+                    <i data-feather="database" class="w-12 h-12 mx-auto text-slate-500 mb-4"></i>
+                    <h3 class="text-xl font-medium text-slate-300 mb-2">No students found</h3>
+                    <p class="text-slate-500">Try adjusting your search or filters.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Modal -->
+    <div id="studentModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div id="modalBackdrop" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-3xl glass-panel animate-modal-in">
+            <div class="absolute top-3 right-3 z-10">
+                <button id="closeModalBtn" class="glass-panel p-2 rounded-xl hover:bg-white/10 transition">
+                    <i data-feather="x" class="w-5 h-5 text-slate-300"></i>
+                </button>
+            </div>
+
+            <div class="p-6 sm:p-8 overflow-y-auto max-h-[92vh]">
+                <!-- Header -->
+                <div class="flex items-start gap-6 mb-6">
+                    <div id="modalAvatar" class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 border border-white/10 flex items-center justify-center text-3xl font-bold text-white shadow-xl"></div>
+                    <div class="flex-1">
+                        <h2 id="modalName" class="text-2xl font-bold text-white"></h2>
+                        <p id="modalMeta" class="text-slate-400 mt-1"></p>
+                        <div class="mt-3 flex flex-wrap gap-2" id="modalBadges"></div>
+                    </div>
+                    <div class="hidden sm:flex flex-col items-end gap-2 text-sm text-slate-300">
+                        <div class="glass-panel px-3 py-2 rounded-lg">
+                            <span class="text-slate-400">ID:</span> <span id="modalId" class="font-medium"></span>
+                        </div>
+                        <div class="glass-panel px-3 py-2 rounded-lg">
+                            <span class="text-slate-400">GPA:</span> <span id="modalGPA" class="font-semibold text-emerald-300"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-6 border-b border-slate-800/60">
+                    <button data-tab="registered" class="tab-btn active">
+                        <i data-feather="user-check" class="w-4 h-4"></i>
+                        <span>Registered Data</span>
+                    </button>
+                    <button data-tab="academic" class="tab-btn">
+                        <i data-feather="bar-chart-2" class="w-4 h-4"></i>
+                        <span>Academic Performance</span>
+                    </button>
+                </div>
+
+                <!-- Registered Data Tab -->
+                <div id="tab-registered" class="tab-content">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                                <i data-feather="info" class="w-5 h-5 text-emerald-400"></i> Basic Info
+                            </h3>
+                            <ul class="space-y-3 text-slate-300">
+                                <li><span class="text-slate-500">Full Name</span> <span id="regName" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Email</span> <span id="regEmail" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Phone</span> <span id="regPhone" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Date of Birth</span> <span id="regDob" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Gender</span> <span id="regGender" class="ml-2 font-medium"></span></li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                                <i data-feather="book" class="w-5 h-5 text-fuchsia-400"></i> Academic Info
+                            </h3>
+                            <ul class="space-y-3 text-slate-300">
+                                <li><span class="text-slate-500">Student ID</span> <span id="regId" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Department</span> <span id="regDept" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Major</span> <span id="regMajor" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Batch</span> <span id="regBatch" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Status</span> <span id="regStatus" class="ml-2 font-medium"></span></li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                                <i data-feather="credit-card" class="w-5 h-5 text-sky-400"></i> Financials
+                            </h3>
+                            <ul class="space-y-3 text-slate-300">
+                                <li><span class="text-slate-500">Total Fee</span> <span id="regTotalFee" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Paid</span> <span id="regPaid" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Due</span> <span id="regDue" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Last Payment</span> <span id="regLastPayment" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Scholarship</span> <span id="regScholarship" class="ml-2 font-medium"></span></li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                                <i data-feather="map-pin" class="w-5 h-5 text-rose-400"></i> Address
+                            </h3>
+                            <ul class="space-y-3 text-slate-300">
+                                <li><span class="text-slate-500">Address</span> <span id="regAddress" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">City</span> <span id="regCity" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">State</span> <span id="regState" class="ml-2 font-medium"></span></li>
+                                <li><span class="text-slate-500">Country</span> <span id="regCountry" class="ml-2 font-medium"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Performance Tab -->
+                <div id="tab-academic" class="tab-content hidden">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-white font-semibold mb-4 flex items-center gap-2">
+                                <i data-feather="activity" class="w-5 h-5 text-emerald-400"></i> Performance Overview
+                            </h3>
+                            <div class="space-y-5">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">Attendance</span>
+                                        <span id="acAttendance" class="text-slate-300">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div id="acAttendanceBar" class="progress-bar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">Exam Score</span>
+                                        <span id="acExam" class="text-slate-300">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div id="acExamBar" class="progress-bar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">Assignment</span>
+                                        <span id="acAssignment" class="text-slate-300">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div id="acAssignmentBar" class="progress-bar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">Projects</span>
+                                        <span id="acProjects" class="text-slate-300">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div id="acProjectsBar" class="progress-bar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">Fee Payment</span>
+                                        <span id="acFee" class="text-slate-300">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div id="acFeeBar" class="progress-bar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-white font-semibold mb-4 flex items-center gap-2">
+                                <i data-feather="calendar" class="w-5 h-5 text-fuchsia-400"></i> Semesters
+                            </h3>
+                            <div id="acSemesters" class="space-y-3">
+                                <!-- Semester items injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer actions -->
+                <div class="mt-8 flex justify-end gap-3">
+                    <button id="messageBtn" class="glass-panel px-4 py-2 rounded-xl text-white hover:bg-white/10 transition flex items-center gap-2">
+                        <i data-feather="mail" class="w-4 h-4 text-emerald-400"></i> Message
+                    </button>
+                    <button id="editBtn" class="glass-panel px-4 py-2 rounded-xl text-white hover:bg-white/10 transition flex items-center gap-2">
+                        <i data-feather="edit-3" class="w-4 h-4 text-fuchsia-400"></i> Edit
+                    </button>
+                    <button id="deleteBtn" class="glass-panel px-4 py-2 rounded-xl text-white hover:bg-white/10 transition flex items-center gap-2">
+                        <i data-feather="trash-2" class="w-4 h-4 text-rose-400"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional sidebar (if you have components/sidebar.js) -->
+    <!-- <script src="components/sidebar.js"></script> -->
+
+    <script>
+        AOS.init();
+        feather.replace();
+    </script>
+    <script>
+        // Students List JavaScript - Mentora
+// This file contains all the functionality for the students page
+
+// Mock student data - Replace with real API calls
+const studentsData = [
+    {
+        id: "STU001",
+        name: "Emily Rodriguez",
+        email: "emily.rodriguez@mentora.edu",
+        phone: "+1 (555) 123-4567",
+        department: "medicine",
+        major: "Medicine",
+        batch: 2023,
+        gpa: 3.8,
+        attendance: 94,
+        status: "active",
+        avatar: "ER",
+        dateOfBirth: "2001-03-15",
+        gender: "Female",
+        totalFee: 45000,
+        paid: 35000,
+        due: 10000,
+        lastPayment: "2024-01-15",
+        scholarship: "Merit-based",
+        address: "123 University Ave",
+        city: "Boston",
+        state: "MA",
+        country: "USA",
+        academicPerformance: {
+            attendance: 94,
+            exam: 87,
+            assignment: 92,
+            projects: 89,
+            fee: 78
+        },
+        semesters: [
+            { name: "Fall 2021", gpa: 3.6, credits: 18 },
+            { name: "Spring 2022", gpa: 3.7, credits: 20 },
+            { name: "Fall 2022", gpa: 3.9, credits: 19 },
+            { name: "Spring 2023", gpa: 3.8, credits: 21 }
+        ]
+    },
+    {
+        id: "STU002",
+        name: "Marcus Chen",
+        email: "marcus.chen@mentora.edu",
+        phone: "+1 (555) 234-5678",
+        department: "tech",
+        major: "Computer Science",
+        batch: 2022,
+        gpa: 3.9,
+        attendance: 96,
+        status: "active",
+        avatar: "MC",
+        dateOfBirth: "2000-07-22",
+        gender: "Male",
+        totalFee: 42000,
+        paid: 42000,
+        due: 0,
+        lastPayment: "2023-12-10",
+        scholarship: "Academic Excellence",
+        address: "456 Tech Boulevard",
+        city: "San Francisco",
+        state: "CA",
+        country: "USA",
+        academicPerformance: {
+            attendance: 96,
+            exam: 94,
+            assignment: 98,
+            projects: 95,
+            fee: 100
+        },
+        semesters: [
+            { name: "Fall 2020", gpa: 3.8, credits: 18 },
+            { name: "Spring 2021", gpa: 3.9, credits: 20 },
+            { name: "Fall 2021", gpa: 4.0, credits: 19 },
+            { name: "Spring 2022", gpa: 3.9, credits: 21 }
+        ]
+    },
+    {
+        id: "STU003",
+        name: "Sarah Johnson",
+        email: "sarah.johnson@mentora.edu",
+        phone: "+1 (555) 345-6789",
+        department: "business",
+        major: "Business Administration",
+        batch: 2024,
+        gpa: 3.6,
+        attendance: 88,
+        status: "active",
+        avatar: "SJ",
+        dateOfBirth: "2002-11-08",
+        gender: "Female",
+        totalFee: 38000,
+        paid: 19000,
+        due: 19000,
+        lastPayment: "2024-02-01",
+        scholarship: "None",
+        address: "789 Business District",
+        city: "New York",
+        state: "NY",
+        country: "USA",
+        academicPerformance: {
+            attendance: 88,
+            exam: 82,
+            assignment: 85,
+            projects: 79,
+            fee: 50
+        },
+        semesters: [
+            { name: "Fall 2023", gpa: 3.5, credits: 18 },
+            { name: "Spring 2024", gpa: 3.7, credits: 20 }
+        ]
+    },
+    {
+        id: "STU004",
+        name: "David Kim",
+        email: "david.kim@mentora.edu",
+        phone: "+1 (555) 456-7890",
+        department: "social",
+        major: "Psychology",
+        batch: 2021,
+        gpa: 3.7,
+        attendance: 92,
+        status: "active",
+        avatar: "DK",
+        dateOfBirth: "1999-05-14",
+        gender: "Male",
+        totalFee: 36000,
+        paid: 36000,
+        due: 0,
+        lastPayment: "2023-08-15",
+        scholarship: "Need-based",
+        address: "321 Psychology Lane",
+        city: "Chicago",
+        state: "IL",
+        country: "USA",
+        academicPerformance: {
+            attendance: 92,
+            exam: 89,
+            assignment: 91,
+            projects: 87,
+            fee: 100
+        },
+        semesters: [
+            { name: "Fall 2019", gpa: 3.4, credits: 16 },
+            { name: "Spring 2020", gpa: 3.6, credits: 18 },
+            { name: "Fall 2020", gpa: 3.8, credits: 19 },
+            { name: "Spring 2021", gpa: 3.9, credits: 20 },
+            { name: "Fall 2021", gpa: 3.7, credits: 18 }
+        ]
+    },
+    {
+        id: "STU005",
+        name: "Isabella Martinez",
+        email: "isabella.martinez@mentora.edu",
+        phone: "+1 (555) 567-8901",
+        department: "medicine",
+        major: "Nursing",
+        batch: 2023,
+        gpa: 3.5,
+        attendance: 85,
+        status: "suspended",
+        avatar: "IM",
+        dateOfBirth: "2001-09-30",
+        gender: "Female",
+        totalFee: 40000,
+        paid: 20000,
+        due: 20000,
+        lastPayment: "2023-11-20",
+        scholarship: "None",
+        address: "654 Medical Center Dr",
+        city: "Houston",
+        state: "TX",
+        country: "USA",
+        academicPerformance: {
+            attendance: 85,
+            exam: 78,
+            assignment: 82,
+            projects: 80,
+            fee: 50
+        },
+        semesters: [
+            { name: "Fall 2022", gpa: 3.4, credits: 17 },
+            { name: "Spring 2023", gpa: 3.6, credits: 19 }
+        ]
+    },
+    {
+        id: "STU006",
+        name: "James Wilson",
+        email: "james.wilson@mentora.edu",
+        phone: "+1 (555) 678-9012",
+        department: "tech",
+        major: "Software Engineering",
+        batch: 2022,
+        gpa: 4.0,
+        attendance: 98,
+        status: "active",
+        avatar: "JW",
+        dateOfBirth: "2000-01-12",
+        gender: "Male",
+        totalFee: 44000,
+        paid: 44000,
+        due: 0,
+        lastPayment: "2023-12-01",
+        scholarship: "Full Academic",
+        address: "987 Innovation Way",
+        city: "Seattle",
+        state: "WA",
+        country: "USA",
+        academicPerformance: {
+            attendance: 98,
+            exam: 96,
+            assignment: 99,
+            projects: 97,
+            fee: 100
+        },
+        semesters: [
+            { name: "Fall 2020", gpa: 3.9, credits: 18 },
+            { name: "Spring 2021", gpa: 4.0, credits: 20 },
+            { name: "Fall 2021", gpa: 4.0, credits: 19 },
+            { name: "Spring 2022", gpa: 4.0, credits: 21 }
+        ]
+    },
+    {
+        id: "STU007",
+        name: "Aisha Patel",
+        email: "aisha.patel@mentora.edu",
+        phone: "+1 (555) 789-0123",
+        department: "social",
+        major: "Economics",
+        batch: 2024,
+        gpa: 3.8,
+        attendance: 91,
+        status: "active",
+        avatar: "AP",
+        dateOfBirth: "2002-04-18",
+        gender: "Female",
+        totalFee: 37000,
+        paid: 18500,
+        due: 18500,
+        lastPayment: "2024-01-30",
+        scholarship: "Merit-based",
+        address: "147 Economics Street",
+        city: "Washington",
+        state: "DC",
+        country: "USA",
+        academicPerformance: {
+            attendance: 91,
+            exam: 88,
+            assignment: 90,
+            projects: 85,
+            fee: 50
+        },
+        semesters: [
+            { name: "Fall 2023", gpa: 3.7, credits: 18 },
+            { name: "Spring 2024", gpa: 3.9, credits: 20 }
+        ]
+    },
+    {
+        id: "STU008",
+        name: "Robert Brown",
+        email: "robert.brown@mentora.edu",
+        phone: "+1 (555) 890-1234",
+        department: "business",
+        major: "Finance",
+        batch: 2021,
+        gpa: 3.4,
+        attendance: 83,
+        status: "inactive",
+        avatar: "RB",
+        dateOfBirth: "1999-12-03",
+        gender: "Male",
+        totalFee: 39000,
+        paid: 39000,
+        due: 0,
+        lastPayment: "2023-05-15",
+        scholarship: "None",
+        address: "258 Finance Plaza",
+        city: "Miami",
+        state: "FL",
+        country: "USA",
+        academicPerformance: {
+            attendance: 83,
+            exam: 79,
+            assignment: 81,
+            projects: 76,
+            fee: 100
+        },
+        semesters: [
+            { name: "Fall 2019", gpa: 3.2, credits: 17 },
+            { name: "Spring 2020", gpa: 3.3, credits: 19 },
+            { name: "Fall 2020", gpa: 3.5, credits: 18 },
+            { name: "Spring 2021", gpa: 3.6, credits: 20 },
+            { name: "Fall 2021", gpa: 3.4, credits: 18 }
+        ]
+    }
+];
+
+// Global variables
+let currentStudents = [...studentsData];
+let currentView = 'table';
+let currentStudent = null;
+
+// DOM elements
+const searchInput = document.getElementById('searchInput');
+const filterDepartment = document.getElementById('filterDepartment');
+const filterBatch = document.getElementById('filterBatch');
+const toggleViewBtn = document.getElementById('toggleViewBtn');
+const exportBtn = document.getElementById('exportBtn');
+const tableView = document.getElementById('tableView');
+const cardsView = document.getElementById('cardsView');
+const studentsTableBody = document.getElementById('studentsTableBody');
+const studentsGrid = document.getElementById('studentsGrid');
+const resultsSummary = document.getElementById('resultsSummary');
+const emptyState = document.getElementById('emptyState');
+
+// Modal elements
+const studentModal = document.getElementById('studentModal');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const closeModalBtn = document.getElementById('closeModalBtn');
+
+// Modal content elements
+const modalAvatar = document.getElementById('modalAvatar');
+const modalName = document.getElementById('modalName');
+const modalMeta = document.getElementById('modalMeta');
+const modalBadges = document.getElementById('modalBadges');
+const modalId = document.getElementById('modalId');
+const modalGPA = document.getElementById('modalGPA');
+
+// Tab elements
+const tabButtons = document.querySelectorAll('.tab-btn');
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    renderStudents();
+    initializeAnimations();
+});
+
+// Event listeners
+function initializeEventListeners() {
+    // Search and filters
+    searchInput.addEventListener('input', debounce(handleSearch, 300));
+    filterDepartment.addEventListener('change', handleFilter);
+    filterBatch.addEventListener('change', handleFilter);
+
+    // View toggle
+    toggleViewBtn.addEventListener('click', toggleView);
+
+    // Export
+    exportBtn.addEventListener('click', exportData);
+
+    // Modal events
+    closeModalBtn.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', closeModal);
+
+    // Tab events
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            switchTab(this.dataset.tab);
+        });
+    });
+
+    // Modal action buttons
+    document.getElementById('messageBtn').addEventListener('click', () => {
+        showNotification('Message feature coming soon!', 'info');
+    });
+    document.getElementById('editBtn').addEventListener('click', () => {
+        showNotification('Edit feature coming soon!', 'info');
+    });
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+        showNotification('Delete feature coming soon!', 'info');
+    });
+}
+
+// Debounce function for search
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Search and filter functions
+function handleSearch() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    filterStudents(searchTerm);
+}
+
+function handleFilter() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    filterStudents(searchTerm);
+}
+
+function filterStudents(searchTerm = '') {
+    const deptFilter = filterDepartment.value;
+    const batchFilter = filterBatch.value;
+
+    currentStudents = studentsData.filter(student => {
+        const matchesSearch = searchTerm === '' || 
+            student.name.toLowerCase().includes(searchTerm) ||
+            student.id.toLowerCase().includes(searchTerm) ||
+            student.email.toLowerCase().includes(searchTerm) ||
+            student.department.toLowerCase().includes(searchTerm);
+
+        const matchesDepartment = deptFilter === 'all' || student.department === deptFilter;
+        const matchesBatch = batchFilter === 'all' || student.batch.toString() === batchFilter;
+
+        return matchesSearch && matchesDepartment && matchesBatch;
+    });
+
+    renderStudents();
+}
+
+// View toggle
+function toggleView() {
+    if (currentView === 'table') {
+        currentView = 'cards';
+        tableView.classList.add('hidden');
+        cardsView.classList.remove('hidden');
+        toggleViewBtn.innerHTML = '<i data-feather="list" class="w-5 h-5 text-emerald-400"></i><span class="hidden sm:inline text-sm">Table</span>';
+    } else {
+        currentView = 'table';
+        cardsView.classList.add('hidden');
+        tableView.classList.remove('hidden');
+        toggleViewBtn.innerHTML = '<i data-feather="grid" class="w-5 h-5 text-emerald-400"></i><span class="hidden sm:inline text-sm">Cards</span>';
+    }
+    feather.replace();
+}
+
+// Export functionality
+function exportData() {
+    const data = currentStudents.map(student => ({
+        'Student ID': student.id,
+        'Name': student.name,
+        'Email': student.email,
+        'Department': student.department,
+        'Major': student.major,
+        'Batch': student.batch,
+        'GPA': student.gpa,
+        'Attendance': `${student.attendance}%`,
+        'Status': student.status
+    }));
+
+    const csv = convertToCSV(data);
+    downloadCSV(csv, 'students-data.csv');
+    showNotification('Data exported successfully!', 'success');
+}
+
+function convertToCSV(data) {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n');
+    
+    return csvContent;
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', filename);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Rendering functions
+function renderStudents() {
+    if (currentStudents.length === 0) {
+        showEmptyState();
+        return;
+    }
+
+    hideEmptyState();
+    
+    if (currentView === 'table') {
+        renderTable();
+    } else {
+        renderCards();
+    }
+    
+    updateResultsSummary();
+}
+
+function renderTable() {
+    studentsTableBody.innerHTML = currentStudents.map(student => `
+        <tr class="hover:bg-white/5 transition cursor-pointer" onclick="openModal('${student.id}')">
+            <td class="py-4 px-4">
+                <div class="flex items-center gap-3">
+                    <div class="avatar w-10 h-10 text-sm">${student.avatar}</div>
+                    <div>
+                        <div class="font-medium text-white">${student.name}</div>
+                        <div class="text-slate-400 text-xs">${student.email}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="py-4 px-4">
+                <span class="text-slate-300 font-mono text-sm">${student.id}</span>
+            </td>
+            <td class="py-4 px-4">
+                <span class="text-slate-300">${formatDepartment(student.department)}</span>
+            </td>
+            <td class="py-4 px-4">
+                <span class="text-slate-300">${student.batch}</span>
+            </td>
+            <td class="py-4 px-4">
+                <span class="font-semibold text-emerald-300">${student.gpa.toFixed(1)}</span>
+            </td>
+            <td class="py-4 px-4">
+                <div class="flex items-center gap-2">
+                    <div class="progress w-20">
+                        <div class="progress-bar" style="width:${student.attendance}%"></div>
+                    </div>
+                    <span class="text-slate-300 text-sm">${student.attendance}%</span>
+                </div>
+            </td>
+            <td class="py-4 px-4">
+                <span class="status-pill status-${student.status}">
+                    <div class="w-2 h-2 rounded-full ${getStatusDot(student.status)}"></div>
+                    ${formatStatus(student.status)}
+                </span>
+            </td>
+            <td class="py-4 px-4 text-right">
+                <div class="flex items-center justify-end gap-2">
+                    <button class="glass-panel p-2 rounded-lg hover:bg-white/10 transition" onclick="event.stopPropagation(); openModal('${student.id}')">
+                        <i data-feather="eye" class="w-4 h-4 text-blue-400"></i>
+                    </button>
+                    <button class="glass-panel p-2 rounded-lg hover:bg-white/10 transition" onclick="event.stopPropagation(); showNotification('Edit feature coming soon!', 'info')">
+                        <i data-feather="edit-3" class="w-4 h-4 text-fuchsia-400"></i>
+                    </button>
+                    <button class="glass-panel p-2 rounded-lg hover:bg-white/10 transition" onclick="event.stopPropagation(); showNotification('Delete feature coming soon!', 'info')">
+                        <i data-feather="trash-2" class="w-4 h-4 text-rose-400"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+
+    feather.replace();
+}
+
+function renderCards() {
+    studentsGrid.innerHTML = currentStudents.map(student => `
+        <div class="glass-panel p-6 rounded-2xl hover:bg-white/10 transition cursor-pointer" onclick="openModal('${student.id}')">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="avatar w-12 h-12 text-lg">${student.avatar}</div>
+                    <div>
+                        <h3 class="font-semibold text-white">${student.name}</h3>
+                        <p class="text-slate-400 text-sm">${student.id}</p>
+                    </div>
+                </div>
+                <span class="status-pill status-${student.status}">
+                    <div class="w-2 h-2 rounded-full ${getStatusDot(student.status)}"></div>
+                    ${formatStatus(student.status)}
+                </span>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Department:</span>
+                    <span class="text-slate-300">${formatDepartment(student.department)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Batch:</span>
+                    <span class="text-slate-300">${student.batch}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">GPA:</span>
+                    <span class="font-semibold text-emerald-300">${student.gpa.toFixed(1)}</span>
+                </div>
+                <div class="flex justify-between text-sm items-center">
+                    <span class="text-slate-400">Attendance:</span>
+                    <div class="flex items-center gap-2">
+                        <div class="progress w-16">
+                            <div class="progress-bar" style="width:${student.attendance}%"></div>
+                        </div>
+                        <span class="text-slate-300">${student.attendance}%</span>
+                    </div>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Due:</span>
+                    <span class="${student.due > 0 ? 'text-rose-400' : 'text-emerald-400'}">
+                        $${student.due.toLocaleString()}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between">
+                <button class="text-emerald-400 hover:text-emerald-300 text-sm transition" onclick="event.stopPropagation(); openModal('${student.id}')">
+                    View Details
+                </button>
+                <div class="flex gap-1">
+                    <button class="glass-panel p-2 rounded-lg hover:bg-white/10 transition" onclick="event.stopPropagation(); showNotification('Message feature coming soon!', 'info')">
+                        <i data-feather="mail" class="w-4 h-4 text-blue-400"></i>
+                    </button>
+                    <button class="glass-panel p-2 rounded-lg hover:bg-white/10 transition" onclick="event.stopPropagation(); showNotification('Edit feature coming soon!', 'info')">
+                        <i data-feather="edit-3" class="w-4 h-4 text-fuchsia-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    feather.replace();
+}
+
+function updateResultsSummary() {
+    const total = studentsData.length;
+    const filtered = currentStudents.length;
+    resultsSummary.textContent = `Showing ${filtered} of ${total} students`;
+}
+
+function showEmptyState() {
+    emptyState.classList.remove('hidden');
+    tableView.classList.add('hidden');
+    cardsView.classList.add('hidden');
+    resultsSummary.textContent = 'Showing 0 of 0 students';
+}
+
+function hideEmptyState() {
+    emptyState.classList.add('hidden');
+    if (currentView === 'table') {
+        tableView.classList.remove('hidden');
+        cardsView.classList.add('hidden');
+    } else {
+        cardsView.classList.remove('hidden');
+        tableView.classList.add('hidden');
+    }
+}
+
+// Modal functions
+function openModal(studentId) {
+    currentStudent = studentsData.find(s => s.id === studentId);
+    if (!currentStudent) return;
+
+    populateModal();
+    studentModal.classList.remove('hidden');
+    studentModal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    studentModal.classList.add('hidden');
+    studentModal.classList.remove('flex');
+    document.body.style.overflow = '';
+    currentStudent = null;
+}
+
+function populateModal() {
+    if (!currentStudent) return;
+
+    // Basic info
+    modalAvatar.textContent = currentStudent.avatar;
+    modalName.textContent = currentStudent.name;
+    modalMeta.textContent = `${formatDepartment(currentStudent.department)} • Batch ${currentStudent.batch}`;
+    modalId.textContent = currentStudent.id;
+    modalGPA.textContent = currentStudent.gpa.toFixed(1);
+
+    // Badges
+    modalBadges.innerHTML = `
+        <span class="status-pill status-${currentStudent.status}">
+            <div class="w-2 h-2 rounded-full ${getStatusDot(currentStudent.status)}"></div>
+            ${formatStatus(currentStudent.status)}
+        </span>
+        <span class="status-pill" style="background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25);">
+            ${currentStudent.major}
+        </span>
+        ${currentStudent.scholarship !== 'None' ? `
+            <span class="status-pill" style="background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">
+                ${currentStudent.scholarship}
+            </span>
+        ` : ''}
+    `;
+
+    // Registered data
+    document.getElementById('regName').textContent = currentStudent.name;
+    document.getElementById('regEmail').textContent = currentStudent.email;
+    document.getElementById('regPhone').textContent = currentStudent.phone;
+    document.getElementById('regDob').textContent = formatDate(currentStudent.dateOfBirth);
+    document.getElementById('regGender').textContent = currentStudent.gender;
+    document.getElementById('regId').textContent = currentStudent.id;
+    document.getElementById('regDept').textContent = formatDepartment(currentStudent.department);
+    document.getElementById('regMajor').textContent = currentStudent.major;
+    document.getElementById('regBatch').textContent = currentStudent.batch;
+    document.getElementById('regStatus').innerHTML = `<span class="status-pill status-${currentStudent.status}">${formatStatus(currentStudent.status)}</span>`;
+    
+    document.getElementById('regTotalFee').textContent = `$${currentStudent.totalFee.toLocaleString()}`;
+    document.getElementById('regPaid').textContent = `$${currentStudent.paid.toLocaleString()}`;
+    document.getElementById('regDue').textContent = `$${currentStudent.due.toLocaleString()}`;
+    document.getElementById('regLastPayment').textContent = formatDate(currentStudent.lastPayment);
+    document.getElementById('regScholarship').textContent = currentStudent.scholarship;
+    
+    document.getElementById('regAddress').textContent = currentStudent.address;
+    document.getElementById('regCity').textContent = currentStudent.city;
+    document.getElementById('regState').textContent = currentStudent.state;
+    document.getElementById('regCountry').textContent = currentStudent.country;
+
+    // Academic performance
+    updateAcademicPerformance();
+
+    feather.replace();
+}
+
+function updateAcademicPerformance() {
+    if (!currentStudent) return;
+
+    const perf = currentStudent.academicPerformance;
+
+    document.getElementById('acAttendance').textContent = `${perf.attendance}%`;
+    document.getElementById('acAttendanceBar').style.width = `${perf.attendance}%`;
+
+    document.getElementById('acExam').textContent = `${perf.exam}%`;
+    document.getElementById('acExamBar').style.width = `${perf.exam}%`;
+
+    document.getElementById('acAssignment').textContent = `${perf.assignment}%`;
+    document.getElementById('acAssignmentBar').style.width = `${perf.assignment}%`;
+
+    document.getElementById('acProjects').textContent = `${perf.projects}%`;
+    document.getElementById('acProjectsBar').style.width = `${perf.projects}%`;
+
+    document.getElementById('acFee').textContent = `${perf.fee}%`;
+    document.getElementById('acFeeBar').style.width = `${perf.fee}%`;
+
+    // Semesters
+    const semestersContainer = document.getElementById('acSemesters');
+    semestersContainer.innerHTML = currentStudent.semesters.map(semester => `
+        <div class="flex items-center justify-between p-3 bg-slate-900/30 rounded-lg">
+            <div>
+                <div class="font-medium text-white">${semester.name}</div>
+                <div class="text-sm text-slate-400">${semester.credits} credits</div>
+            </div>
+            <div class="text-right">
+                <div class="font-semibold text-emerald-300">${semester.gpa.toFixed(1)}</div>
+                <div class="text-sm text-slate-400">GPA</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Tab switching
+function switchTab(tabName) {
+    // Update tab buttons
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+    feather.replace();
+}
+
+// Utility functions
+function formatDepartment(dept) {
+    const departments = {
+        'medicine': 'Medicine & Health Sciences',
+        'business': 'Business & Management',
+        'social': 'Social Science & Economics',
+        'tech': 'Technology & Engineering'
+    };
+    return departments[dept] || dept;
+}
+
+function formatStatus(status) {
+    const statuses = {
+        'active': 'Active',
+        'suspended': 'Suspended',
+        'inactive': 'Inactive'
+    };
+    return statuses[status] || status;
+}
+
+function getStatusDot(status) {
+    const dots = {
+        'active': 'bg-emerald-400',
+        'suspended': 'bg-rose-400',
+        'inactive': 'bg-slate-400'
+    };
+    return dots[status] || 'bg-slate-400';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 glass-panel px-6 py-4 rounded-xl text-white transition-all duration-300 transform translate-x-full`;
+    
+    const colors = {
+        'success': 'border-emerald-500/30 text-emerald-300',
+        'error': 'border-rose-500/30 text-rose-300',
+        'info': 'border-blue-500/30 text-blue-300',
+        'warning': 'border-amber-500/30 text-amber-300'
+    };
+    
+    notification.className += ` ${colors[type] || colors.info}`;
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <i data-feather="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info'}" class="w-5 h-5"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    feather.replace();
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Animate out and remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Initialize animations
+function initializeAnimations() {
+    // Initialize AOS if available
+    if (typeof AOS !== 'undefined') {
+        AOS.init();
+    }
+
+    // Initialize GSAP animations for bubbles
+    initializeBubbles();
+
+    // Initialize feather icons
+    feather.replace();
+}
+
+// Bubble background animation
+function initializeBubbles() {
+    const bubblesContainer = document.querySelector('.bubbles-bg');
+    if (!bubblesContainer) return;
+
+    const colors = ['#10b981', '#c026d3', '#3b82f6', '#f59e0b'];
+    
+    for (let i = 0; i < 15; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        
+        const size = Math.random() * 200 + 50;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const left = Math.random() * 100;
+        const animationDuration = Math.random() * 20 + 10;
+        
+        bubble.style.width = `${size}px`;
+        bubble.style.height = `${size}px`;
+        bubble.style.left = `${left}%`;
+        bubble.style.bottom = '-100px';
+        bubble.style.background = color;
+        bubble.style.animation = `float ${animationDuration}s infinite linear`;
+        
+        bubblesContainer.appendChild(bubble);
+    }
+
+    // Add CSS for float animation if not exists
+    if (!document.querySelector('#bubble-styles')) {
+        const style = document.createElement('style');
+        style.id = 'bubble-styles';
+        style.textContent = `
+            @keyframes float {
+                0% {
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 0;
+                }
+                10% {
+                    opacity: 0.18;
+                }
+                90% {
+                    opacity: 0.18;
+                }
+                100% {
+                    transform: translateY(-100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Escape to close modal
+    if (e.key === 'Escape' && !studentModal.classList.contains('hidden')) {
+        closeModal();
+    }
+    
+    // Ctrl/Cmd + F to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInput.focus();
+    }
+    
+    // Ctrl/Cmd + E to export
+    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        exportData();
+    }
+});
+
+// Auto-focus search on load
+window.addEventListener('load', function() {
+    setTimeout(() => {
+        searchInput.focus();
+    }, 500);
+});
+
+// Expose functions globally for onclick handlers
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.showNotification = showNotification;
+    </script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

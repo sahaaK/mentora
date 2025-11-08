@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Analytics Dashboard | Mentora</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <link rel="stylesheet" href="components/sidebar.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/enrollment/components/sidebar.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        secondary: {
+                            400: '#d946ef',
+                            500: '#c026d3',
+                            600: '#a21caf',
+                            700: '#86198f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary: #10b981;     /* Emerald 500 */
+            --secondary: #c026d3;   /* Fuchsia 600 */
+            --bg: #0f172a;          /* Slate 900 */
+            --panel: rgba(255,255,255,0.06);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #e2e8f0;
+            min-height: 100vh;
+            margin-left: 92px; /* space for floating sidebar */
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass:hover {
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            letter-spacing: 0.2px;
+            color: #e2e8f0;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .chip-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+        }
+
+        .card-anim {
+            transition: transform 300ms ease, box-shadow 300ms ease;
+        }
+
+        .card-anim:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.35);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.55);
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+            }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            color: #e2e8f0;
+            padding: 6px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+            z-index: 50;
+        }
+        body {
+	padding: 2rem;
+	font-family: -apple-system, BlinkMacSystemFont, "Arial", sans-serif;
+}
+
+h1 {
+	font-size: 16px;
+	margin-top: 0;
+}
+
+p {
+	color: rgb(107, 114, 128);
+	font-size: 15px;
+	margin-bottom: 10px;
+	margin-top: 5px;
+}
+
+.card {
+	max-width: 620px;
+	margin: 0 auto;
+	padding: 16px;
+	border: 1px solid lightgray;
+	border-radius: 16px;
+}
+
+.card p:last-child {
+	margin-bottom: 0;
+}
+
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-6 lg:p-8">
+
+    <!-- Sidebar (injected from components/sidebar.js) -->
+    <div id="sidebar-root"></div>
+    <script src="components/sidebar.js"></script>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 right-4 z-[9999]">
+        <div id="toastText" class="px-4 py-2 rounded-lg text-white text-sm shadow-lg"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-[1400px] mx-auto">
+
+        <!-- Hero -->
+        <div class="relative overflow-hidden rounded-3xl mb-8">
+            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/35 to-fuchsia-900/35"></div>
+            <div class="relative z-10 p-8 md:p-10">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div>
+                        <h1 class="text-white text-3xl md:text-4xl font-bold drop-shadow-lg">
+                            Student Analytics Dashboard
+                        </h1>
+                        <p class="text-emerald-300 mt-2">
+                            Real-time insights and analytics from Cloud Firestore
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="btnRefresh" class="glass px-4 py-2 rounded-xl text-white hover:opacity-90 transition flex items-center gap-2">
+                            <i data-feather="refresh-ccw" class="w-4 h-4"></i>
+                            Refresh
+                        </button>
+                        <div class="glass px-3 py-2 rounded-xl flex items-center gap-2 text-emerald-300">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div id="summary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <!-- Cards will be injected -->
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Department Distribution -->
+            <div class="glass rounded-2xl p-6 card-anim">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white font-semibold">Department Distribution</h3>
+                    <span class="chip"><span class="chip-dot bg-emerald-400"></span> Live</span>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="deptChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Faculty Distribution -->
+            <div class="glass rounded-2xl p-6 card-anim">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white font-semibold">Top Faculties</h3>
+                    <span class="chip"><span class="chip-dot bg-fuchsia-400"></span> Top 7</span>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="facultyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Age & Gender -->
+            <div class="glass rounded-2xl p-6 card-anim">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white font-semibold">Age & Gender</h3>
+                    <span class="chip"><span class="chip-dot bg-sky-400"></span> Cohort</span>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table + Top Schools -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Student Overview Table -->
+            <div class="lg:col-span-2 glass rounded-2xl p-6 card-anim">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white font-semibold">Student Overview</h3>
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <input id="searchInput" type="text" placeholder="Search name, phone, faculty..." class="pl-9 pr-3 py-2 rounded-lg bg-white/5 text-white placeholder:text-slate-400 border border-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                            <i data-feather="search" class="absolute left-2 top-2.5 w-4 h-4 text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[520px]">
+                    <table class="min-w-full text-sm">
+                        <thead class="sticky top-0 z-10 bg-slate-900/70 backdrop-blur">
+                            <tr class="text-slate-300">
+                                <th class="text-left py-3 px-3">Student</th>
+                                <th class="text-left py-3 px-3">Department</th>
+                                <th class="text-left py-3 px-3">Faculty</th>
+                                <th class="text-left py-3 px-3">Age</th>
+                                <th class="text-left py-3 px-3">Gender</th>
+                                <th class="text-left py-3 px-3">Phone</th>
+                                <th class="text-left py-3 px-3">Guardian</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody" class="divide-y divide-white/5">
+                            <!-- Rows injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Schools -->
+            <div class="glass rounded-2xl p-6 card-anim">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white font-semibold">Top Schools</h3>
+                    <span class="chip"><span class="chip-dot bg-amber-400"></span> Origin</span>
+                </div>
+                <div class="space-y-3" id="topSchools">
+                    <!-- Items injected -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Grid -->
+        <div class="glass rounded-2xl p-6 card-anim">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-white font-semibold">Student Profiles</h3>
+                <div class="text-slate-400 text-sm" id="studentCountLabel">0 students</div>
+            </div>
+            <div id="studentGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Cards injected -->
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/enrollment/components/dashboard.js"></script>
+    <script>
+        AOS.init();
+        feather.replace();
+    </script>
+</body>
+</html>

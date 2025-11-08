@@ -19,6 +19,10 @@
             <i data-feather="list" class="w-5 h-5"></i>
             <span class="tooltip">Students List</span>
         </a>
+        <a href="dashboard.html" class="sidebar-item" data-section="dashboard" title="Dashboard">
+            <i data-feather="grid" class="w-5 h-5"></i>
+            <span class="tooltip">Dashboard</span>
+        </a>
         
         <a href="profile.html" class="sidebar-item" data-section="profile" title="Profile">
             <i data-feather="user" class="w-5 h-5"></i>
