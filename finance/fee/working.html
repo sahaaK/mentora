@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Fee Collection System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --glass: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --glass-highlight: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+
+            /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+        }
+        
+        .glass-btn {
+            background: linear-gradient(45deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-btn:hover {
+            background: linear-gradient(45deg, rgba(255,255,255,0.3), rgba(255,255,255,0.2));
+            transform: translateY(-2px);
+        }
+        
+        .glow {
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px rgba(255,255,255,0.5);
+            }
+            to {
+                box-shadow: 0 0 20px rgba(255,255,255,0.8);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s forwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            transition: width 0.5s ease;
+        }
+        
+        .student-row {
+            transition: all 0.3s ease;
+        }
+        
+        .student-row:hover {
+            transform: translateX(5px);
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            transform: scale(0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .payment-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .payment-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .payment-option.active {
+            border: 2px solid #4facfe;
+            background: rgba(79, 172, 254, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <div id="toastText"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">University Fee Collection</h1>
+                <p class="text-gray-600">Manage student payments efficiently</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search students..." class="glass-card px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
+                    <i data-feather="search" class="absolute right-3 top-2.5 text-gray-500"></i>
+                </div>
+                <button class="glass-card px-4 py-2 rounded-full flex items-center space-x-2 glass-btn">
+                    <i data-feather="bell"></i>
+                </button>
+                <div class="glass-card w-10 h-10 rounded-full overflow-hidden">
+                    <img src="http://static.photos/people/200x200/1" alt="Profile" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-6 slide-in" style="animation-delay: 0.1s;">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-600">Total Students</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="totalStudents">0</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100/20">
+                        <i data-feather="users" class="text-blue-500"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">75% of capacity</p>
+                </div>
+            </div>
+            
+            <div class="glass-card p-6 slide-in" style="animation-delay: 0.2s;">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-600">Paid Fees</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="paidFees">$0</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100/20">
+                        <i data-feather="dollar-sign" class="text-green-500"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">60% of target</p>
+                </div>
+            </div>
+            
+            <div class="glass-card p-6 slide-in" style="animation-delay: 0.3s;">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-600">Pending Fees</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="pendingFees">$0</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-yellow-100/20">
+                        <i data-feather="alert-circle" class="text-yellow-500"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 40%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">40% of total</p>
+                </div>
+            </div>
+            
+            <div class="glass-card p-6 slide-in" style="animation-delay: 0.4s;">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-600">Recent Payments</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="recentPayments">0</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-purple-100/20">
+                        <i data-feather="clock" class="text-purple-500"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 90%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">90% on time</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Students Table -->
+            <div class="lg:col-span-2">
+                <div class="glass-card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Student Records</h2>
+                        <div class="flex space-x-2">
+                            <button id="refreshStudents" class="glass-btn px-3 py-1 rounded-lg flex items-center space-x-1">
+                                <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                                <span>Refresh</span>
+                            </button>
+                            <button id="exportStudents" class="glass-btn px-3 py-1 rounded-lg flex items-center space-x-1">
+                                <i data-feather="download" class="w-4 h-4"></i>
+                                <span>Export</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200/30">
+                                    <th class="pb-3 text-left text-gray-600">Student</th>
+                                    <th class="pb-3 text-left text-gray-600">Department</th>
+                                    <th class="pb-3 text-left text-gray-600">Payment Status</th>
+                                    <th class="pb-3 text-left text-gray-600">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                                <!-- Students will be loaded here dynamically -->
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-gray-500">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <i data-feather="loader" class="animate-spin w-8 h-8 mb-2"></i>
+                                            Loading students...
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="text-sm text-gray-500">
+                            Showing <span id="startCount">1</span> to <span id="endCount">10</span> of <span id="totalCount">0</span> students
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="prevPage" class="glass-btn px-3 py-1 rounded-lg disabled:opacity-50" disabled>
+                                <i data-feather="chevron-left" class="w-4 h-4"></i>
+                            </button>
+                            <button id="nextPage" class="glass-btn px-3 py-1 rounded-lg disabled:opacity-50" disabled>
+                                <i data-feather="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Chart -->
+            <div>
+                <div class="glass-card p-6 h-full">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6">Payment Distribution</h2>
+                    <div class="h-64">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="bg-blue-500/10 p-3 rounded-lg">
+                            <p class="text-sm text-blue-500">Quiz Fees (40%)</p>
+                            <p class="font-semibold" id="quizTotal">$0</p>
+                        </div>
+                        <div class="bg-purple-500/10 p-3 rounded-lg">
+                            <p class="text-sm text-purple-500">Midterm (30%)</p>
+                            <p class="font-semibold" id="midtermTotal">$0</p>
+                        </div>
+                        <div class="bg-green-500/10 p-3 rounded-lg">
+                            <p class="text-sm text-green-500">Final (30%)</p>
+                            <p class="font-semibold" id="finalTotal">$0</p>
+                        </div>
+                        <div class="bg-yellow-500/10 p-3 rounded-lg">
+                            <p class="text-sm text-yellow-500">Pending</p>
+                            <p class="font-semibold" id="pendingTotal">$0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student View Modal -->
+    <div id="studentModal" class="modal-overlay">
+        <div class="modal-content glass-card p-6 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Student Details</h2>
+                <button id="closeModal" class="glass-btn p-2 rounded-full">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 flex flex-col items-center">
+                    <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 mb-4">
+                        <img id="modalProfile" src="http://static.photos/people/200x200/1" alt="Profile" class="w-full h-full object-cover">
+                    </div>
+                    <h3 id="modalName" class="text-xl font-semibold text-center">John Doe</h3>
+                    <p id="modalFaculty" class="text-gray-600 text-center">Computer Science</p>
+                    <div class="mt-4 w-full">
+                        <div class="bg-blue-500/10 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-blue-500">Student ID</p>
+                            <p class="font-semibold" id="modalId">STD-001</p>
+                        </div>
+                        <div class="bg-purple-500/10 p-3 rounded-lg">
+                            <p class="text-sm text-purple-500">Contact</p>
+                            <p class="font-semibold" id="modalPhone">+1234567890</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-500">Department</p>
+                            <p class="font-medium" id="modalDepartment">Technology</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Graduated From</p>
+                            <p class="font-medium" id="modalGraduated">High School XYZ</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Grade</p>
+                            <p class="font-medium" id="modalGrade">A</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">City</p>
+                            <p class="font-medium" id="modalCity">New York</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Education</p>
+                            <p class="font-medium" id="modalEducation">Bachelor's</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Gender</p>
+                            <p class="font-medium" id="modalGender">Male</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Blood Type</p>
+                            <p class="font-medium" id="modalBlood">O+</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Age</p>
+                            <p class="font-medium" id="modalAge">22</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200/30 pt-4">
+                        <h3 class="font-semibold mb-3">Guardian Information</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Name</p>
+                                <p class="font-medium" id="modalGuardianName">Jane Doe</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Phone</p>
+                                <p class="font-medium" id="modalGuardianPhone">+1234567890</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 border-t border-gray-200/30 pt-6">
+                <h3 class="font-semibold mb-4">Fee Payment</h3>
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="payment-option p-4 rounded-lg border border-gray-200/30 flex flex-col items-center" data-type="quiz">
+                        <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-2">
+                            <i data-feather="edit-3" class="text-blue-500"></i>
+                        </div>
+                        <p class="font-medium">Quiz (40%)</p>
+                        <p class="text-sm text-gray-500" id="quizFee">$200</p>
+                    </div>
+                    <div class="payment-option p-4 rounded-lg border border-gray-200/30 flex flex-col items-center" data-type="midterm">
+                        <div class="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-2">
+                            <i data-feather="file-text" class="text-purple-500"></i>
+                        </div>
+                        <p class="font-medium">Midterm (30%)</p>
+                        <p class="text-sm text-gray-500" id="midtermFee">$150</p>
+                    </div>
+                    <div class="payment-option p-4 rounded-lg border border-gray-200/30 flex flex-col items-center" data-type="final">
+                        <div class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+                            <i data-feather="award" class="text-green-500"></i>
+                        </div>
+                        <p class="font-medium">Final (30%)</p>
+                        <p class="text-sm text-gray-500" id="finalFee">$150</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-100/20 p-4 rounded-lg mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-gray-600">Total Fee</p>
+                        <p class="font-semibold" id="totalFee">$500</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <p class="text-gray-600">Paid Amount</p>
+                        <p class="font-semibold text-green-500" id="paidAmount">$0</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-gray-500">Payment Status</p>
+                        <p class="font-semibold" id="paymentStatus">Pending</p>
+                    </div>
+                    <button id="processPayment" class="glass-btn px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center space-x-2">
+                        <i data-feather="credit-card" class="w-4 h-4"></i>
+                        <span>Process Payment</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-content glass-card p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Process Payment</h2>
+                <button id="closePaymentModal" class="glass-btn p-2 rounded-full">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-gray-600 mb-2">Payment For</p>
+                <p class="font-semibold" id="paymentFor">Quiz Fee (40%)</p>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-gray-600 mb-2">Amount</p>
+                <p class="font-semibold text-xl" id="paymentAmount">$200</p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-600 mb-2">Payment Method</label>
+                <select id="paymentMethod" class="glass-card w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="mobile_money">Mobile Money</option>
+                </select>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-600 mb-2">Transaction Reference</label>
+                <input type="text" id="transactionRef" class="glass-card w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter reference if any">
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button id="cancelPayment" class="glass-btn px-6 py-2 rounded-lg">Cancel</button>
+                <button id="confirmPayment" class="glass-btn px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center space-x-2">
+                    <i data-feather="check" class="w-4 h-4"></i>
+                    <span>Confirm Payment</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+            authDomain: "mentora-71f5c.firebaseapp.com",
+            projectId: "mentora-71f5c",
+            storageBucket: "mentora-71f5c.appspot.com",
+            messagingSenderId: "16685388211",
+            appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+            measurementId: "G-BL98PXGK2G"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Initialize components
+        feather.replace();
+        AOS.init();
+        
+        // Global variables
+        let currentPage = 1;
+        const pageSize = 10;
+        let students = [];
+        let selectedStudent = null;
+        let selectedPaymentType = null;
+        
+        // DOM elements
+        const studentsTableBody = document.getElementById('studentsTableBody');
+        const totalStudents = document.getElementById('totalStudents');
+        const paidFees = document.getElementById('paidFees');
+        const pendingFees = document.getElementById('pendingFees');
+        const recentPayments = document.getElementById('recentPayments');
+        const startCount = document.getElementById('startCount');
+        const endCount = document.getElementById('endCount');
+        const totalCount = document.getElementById('totalCount');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+        const refreshStudents = document.getElementById('refreshStudents');
+        const exportStudents = document.getElementById('exportStudents');
+        
+        // Modal elements
+        const studentModal = document.getElementById('studentModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalProfile = document.getElementById('modalProfile');
+        const modalName = document.getElementById('modalName');
+        const modalFaculty = document.getElementById('modalFaculty');
+        const modalId = document.getElementById('modalId');
+        const modalPhone = document.getElementById('modalPhone');
+        const modalDepartment = document.getElementById('modalDepartment');
+        const modalGraduated = document.getElementById('modalGraduated');
+        const modalGrade = document.getElementById('modalGrade');
+        const modalCity = document.getElementById('modalCity');
+        const modalEducation = document.getElementById('modalEducation');
+        const modalGender = document.getElementById('modalGender');
+        const modalBlood = document.getElementById('modalBlood');
+        const modalAge = document.getElementById('modalAge');
+        const modalGuardianName = document.getElementById('modalGuardianName');
+        const modalGuardianPhone = document.getElementById('modalGuardianPhone');
+        const quizFee = document.getElementById('quizFee');
+        const midtermFee = document.getElementById('midtermFee');
+        const finalFee = document.getElementById('finalFee');
+        const totalFee = document.getElementById('totalFee');
+        const paidAmount = document.getElementById('paidAmount');
+        const paymentStatus = document.getElementById('paymentStatus');
+        const processPayment = document.getElementById('processPayment');
+        
+        // Payment modal elements
+        const paymentModal = document.getElementById('paymentModal');
+        const closePaymentModal = document.getElementById('closePaymentModal');
+        const paymentFor = document.getElementById('paymentFor');
+        const paymentAmount = document.getElementById('paymentAmount');
+        const paymentMethod = document.getElementById('paymentMethod');
+        const transactionRef = document.getElementById('transactionRef');
+        const cancelPayment = document.getElementById('cancelPayment');
+        const confirmPayment = document.getElementById('confirmPayment');
+        
+        // Chart elements
+        const quizTotal = document.getElementById('quizTotal');
+        const midtermTotal = document.getElementById('midtermTotal');
+        const finalTotal = document.getElementById('finalTotal');
+        const pendingTotal = document.getElementById('pendingTotal');
+        
+        // Payment options
+        const paymentOptions = document.querySelectorAll('.payment-option');
+        
+        // Toast function
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastText');
+            
+            toastText.textContent = message;
+            toast.className = 'toast';
+            
+            if (type === 'error') {
+                toast.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
+            } else if (type === 'warning') {
+                toast.style.backgroundColor = 'rgba(234, 179, 8, 0.9)';
+            } else {
+                toast.style.backgroundColor = 'rgba(16, 185, 129, 0.9)';
+            }
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Load students from Firestore
+        async function loadStudents() {
+            try {
+                studentsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <i data-feather="loader" class="animate-spin w-8 h-8 mb-2"></i>
+                                Loading students...
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                feather.replace();
+                
+                const snapshot = await db.collection('students').get();
+                students = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                renderStudents();
+                updateStats();
+                renderChart();
+                
+                // Update pagination
+                totalCount.textContent = students.length;
+                updatePagination();
+                
+            } catch (error) {
+                console.error('Error loading students:', error);
+                showToast('Failed to load students', 'error');
+            }
+        }
+        
+        // Render students table
+        function renderStudents() {
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const paginatedStudents = students.slice(start, end);
+            
+            studentsTableBody.innerHTML = '';
+            
+            if (paginatedStudents.length === 0) {
+                studentsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">
+                            No students found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            paginatedStudents.forEach(student => {
+                const row = document.createElement('tr');
+                row.className = 'student-row';
+                row.innerHTML = `
+                    <td class="py-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full overflow-hidden">
+                                <img src="${student.profileImageUrl || student.profileImageData || 'http://static.photos/people/200x200/1'}" alt="${student.fullName}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <p class="font-medium">${student.fullName}</p>
+                                <p class="text-sm text-gray-500">${student.faculty}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4">
+                        <p class="text-gray-700">${student.department}</p>
+                    </td>
+                    <td class="py-4">
+                        <span class="px-2 py-1 rounded-full text-xs ${getRandomPaymentStatus().color}">${getRandomPaymentStatus().text}</span>
+                    </td>
+                    <td class="py-4">
+                        <button class="view-btn glass-btn px-3 py-1 rounded-lg flex items-center space-x-1" data-id="${student.id}">
+                            <i data-feather="eye" class="w-4 h-4"></i>
+                            <span>View</span>
+                        </button>
+                    </td>
+                `;
+                studentsTableBody.appendChild(row);
+            });
+            
+            feather.replace();
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => viewStudent(btn.dataset.id));
+            });
+        }
+        
+        // View student details
+        function viewStudent(id) {
+            selectedStudent = students.find(student => student.id === id);
+            
+            if (!selectedStudent) {
+                showToast('Student not found', 'error');
+                return;
+            }
+            
+            // Update modal with student data
+            modalProfile.src = selectedStudent.profileImageUrl || selectedStudent.profileImageData || 'http://static.photos/people/200x200/1';
+            modalName.textContent = selectedStudent.fullName;
+            modalFaculty.textContent = selectedStudent.faculty;
+            modalId.textContent = selectedStudent.id;
+            modalPhone.textContent = selectedStudent.phone;
+            modalDepartment.textContent = selectedStudent.department;
+            modalGraduated.textContent = selectedStudent.graduatedFrom;
+            modalGrade.textContent = selectedStudent.grade;
+            modalCity.textContent = selectedStudent.city;
+            modalEducation.textContent = selectedStudent.education;
+            modalGender.textContent = selectedStudent.gender;
+            modalBlood.textContent = selectedStudent.bloodType;
+            modalAge.textContent = selectedStudent.age;
+            modalGuardianName.textContent = selectedStudent.guardianName;
+            modalGuardianPhone.textContent = selectedStudent.guardianPhone;
+            
+            // Set fees (random for demo)
+            const total = 500;
+            quizFee.textContent = `$${total * 0.4}`;
+            midtermFee.textContent = `$${total * 0.3}`;
+            finalFee.textContent = `$${total * 0.3}`;
+            totalFee.textContent = `$${total}`;
+            
+            // Random payment status for demo
+            const status = getRandomPaymentStatus();
+            paidAmount.textContent = `$${status.paid}`;
+            paymentStatus.textContent = status.text;
+            paymentStatus.className = 'font-semibold ' + status.color;
+            
+            // Open modal
+            studentModal.classList.add('active');
+        }
+        
+        // Update pagination
+        function updatePagination() {
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, students.length);
+            
+            startCount.textContent = start;
+            endCount.textContent = end;
+            
+            prevPage.disabled = currentPage === 1;
+            nextPage.disabled = end >= students.length;
+        }
+        
+        // Update stats
+        function updateStats() {
+            totalStudents.textContent = students.length;
+            
+            // Random stats for demo
+            const paid = Math.floor(Math.random() * 10000) + 5000;
+            const pending = Math.floor(Math.random() * 5000) + 1000;
+            const recent = Math.floor(Math.random() * 20) + 5;
+            
+            paidFees.textContent = `$${paid.toLocaleString()}`;
+            pendingFees.textContent = `$${pending.toLocaleString()}`;
+            recentPayments.textContent = recent;
+            
+            // Update fee breakdown
+            quizTotal.textContent = `$${Math.floor(paid * 0.4).toLocaleString()}`;
+            midtermTotal.textContent = `$${Math.floor(paid * 0.3).toLocaleString()}`;
+            finalTotal.textContent = `$${Math.floor(paid * 0.3).toLocaleString()}`;
+            pendingTotal.textContent = `$${pending.toLocaleString()}`;
+        }
+        
+        // Render chart
+        function renderChart() {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            
+            if (window.paymentChart) {
+                window.paymentChart.destroy();
+            }
+            
+            window.paymentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Quiz (40%)', 'Midterm (30%)', 'Final (30%)', 'Pending'],
+                    datasets: [{
+                        data: [40, 30, 30, 20],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(234, 179, 8, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(168, 85, 247, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(234, 179, 8, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+        
+        // Helper function for random payment status (demo only)
+        function getRandomPaymentStatus() {
+            const statuses = [
+                { text: 'Paid', color: 'bg-green-100 text-green-800', paid: 500 },
+                { text: 'Partial', color: 'bg-yellow-100 text-yellow-800', paid: 300 },
+                { text: 'Pending', color: 'bg-red-100 text-red-800', paid: 0 }
+            ];
+            return statuses[Math.floor(Math.random() * statuses.length)];
+        }
+        
+        // Event listeners
+        prevPage.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderStudents();
+                updatePagination();
+            }
+        });
+        
+        nextPage.addEventListener('click', () => {
+            if (currentPage * pageSize < students.length) {
+                currentPage++;
+                renderStudents();
+                updatePagination();
+            }
+        });
+        
+        refreshStudents.addEventListener('click', () => {
+            loadStudents();
+            showToast('Students list refreshed');
+        });
+        
+        exportStudents.addEventListener('click', () => {
+            showToast('Export feature coming soon', 'warning');
+        });
+        
+        closeModal.addEventListener('click', () => {
+            studentModal.classList.remove('active');
+        });
+        
+        closePaymentModal.addEventListener('click', () => {
+            paymentModal.classList.remove('active');
+        });
+        
+        cancelPayment.addEventListener('click', () => {
+            paymentModal.classList.remove('active');
+        });
+        
+        // Payment option selection
+        paymentOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                paymentOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedPaymentType = option.dataset.type;
+                
+                // Set payment details
+                paymentFor.textContent = `${option.querySelector('p').textContent} Fee`;
+                paymentAmount.textContent = option.querySelector('.text-sm').textContent;
+            });
+        });
+        
+        // Process payment button
+        processPayment.addEventListener('click', () => {
+            if (!selectedPaymentType) {
+                showToast('Please select a payment type', 'error');
+                return;
+            }
+            
+            paymentModal.classList.add('active');
+        });
+        
+        // Confirm payment
+        confirmPayment.addEventListener('click', () => {
+            const method = paymentMethod.value;
+            const reference = transactionRef.value;
+            
+            // In a real app, you would save this to Firestore
+            showToast(`Payment of ${paymentAmount.textContent} processed successfully`);
+            
+            // Update UI
+            const paid = parseFloat(paidAmount.textContent.replace('$', '')) + parseFloat(paymentAmount.textContent.replace('$', ''));
+            paidAmount.textContent = `$${paid}`;
+            
+            if (paid >= 500) {
+                paymentStatus.textContent = 'Paid';
+                paymentStatus.className = 'font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs';
+            } else {
+                paymentStatus.textContent = 'Partial';
+                paymentStatus.className = 'font-semibold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs';
+            }
+            
+            // Close modals
+            paymentModal.classList.remove('active');
+            
+            // Update stats
+            updateStats();
+            renderChart();
+        });
+        
+        // Close modals when clicking outside
+        studentModal.addEventListener('click', (e) => {
+            if (e.target === studentModal) {
+                studentModal.classList.remove('active');
+            }
+        });
+        
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.classList.remove('active');
+            }
+        });
+        
+        // Initial load
+        loadStudents();
+    </script>
+</body>
+</html>

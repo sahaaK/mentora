@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Attendance Sheet - MedGlass Cloud</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
     
     <!--
@@ -86,7 +88,7 @@ body {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  /* background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899); */
+   /* background: linear-gradient(90deg, #6366f1, #8b5cf6);  */
   z-index: -1;
   border-radius: 18px;
   opacity: 0.7;
@@ -309,10 +311,13 @@ body {
   .modal-content { padding: 1rem; }
 }
     </style>
+    <link rel="stylesheet" href="sidebar.css">
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-100 overflow-x-hidden">
     <!-- Animated Background -->
     <div class="bubble-container"></div>
+    <div id="sidebar-root"></div>
+    <script src="sidebar.js"></script>
 
     <!-- Header -->
     <header class="px-6 py-8">
@@ -499,15 +504,731 @@ body {
       </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- <script src="script.js"></script> -->
     <script>
-      // Initialize icons
-      document.addEventListener('DOMContentLoaded', () => {
-        if (window.feather) feather.replace();
-      });
+  // script.js - Dynamic Attendance by Class (Firestore + localStorage fallback)
+// Requirements met:
+// - Load classes from Firestore, allow selecting a class
+// - Load students from Firestore subcollection for selected class
+// - Attendance tracked per student per day (localStorage), per class
+// - Filters: search, status, blood type
+// - Bulk actions, modal, export CSV
+// - Charts (last 7 days mock) and stats
+// - TailwindCSS compatible (no color classes changed)
 
-      
+// Firebase config (use your own if needed)
+const firebaseConfig = {
+  apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+  authDomain: "mentora-71f5c.firebaseapp.com",
+  projectId: "mentora-71f5c",
+  storageBucket: "mentora-71f5c.appspot.com",
+  messagingSenderId: "16685388211",
+  appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+  measurementId: "G-BL98PXGK2G"
+};
+
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+
+// Globals
+const today = new Date();
+const todayISO = today.toISOString().split('T')[0];
+
+let attendanceMap = {}; // { [classId]: { [studentId]: { [date]: { status, time, notes } } } }
+let selectedRows = new Set();
+let attendanceChart = null;
+let selectedClassId = null;
+let classesCache = []; // Firestore classes
+let currentStudents = []; // Students in selected class (resolved from subcollection + students collection)
+
+// DOM elements
+let classSelectEl, attendanceTableBodyEl;
+let presentCountEl, absentCountEl, lateCountEl, presentTodayEl, absentTodayEl, lateTodayEl, totalStudentsEl, selectionSummaryEl;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+  setupRefs();
+  createBubbles();
+  bindEvents();
+  await loadClassesDropdown();
+  const initialClassId = getInitialClassId();
+  if (initialClassId) {
+    setSelectedClass(initialClassId, false);
+  } else if (classesCache.length > 0) {
+    setSelectedClass(classesCache[0].id, true);
+  } else {
+    // Demo fallback: use URL id or a dummy class
+    const urlParams = new URLSearchParams(window.location.search);
+    const demoId = urlParams.get('id') || 'demo';
+    setSelectedClass(demoId, true);
+  }
+  if (window.feather) feather.replace();
+});
+
+// Refs
+function setupRefs() {
+  classSelectEl = document.getElementById('classSelect');
+  attendanceTableBodyEl = document.getElementById('attendanceTableBody');
+  presentCountEl = document.getElementById('presentCount');
+  absentCountEl = document.getElementById('absentCount');
+  lateCountEl = document.getElementById('lateCount');
+  presentTodayEl = document.getElementById('presentToday');
+  absentTodayEl = document.getElementById('absentToday');
+  lateTodayEl = document.getElementById('lateToday');
+  totalStudentsEl = document.getElementById('totalStudents');
+  selectionSummaryEl = document.getElementById('selectionSummary');
+}
+
+// Determine initial class id from URL or last selection
+function getInitialClassId() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlClassId = urlParams.get('id');
+  if (urlClassId) return urlClassId;
+  const saved = localStorage.getItem('selectedClassId');
+  return saved;
+}
+
+// Load classes dropdown from Firestore
+async function loadClassesDropdown() {
+  try {
+    const snapshot = await db.collection('classes').orderBy('name').get();
+    classesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderClassDropdown(classesCache);
+  } catch (e) {
+    console.error('Error loading classes:', e);
+    classesCache = [];
+    renderClassDropdown([]);
+  }
+}
+
+// Render class dropdown
+function renderClassDropdown(classes) {
+  if (!classSelectEl) return;
+  classSelectEl.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = classes.length ? 'Select a class...' : 'No classes found';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  classSelectEl.appendChild(placeholder);
+
+  classes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    classSelectEl.appendChild(opt);
+  });
+
+  // If we already have a selected class, set it
+  if (selectedClassId) {
+    classSelectEl.value = selectedClassId;
+  }
+}
+
+// Set selected class
+async function setSelectedClass(classId, persist = true) {
+  if (!classId) return;
+  selectedClassId = classId;
+  if (classSelectEl) classSelectEl.value = classId;
+  if (persist) localStorage.setItem('selectedClassId', classId);
+
+  // Reset selection
+  selectedRows.clear();
+  if (document.getElementById('masterCheckbox')) {
+    document.getElementById('masterCheckbox').checked = false;
+    document.getElementById('masterCheckbox').indeterminate = false;
+  }
+  updateSelectionSummary();
+
+  await loadAttendanceMapForClass(classId);
+  await loadClassStudents(classId);
+  renderTable();
+  renderChart();
+  updateStats();
+}
+
+// Load attendance map for selected class from localStorage
+function loadAttendanceMapForClass(classId) {
+  try {
+    const raw = localStorage.getItem('attendance');
+    const all = raw ? JSON.parse(raw) : {};
+    attendanceMap[classId] = all[classId] || {};
+  } catch {
+    attendanceMap[classId] = {};
+  }
+}
+
+// Save attendance map for selected class to localStorage
+function saveAttendanceForClass() {
+  try {
+    const raw = localStorage.getItem('attendance');
+    const all = raw ? JSON.parse(raw) : {};
+    all[selectedClassId] = attendanceMap[selectedClassId] || {};
+    localStorage.setItem('attendance', JSON.stringify(all));
+  } catch (e) {
+    console.error('Failed to save attendance:', e);
+  }
+}
+
+// Load students for selected class
+async function loadClassStudents(classId) {
+  currentStudents = [];
+
+  if (!classId || classId === 'demo') {
+    // Demo fallback data
+    currentStudents = [
+      { id: 's1', name: "Aisha Khan", studentNumber: "MBBS2024001", bloodType: "A+", attendance: 96, examPerformance: 88, grade: "A", avatar: "https://i.pravatar.cc/150?img=1" },
+      { id: 's2', name: "Rahul Sharma", studentNumber: "MBBS2024002", bloodType: "O+", attendance: 89, examPerformance: 92, grade: "A+", avatar: "https://i.pravatar.cc/150?img=2" },
+      { id: 's3', name: "Emily Chen", studentNumber: "MBBS2024003", bloodType: "B-", attendance: 78, examPerformance: 81, grade: "B+", avatar: "https://i.pravatar.cc/150?img=3" },
+      { id: 's4', name: "Mohammed Ali", studentNumber: "MBBS2024004", bloodType: "AB+", attendance: 94, examPerformance: 95, grade: "A+", avatar: "https://i.pravatar.cc/150?img=4" },
+      { id: 's5', name: "Sofia Rossi", studentNumber: "MBBS2024005", bloodType: "A-", attendance: 84, examPerformance: 79, grade: "B+", avatar: "https://i.pravatar.cc/150?img=5" },
+      { id: 's6', name: "Liam O'Connor", studentNumber: "MBBS2024006", bloodType: "B+", attendance: 73, examPerformance: 75, grade: "B", avatar: "https://i.pravatar.cc/150?img=6" },
+      { id: 's7', name: "Ava Johnson", studentNumber: "MBBS2024007", bloodType: "AB-", attendance: 91, examPerformance: 89, grade: "A", avatar: "https://i.pravatar.cc/150?img=7" },
+      { id: 's8', name: "Noah Williams", studentNumber: "MBBS2024008", bloodType: "O-", attendance: 88, examPerformance: 90, grade: "A", avatar: "https://i.pravatar.cc/150?img=8" },
+      { id: 's9', name: "Isabella Garcia", studentNumber: "MBBS2024009", bloodType: "B-", attendance: 82, examPerformance: 84, grade: "B+", avatar: "https://i.pravatar.cc/150?img=9" },
+      { id: 's10', name: "Ethan Brown", studentNumber: "MBBS2024010", bloodType: "A+", attendance: 77, examPerformance: 80, grade: "B", avatar: "https://i.pravatar.cc/150?img=10" },
+      { id: 's11', name: "Mia Davis", studentNumber: "MBBS2024011", bloodType: "O+", attendance: 95, examPerformance: 93, grade: "A", avatar: "https://i.pravatar.cc/150?img=11" },
+      { id: 's12', name: "Lucas Martin", studentNumber: "MBBS2024012", bloodType: "AB+", attendance: 86, examPerformance: 88, grade: "A-", avatar: "https://i.pravatar.cc/150?img=12" }
+    ];
+    return;
+  }
+
+  try {
+    const subSnap = await db.collection('classes').doc(classId).collection('students').get();
+    if (subSnap.empty) {
+      currentStudents = [];
+      return;
+    }
+
+    // Resolve full profiles if available in 'students' collection, else fallback to sub doc fields
+    const resolvers = subSnap.docs.map(async (doc) => {
+      const data = doc.data();
+      if (data.studentId) {
+        try {
+          const sDoc = await db.collection('students').doc(data.studentId).get();
+          if (sDoc.exists) {
+            const s = sDoc.data();
+            // Normalize fields for UI
+            return {
+              id: sDoc.id,
+              name: s.fullName || s.name || 'Unknown',
+              studentNumber: s.studentNumber || s.phone || sDoc.id,
+              bloodType: s.bloodType || 'O+',
+              attendance: typeof s.attendance === 'number' ? s.attendance : Math.floor(Math.random() * 20) + 80,
+              examPerformance: typeof s.examPerformance === 'number' ? s.examPerformance : Math.floor(Math.random() * 30) + 65,
+              grade: s.grade || ['A+', 'A', 'B+', 'B', 'C+', 'C'][Math.floor(Math.random() * 6)],
+              avatar: s.profileImageUrl || ''
+            };
+          }
+        } catch (err) {
+          console.warn('Failed to fetch student profile:', data.studentId, err);
+        }
+        // Fallback
+        return {
+          id: data.studentId,
+          name: data.name || data.fullName || 'Unknown',
+          studentNumber: data.studentNumber || data.phone || data.studentId,
+          bloodType: data.bloodType || 'O+',
+          attendance: Math.floor(Math.random() * 20) + 80,
+          examPerformance: Math.floor(Math.random() * 30) + 65,
+          grade: ['A+', 'A', 'B+', 'B', 'C+', 'C'][Math.floor(Math.random() * 6)],
+          avatar: data.profileImageUrl || data.avatar || ''
+        };
+      }
+      // If stored full data directly
+      return {
+        id: doc.id,
+        ...data,
+        name: data.name || data.fullName || 'Unknown',
+        studentNumber: data.studentNumber || data.phone || doc.id,
+        avatar: data.profileImageUrl || data.avatar || ''
+      };
+    });
+
+    currentStudents = (await Promise.all(resolvers)) || [];
+  } catch (e) {
+    console.error('Error loading students for class:', e);
+    currentStudents = [];
+  }
+}
+
+// Bubble background
+function createBubbles() {
+  const container = document.querySelector('.bubble-container');
+  if (!container) return;
+  const bubbleCount = 15;
+  for (let i = 0; i < bubbleCount; i++) {
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    const size = Math.random() * 100 + 50;
+    const left = Math.random() * 100;
+    const top = Math.random() * 100;
+    const delay = Math.random() * 10;
+    bubble.style.width = `${size}px`;
+    bubble.style.height = `${size}px`;
+    bubble.style.left = `${left}%`;
+    bubble.style.top = `${top}%`;
+    bubble.style.animationDelay = `${delay}s`;
+    container.appendChild(bubble);
+  }
+}
+
+// Helpers
+function getInitials(name) {
+  if (!name) return 'NA';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getBloodClass(bloodType) {
+  return `blood-${String(bloodType).replace('+', 'plus').replace('-', 'minus')}`;
+}
+
+function statusBadgeHTML(status, time = null) {
+  const map = {
+    present: { cls: 'status-present', icon: 'check-circle', label: 'Present' },
+    absent: { cls: 'status-absent', icon: 'x-circle', label: 'Absent' },
+    late: { cls: 'status-late', icon: 'clock', label: 'Late' },
+    excused: { cls: 'status-excused', icon: 'shield', label: 'Excused' }
+  };
+  const info = map[status] || map.absent;
+  return `<span class="status-badge ${info.cls}">
+    <i data-feather="${info.icon}" class="w-3.5 h-3.5"></i>
+    ${info.label}${time ? ` • ${time}` : ''}
+  </span>`;
+}
+
+function getTodayRecord(studentId) {
+  if (!attendanceMap[selectedClassId]) attendanceMap[selectedClassId] = {};
+  if (!attendanceMap[selectedClassId][studentId]) {
+    attendanceMap[selectedClassId][studentId] = {};
+  }
+  return attendanceMap[selectedClassId][studentId][todayISO] || { status: 'absent', time: null, notes: '' };
+}
+
+function setTodayRecord(studentId, status, time = new Date().toLocaleTimeString(), notes = '') {
+  if (!attendanceMap[selectedClassId]) attendanceMap[selectedClassId] = {};
+  if (!attendanceMap[selectedClassId][studentId]) attendanceMap[selectedClassId][studentId] = {};
+  attendanceMap[selectedClassId][studentId][todayISO] = { status, time, notes };
+  saveAttendanceForClass();
+}
+
+function filterStudents() {
+  const searchTerm = (document.getElementById('studentSearch')?.value || '').toLowerCase();
+  const presentFilter = document.getElementById('presentFilter')?.value || 'all';
+  const bloodFilter = document.getElementById('bloodFilter')?.value || '';
+
+  const filtered = currentStudents.filter(student => {
+    const rec = getTodayRecord(student.id);
+    const matchesSearch = (student.name || '').toLowerCase().includes(searchTerm) ||
+                          (student.studentNumber || '').toLowerCase().includes(searchTerm);
+    const matchesPresent = presentFilter === 'all' || rec.status === presentFilter;
+    const matchesBlood = !bloodFilter || student.bloodType === bloodFilter;
+    return matchesSearch && matchesPresent && matchesBlood;
+  });
+
+  renderTable(filtered);
+}
+
+// Render table
+function renderTable(students = currentStudents) {
+  if (!attendanceTableBodyEl) return;
+  attendanceTableBodyEl.innerHTML = '';
+
+  students.forEach((student) => {
+    const rec = getTodayRecord(student.id);
+    const row = document.createElement('tr');
+    row.className = 'table-row';
+    row.dataset.id = student.id;
+
+    row.innerHTML = `
+      <td class="p-4">
+        <input type="checkbox" class="row-checkbox rounded border-white/20 bg-transparent text-indigo-500 focus:ring-indigo-500/50" ${selectedRows.has(student.id) ? 'checked' : ''} />
+      </td>
+      <td class="p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 flex items-center justify-center font-bold overflow-hidden">
+            ${student.avatar ? `<img src="${student.avatar}" alt="${student.name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='${getInitials(student.name)}'">` : getInitials(student.name)}
+          </div>
+          <div>
+            <div class="font-medium">${student.name}</div>
+            <div class="text-xs text-gray-400 md:hidden">${student.studentNumber}</div>
+          </div>
+        </div>
+      </td>
+      <td class="p-4 hidden md:table-cell">${student.studentNumber}</td>
+      <td class="p-4 hidden lg:table-cell">
+        <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+      </td>
+      <td class="p-4">
+        <div class="text-sm">
+          <div class="text-gray-400">Attendance</div>
+          <div class="font-semibold">${student.attendance || 0}%</div>
+        </div>
+      </td>
+      <td class="p-4">
+        ${statusBadgeHTML(rec.status, rec.time)}
+      </td>
+      <td class="p-4 hidden sm:table-cell">
+        <div class="flex items-center gap-2">
+          <button class="glass-card p-2 rounded-lg hover:bg-white/10 transition-all view-student" data-id="${student.id}" title="View Details">
+            <i data-feather="eye" class="w-4 h-4"></i>
+          </button>
+          <button class="glass-card p-2 rounded-lg hover:bg-white/10 transition-all quick-present" data-id="${student.id}" title="Mark Present">
+            <i data-feather="check" class="w-4 h-4 text-emerald-400"></i>
+          </button>
+          <button class="glass-card p-2 rounded-lg hover:bg-white/10 transition-all quick-absent" data-id="${student.id}" title="Mark Absent">
+            <i data-feather="x" class="w-4 h-4 text-rose-400"></i>
+          </button>
+        </div>
+      </td>
+    `;
+
+    attendanceTableBodyEl.appendChild(row);
+  });
+
+  if (window.feather) feather.replace();
+  updateStats();
+  updateSelectionSummary();
+}
+
+// Stats
+function computeTodayStats(students = currentStudents) {
+  let present = 0, absent = 0, late = 0, excused = 0;
+  students.forEach(s => {
+    const status = getTodayRecord(s.id).status;
+    if (status === 'present') present++;
+    else if (status === 'late') late++;
+    else if (status === 'excused') excused++;
+    else absent++;
+  });
+  return { present, absent, late, excused, total: students.length };
+}
+
+function updateStats() {
+  const { present, absent, late, total } = computeTodayStats();
+  if (presentCountEl) presentCountEl.textContent = present;
+  if (absentCountEl) absentCountEl.textContent = absent;
+  if (lateCountEl) lateCountEl.textContent = late;
+  if (presentTodayEl) presentTodayEl.textContent = present;
+  if (absentTodayEl) absentTodayEl.textContent = absent;
+  if (lateTodayEl) lateTodayEl.textContent = late;
+  if (totalStudentsEl) totalStudentsEl.textContent = total;
+}
+
+// Selection
+function updateSelectionSummary() {
+  if (!selectionSummaryEl) return;
+  selectionSummaryEl.textContent = `${selectedRows.size} selected`;
+}
+
+function getSelectedIds() {
+  return Array.from(selectedRows);
+}
+
+// Modal
+function openStudentModal(studentId) {
+  const student = currentStudents.find(s => s.id == studentId);
+  if (!student) return;
+  const rec = getTodayRecord(student.id);
+  const modalBody = document.getElementById('studentModalBody');
+  if (!modalBody) return;
+
+  modalBody.innerHTML = `
+    <div class="flex items-center gap-6">
+      <div class="w-20 h-20 rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 flex items-center justify-center text-2xl font-bold overflow-hidden">
+        ${student.avatar ? `<img src="${student.avatar}" alt="${student.name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='${getInitials(student.name)}'">` : getInitials(student.name)}
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold">${student.name}</h3>
+        <p class="text-gray-400">${student.studentNumber}</p>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+          <span class="blood-badge">Grade: ${student.grade || '-'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="glass-card p-4 rounded-xl bg-white/5">
+        <div class="text-sm text-gray-400 mb-1">Today's Status</div>
+        <div class="flex items-center gap-2">
+          ${statusBadgeHTML(rec.status, rec.time)}
+        </div>
+      </div>
+      <div class="glass-card p-4 rounded-xl bg-white/5">
+        <div class="text-sm text-gray-400 mb-1">Overall Attendance</div>
+        <div class="text-2xl font-bold">${student.attendance || 0}%</div>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:opacity-90 transition-opacity mark-present" data-id="${student.id}">
+        Mark Present
+      </button>
+      <button class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 text-white font-medium hover:opacity-90 transition-opacity mark-absent" data-id="${student.id}">
+        Mark Absent
+      </button>
+    </div>
+  `;
+
+  document.getElementById('studentModal')?.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  if (window.feather) feather.replace();
+}
+
+function closeStudentModal() {
+  document.getElementById('studentModal')?.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Export CSV
+function exportCSV() {
+  const headers = ['Student ID', 'Name', 'Student Number', 'Blood Type', 'Status', 'Time', 'Date', 'Class'];
+  const rows = currentStudents.map(s => {
+    const rec = getTodayRecord(s.id);
+    return [
+      s.id,
+      s.name,
+      s.studentNumber,
+      s.bloodType,
+      rec.status,
+      rec.time || '',
+      todayISO,
+      selectedClassId || ''
+    ];
+  });
+
+  const csvContent = [headers, ...rows]
+    .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `attendance_${selectedClassId || 'class'}_${todayISO}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Chart
+function renderChart() {
+  const ctx = document.getElementById('attendanceChart');
+  if (!ctx) return;
+
+  if (attendanceChart) {
+    attendanceChart.destroy();
+  }
+
+  // Simple mock dataset: last 7 days
+  const labels = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toLocaleDateString(undefined, { weekday: 'short' });
+  });
+
+  const presentData = labels.map(() => Math.floor(Math.random() * 6) + Math.max(1, currentStudents.length - 5));
+  const absentData = labels.map(() => Math.floor(Math.random() * 4) + 1);
+  const lateData = labels.map(() => Math.floor(Math.random() * 3) + 1);
+
+  attendanceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Present',
+          data: presentData,
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52, 211, 153, 0.2)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Absent',
+          data: absentData,
+          borderColor: '#f87171',
+          backgroundColor: 'rgba(248, 113, 113, 0.2)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Late',
+          data: lateData,
+          borderColor: '#fbbf24',
+          backgroundColor: 'rgba(251, 191, 36, 0.2)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e2e8f0' } }
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      }
+    }
+  });
+}
+
+// Event Handlers
+function bindEvents() {
+  // Class selection
+  if (classSelectEl) {
+    classSelectEl.addEventListener('change', async (e) => {
+      const classId = e.target.value;
+      await setSelectedClass(classId, true);
+      filterStudents();
+    });
+  }
+
+  // Filters
+  const studentSearchEl = document.getElementById('studentSearch');
+  const presentFilterEl = document.getElementById('presentFilter');
+  const bloodFilterEl = document.getElementById('bloodFilter');
+  if (studentSearchEl) studentSearchEl.addEventListener('input', filterStudents);
+  if (presentFilterEl) presentFilterEl.addEventListener('change', filterStudents);
+  if (bloodFilterEl) bloodFilterEl.addEventListener('change', filterStudents);
+
+  // Master checkbox
+  const masterCheckbox = document.getElementById('masterCheckbox');
+  if (masterCheckbox) {
+    masterCheckbox.addEventListener('change', (e) => {
+      selectedRows.clear();
+      if (e.target.checked) {
+        currentStudents.forEach(s => selectedRows.add(s.id));
+      }
+      // Reflect in UI
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = e.target.checked;
+      });
+      updateSelectionSummary();
+    });
+  }
+
+  // Row selection (event delegation)
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('row-checkbox')) {
+      const row = e.target.closest('tr');
+      if (!row) return;
+      const id = parseInt(row.dataset.id, 10);
+      if (e.target.checked) selectedRows.add(id);
+      else selectedRows.delete(id);
+      // Update master
+      if (masterCheckbox) {
+        masterCheckbox.checked = selectedRows.size === currentStudents.length;
+        masterCheckbox.indeterminate = selectedRows.size > 0 && selectedRows.size < currentStudents.length;
+      }
+      updateSelectionSummary();
+    }
+  });
+
+  // Quick actions (event delegation)
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.quick-present')) {
+      const id = parseInt(e.target.closest('.quick-present').dataset.id, 10);
+      setTodayRecord(id, 'present');
+      renderTable();
+    } else if (e.target.closest('.quick-absent')) {
+      const id = parseInt(e.target.closest('.quick-absent').dataset.id, 10);
+      setTodayRecord(id, 'absent');
+      renderTable();
+    } else if (e.target.closest('.view-student')) {
+      const id = e.target.closest('.view-student').dataset.id;
+      openStudentModal(id);
+    }
+  });
+
+  // Bulk actions
+  const markPresentBtn = document.getElementById('markPresentBtn');
+  const markAbsentBtn = document.getElementById('markAbsentBtn');
+  const markLateBtn = document.getElementById('markLateBtn');
+  const markExcusedBtn = document.getElementById('markExcusedBtn');
+  if (markPresentBtn) markPresentBtn.addEventListener('click', () => {
+    getSelectedIds().forEach(id => setTodayRecord(id, 'present'));
+    renderTable();
+  });
+  if (markAbsentBtn) markAbsentBtn.addEventListener('click', () => {
+    getSelectedIds().forEach(id => setTodayRecord(id, 'absent'));
+    renderTable();
+  });
+  if (markLateBtn) markLateBtn.addEventListener('click', () => {
+    getSelectedIds().forEach(id => setTodayRecord(id, 'late'));
+    renderTable();
+  });
+  if (markExcusedBtn) markExcusedBtn.addEventListener('click', () => {
+    getSelectedIds().forEach(id => setTodayRecord(id, 'excused'));
+    renderTable();
+  });
+
+  // Select/Clear
+  const selectAllBtn = document.getElementById('selectAllBtn');
+  const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+  if (selectAllBtn) selectAllBtn.addEventListener('click', () => {
+    selectedRows = new Set(currentStudents.map(s => s.id));
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = true);
+    if (masterCheckbox) {
+      masterCheckbox.checked = true;
+      masterCheckbox.indeterminate = false;
+    }
+    updateSelectionSummary();
+  });
+  if (clearSelectionBtn) clearSelectionBtn.addEventListener('click', () => {
+    selectedRows.clear();
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    if (masterCheckbox) {
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = false;
+    }
+    updateSelectionSummary();
+  });
+
+  // Export
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+  if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportCSV);
+
+  // Modal
+  const closeStudentModalBtn = document.getElementById('closeStudentModal');
+  if (closeStudentModalBtn) closeStudentModalBtn.addEventListener('click', closeStudentModal);
+
+  const studentModal = document.getElementById('studentModal');
+  if (studentModal) {
+    studentModal.addEventListener('click', (e) => {
+      if (e.target.id === 'studentModal') closeStudentModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeStudentModal();
+  });
+
+  // Modal quick mark (delegation)
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.mark-present')) {
+      const id = parseInt(e.target.closest('.mark-present').dataset.id, 10);
+      setTodayRecord(id, 'present');
+      renderTable();
+      closeStudentModal();
+    }
+    if (e.target.closest('.mark-absent')) {
+      const id = parseInt(e.target.closest('.mark-absent').dataset.id, 10);
+      setTodayRecord(id, 'absent');
+      renderTable();
+      closeStudentModal();
+    }
+  });
+
+  // Icons init on load
+  if (window.feather) feather.replace();
+}
     </script>
-<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
 </body>
 </html>

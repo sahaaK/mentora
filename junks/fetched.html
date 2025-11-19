@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>University Programs — Firestore Cards</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24' fill='none' stroke='%230ea5e9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 10L12 7 2 10l10 3 10-3z'/%3E%3Cpath d='M6 12v5c0 .6.4 1 1 1h10c.6 0 1-.4 1-1v-5'/%3E%3Cpath d='M12 9v8'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial']
+          },
+          colors: {
+            primary: '#06b6d4',
+            secondary: '#0ea5e9'
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-6px)' }
+            },
+            shine: {
+              '0%': { transform: 'translateX(-120%) skewX(-15deg)' },
+              '100%': { transform: 'translateX(220%) skewX(-15deg)' }
+            },
+            blob: {
+              '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+              '33%': { transform: 'translate(10px, -14px) scale(1.05)' },
+              '66%': { transform: 'translate(-8px, 8px) scale(0.98)' }
+            }
+          },
+          animation: {
+            float: 'float 6s ease-in-out infinite',
+            shine: 'shine 1.6s ease-in-out infinite',
+            blob: 'blob 9s ease-in-out infinite'
+          },
+          backgroundImage: {
+            'aurora-gradient':
+              'linear-gradient(45deg, #06b6d4, #0ea5e9, #3b82f6, #6366f1, #8b5cf6)'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-dark: #0b1220;
+  --glass: rgba(15, 23, 42, 0.55);
+  --glass-strong: rgba(15, 23, 42, 0.8);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(6,182,212,0.15), transparent 60%),
+              radial-gradient(1000px 500px at 90% 10%, rgba(99,102,241,0.12), transparent 60%),
+              var(--bg-dark);
+  min-height: 100%;
+  color: var(--text);
+}
+
+/* Animated background bubbles */
+.bubble-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(6,182,212,0.14), rgba(99,102,241,0.06));
+  filter: blur(1px);
+  animation: floatBubble 24s linear infinite;
+}
+
+@keyframes floatBubble {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0.9);
+    opacity: 0.0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(50vh) translateX(40px) scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(-30px) scale(0.85);
+    opacity: 0.0;
+  }
+}
+
+/* Glass Card */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(1.1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+  transition: all 0.35s ease;
+}
+
+.glass-card:hover {
+  background: var(--glass-strong);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.45);
+}
+
+/* Card style-1 glow border wrapper */
+.glow-wrapper {
+  position: relative;
+  overflow: visible;
+}
+
+.glow-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  background: linear-gradient(45deg, #06b6d4, #0ea5e9, #3b82f6, #6366f1, #8b5cf6);
+  opacity: 0.45;
+  filter: blur(10px);
+  transition: opacity 0.35s ease;
+  z-index: -1;
+}
+
+.glow-wrapper:hover::before {
+  opacity: 0.9;
+}
+
+/* Tiltable card */
+.tilt {
+  will-change: transform, box-shadow;
+  transform-style: preserve-3d;
+}
+
+/* Glass form controls */
+.form-select, .form-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 12px;
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.form-select:focus, .form-input:focus {
+  border-color: rgba(6,182,212,0.5);
+  box-shadow: 0 0 0 3px rgba(6,182,212,0.15);
+  background: rgba(255,255,255,0.09);
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1.2em;
+  padding-right: 2.4rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  width: min(92vw, 720px);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  animation: modalEnter 0.25s ease-out;
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Reveal on scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .bubble { animation: none; }
+  .glass-card, .glow-wrapper::before { transition: none; }
+}
+  </style>
+</head>
+<body class="font-sans antialiased text-slate-100 overflow-x-hidden">
+  <!-- Animated Background -->
+  <div class="bubble-container"></div>
+
+  <header class="px-6 pt-10 pb-6">
+    <div class="mx-auto max-w-7xl">
+      <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+        University Programs
+      </h1>
+      <p class="text-slate-300 mt-2">Discover programs fetched from Cloud Firestore.</p>
+      <p class="text-slate-400 text-sm mt-1">Theme: glassy dark • Primary: #06b6d4 • Secondary: #0ea5e9</p>
+    </div>
+  </header>
+
+  <main class="px-6 pb-16">
+    <div class="mx-auto max-w-7xl space-y-8">
+      <!-- Quick Overview Stats -->
+      <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-primary/20">
+            <i data-feather="book-open" class="text-primary"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Programs</h3>
+            <p class="text-sm text-slate-300" id="statTotal">—</p>
+          </div>
+        </div>
+        <div class="glass-card p-6 flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-secondary/20">
+            <i data-feather="cpu" class="text-secondary"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Average Duration</h3>
+            <p class="text-sm text-slate-300" id="statAvgDuration">—</p>
+          </div>
+        </div>
+        <div class="glass-card p-6 flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-purple-500/20">
+            <i data-feather="globe" class="text-purple-400"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Top Field</h3>
+            <p class="text-sm text-slate-300" id="statTopField">—</p>
+          </div>
+        </div>
+        <div class="glass-card p-6 flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-emerald-500/20">
+            <i data-feather="award" class="text-emerald-400"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Top Degree</h3>
+            <p class="text-sm text-slate-300" id="statTopDegree">—</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section class="glass-card p-4">
+        <div class="flex flex-col md:flex-row gap-3 items-center justify-between">
+          <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            <select id="degreeFilter" class="form-select">
+              <option value="">All Degrees</option>
+              <option>BSc</option>
+              <option>BEng</option>
+              <option>BA</option>
+              <option>MSc</option>
+              <option>MEng</option>
+              <option>MA</option>
+            </select>
+            <select id="fieldFilter" class="form-select">
+              <option value="">All Fields</option>
+              <option>Engineering</option>
+              <option>Computer Science</option>
+              <option>Business</option>
+              <option>Medicine</option>
+              <option>Arts</option>
+              <option>Science</option>
+            </select>
+            <select id="durationFilter" class="form-select">
+              <option value="">Any Duration</option>
+              <option value="2">2 years</option>
+              <option value="3">3 years</option>
+              <option value="4">4 years</option>
+              <option value="5">5 years</option>
+              <option value="6">6 years</option>
+            </select>
+          </div>
+          <div class="flex gap-3 w-full md:w-auto">
+            <button id="clearFilters" class="glass-card px-4 py-2 rounded-xl bg-slate-700/50 hover:bg-slate-600/60 transition-colors text-sm">
+              Clear
+            </button>
+            <button id="applyFilters" class="glass-card px-4 py-2 rounded-xl bg-aurora-gradient text-white font-semibold hover:opacity-90 transition-opacity text-sm">
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Programs Grid: STYLE 1 -->
+      <section id="programsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <!-- Program cards will render here -->
+      </section>
+    </div>
+  </main>
+
+  <!-- Program Detail Modal -->
+  <div id="programModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-white" id="modalTitle">Program Details</h2>
+        <button id="closeModalBtn" class="glass-card p-2 rounded-lg hover:bg-slate-700/60 transition-colors">
+          <i data-feather="x" class="w-5 h-5 text-slate-200"></i>
+        </button>
+      </div>
+      <div id="modalBody" class="space-y-4 text-slate-200">
+        <!-- Dynamic content -->
+      </div>
+      <div class="mt-6 flex justify-end">
+        <a id="manageProgramLink" href="#" class="glass-card px-4 py-2 rounded-xl bg-aurora-gradient text-white font-semibold hover:opacity-90 transition-opacity">
+          Manage Program
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+  authDomain: "mentora-71f5c.firebaseapp.com",
+  projectId: "mentora-71f5c",
+  storageBucket: "mentora-71f5c.appspot.com",
+  messagingSenderId: "16685388211",
+  appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+  measurementId: "G-BL98PXGK2G"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// DOM
+const programsGrid = document.getElementById('programsGrid');
+const degreeFilter = document.getElementById('degreeFilter');
+const fieldFilter = document.getElementById('fieldFilter');
+const durationFilter = document.getElementById('durationFilter');
+const applyFiltersBtn = document.getElementById('applyFilters');
+const clearFiltersBtn = document.getElementById('clearFilters');
+
+const statTotal = document.getElementById('statTotal');
+const statAvgDuration = document.getElementById('statAvgDuration');
+const statTopField = document.getElementById('statTopField');
+const statTopDegree = document.getElementById('statTopDegree');
+
+const programModal = document.getElementById('programModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const manageProgramLink = document.getElementById('manageProgramLink');
+
+// Bubbles background
+function createBubbles() {
+  const container = document.querySelector('.bubble-container');
+  const count = 16;
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random() * 140 + 60; // 60 - 200
+    const left = Math.random() * 100;
+    const delay = Math.random() * 20;
+    b.style.width = `${size}px`;
+    b.style.height = `${size}px`;
+    b.style.left = `${left}%`;
+    b.style.animationDelay = `${delay}s`;
+    container.appendChild(b);
+  }
+}
+
+// Tilt effect for cards
+function attachTilt(el) {
+  const damp = 18;
+  el.addEventListener('mousemove', (e) => {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const rx = ((y / rect.height) - 0.5) * -damp;
+    const ry = ((x / rect.width) - 0.5) * damp;
+    el.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = 'perspective(900px) rotateX(0) rotateY(0)';
+  });
+}
+
+// Reveal on scroll
+function setupReveal() {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(ent => {
+      if (ent.isIntersecting) {
+        ent.target.classList.add('in');
+        io.unobserve(ent.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal').forEach(node => io.observe(node));
+}
+
+// Fetch programs
+let allPrograms = [];
+
+async function fetchPrograms() {
+  programsGrid.innerHTML = `
+    <div class="glass-card p-10 text-center col-span-full">
+      <div class="inline-flex items-center gap-3">
+        <div class="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+        <span class="text-slate-300">Loading programs…</span>
+      </div>
+    </div>
+  `;
+  try {
+    const snap = await db.collection('programs').orderBy('createdAt', 'desc').get();
+    allPrograms = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderPrograms(allPrograms);
+    updateStats(allPrograms);
+  } catch (err) {
+    console.error(err);
+    programsGrid.innerHTML = `
+      <div class="glass-card p-10 text-center col-span-full">
+        <p class="text-red-300">Failed to load programs. Check your Firestore rules.</p>
+      </div>
+    `;
+  }
+}
+
+// Filter and render
+function applyFilters() {
+  const deg = degreeFilter.value;
+  const field = fieldFilter.value;
+  const dur = parseInt(durationFilter.value || '0', 10);
+
+  const filtered = allPrograms.filter(p => {
+    const okDeg = !deg || (p.degree || '').toLowerCase() === deg.toLowerCase();
+    const okField = !field || (p.field || '').toLowerCase() === field.toLowerCase();
+    const okDur = !dur || (p.durationYears || 0) === dur;
+    return okDeg && okField && okDur;
+  });
+
+  renderPrograms(filtered);
+  updateStats(filtered);
+}
+
+function clearFilters() {
+  degreeFilter.value = '';
+  fieldFilter.value = '';
+  durationFilter.value = '';
+  renderPrograms(allPrograms);
+  updateStats(allPrograms);
+}
+
+// Render STYLE 1 cards
+function renderPrograms(list) {
+  if (!list.length) {
+    programsGrid.innerHTML = `
+      <div class="glass-card p-10 text-center col-span-full">
+        <p class="text-slate-300">No programs found.</p>
+      </div>
+    `;
+    feather.replace();
+    return;
+  }
+
+  programsGrid.innerHTML = list.map(p => cardStyle1(p)).join('');
+  feather.replace();
+
+  // attach interactions
+  document.querySelectorAll('.tilt').forEach(attachTilt);
+  document.querySelectorAll('.view-program-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-id');
+      openProgramModal(id);
+    });
+  });
+}
+
+// Compute stats
+function updateStats(list) {
+  statTotal.textContent = list.length;
+  const avgDur = list.length ? (list.reduce((a, b) => a + (b.durationYears || 0), 0) / list.length) : 0;
+  statAvgDuration.textContent = avgDur ? `${avgDur.toFixed(1)} years` : '—';
+
+  const fieldCount = {};
+  const degreeCount = {};
+  list.forEach(p => {
+    const f = p.field || 'Other';
+    const d = p.degree || 'Other';
+    fieldCount[f] = (fieldCount[f] || 0) + 1;
+    degreeCount[d] = (degreeCount[d] || 0) + 1;
+  });
+
+  const topField = Object.entries(fieldCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  const topDegree = Object.entries(degreeCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  statTopField.textContent = topField;
+  statTopDegree.textContent = topDegree;
+}
+
+// STYLE 1 template
+function cardStyle1(p) {
+  const {
+    id,
+    name = 'Program',
+    degree = 'BSc',
+    field = 'Engineering',
+    image = 'https://images.unsplash.com/photo-1542744094-3a31f272c490?q=80&w=1400&auto=format&fit=crop',
+    faculty = 'Faculty',
+    description = 'Program description...',
+    tags = ['General'],
+    durationYears = 3
+  } = p;
+
+  const manageUrl = `manage-program.html?id=${encodeURIComponent(id)}`;
+  const tagIcons = {
+    'AI & ML': 'cpu',
+    'Systems': 'hard-drive',
+    'Cloud': 'globe',
+    'Security': 'shield',
+    'Data': 'database',
+    'DevOps': 'git-branch',
+    'Capstone': 'award',
+    'Co-op': 'briefcase'
+  };
+
+  const tagBadges = (tags || []).slice(0, 4).map(t => {
+    const icon = tagIcons[t] || 'book';
+    return `
+      <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-slate-200">
+        <i data-feather="${icon}" class="w-3.5 h-3.5 text-primary"></i> ${t}
+      </span>
+    `;
+  }).join('');
+
+  return `
+    <div class="glow-wrapper reveal">
+      <div class="group relative overflow-visible">
+        <div class="pointer-events-none absolute -inset-1 rounded-2xl opacity-0 blur-md transition duration-700 bg-primary/60 group-hover:opacity-100"></div>
+        <article class="card relative h-[420px] rounded-2xl glass border border-white/10 overflow-hidden shadow-sm transition-all duration-500 hover:shadow-xl tilt">
+          <div class="absolute -top-14 -right-14 h-40 w-40 rounded-full bg-primary/20 blur-2xl"></div>
+          <div class="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-secondary/20 blur-xl"></div>
+          <div class="absolute inset-0 bg-gradient-to-br from-primary/0 via-secondary/0 to-primary/0"></div>
+
+          <div class="relative h-44 overflow-hidden">
+            <img src="${image}" alt="${name}" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent"></div>
+
+            <div class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-1.5 text-slate-100 shadow border border-white/10">
+              <i data-feather="cpu" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-semibold">${degree} ${field}</span>
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+              <div class="text-white">
+                <div class="flex items-center gap-2 text-white/80 text-xs">
+                  <i data-feather="map-pin" class="w-3.5 h-3.5"></i>
+                  <span>${faculty}</span>
+                </div>
+                <h3 class="text-lg font-bold leading-tight">${name}</h3>
+              </div>
+              <div class="rounded-full p-2 bg-white/10 border border-white/20 text-white shadow">
+                <i data-feather="arrow-right" class="w-5 h-5"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <p class="text-sm text-slate-200/90 line-clamp-3">
+              ${description}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              ${tagBadges}
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-slate-200">
+                <div class="text-xs">Duration</div>
+                <div class="font-semibold">${durationYears} ${durationYears === 1 ? 'year' : 'years'}</div>
+              </div>
+              <div class="flex gap-2">
+                <a href="#" class="view-program-btn inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-white text-sm font-semibold hover:bg-secondary/90 transition-colors" data-id="${id}">
+                  <i data-feather="info" class="w-4 h-4"></i>
+                  Details
+                </a>
+                <a href="${manageUrl}" class="inline-flex items-center gap-2 rounded-xl bg-aurora-gradient px-4 py-2 text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+                  <i data-feather="external-link" class="w-4 h-4"></i>
+                  Manage
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  `;
+}
+
+// Modal
+function openProgramModal(programId) {
+  const p = allPrograms.find(x => x.id === programId);
+  if (!p) return;
+
+  modalTitle.textContent = `${p.name} — ${p.degree}`;
+  manageProgramLink.href = `manage-program.html?id=${encodeURIComponent(p.id)}`;
+
+  modalBody.innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="space-y-2">
+        <div class="text-slate-400 text-sm">Field</div>
+        <div class="font-semibold">${p.field || '—'}</div>
+      </div>
+      <div class="space-y-2">
+        <div class="text-slate-400 text-sm">Duration</div>
+        <div class="font-semibold">${p.durationYears || '—'} ${p.durationYears === 1 ? 'year' : 'years'}</div>
+      </div>
+      <div class="space-y-2">
+        <div class="text-slate-400 text-sm">Faculty</div>
+        <div class="font-semibold">${p.faculty || '—'}</div>
+      </div>
+      <div class="space-y-2">
+        <div class="text-slate-400 text-sm">Degree</div>
+        <div class="font-semibold">${p.degree || '—'}</div>
+      </div>
+    </div>
+    <div class="space-y-2 pt-2">
+      <div class="text-slate-400 text-sm">Overview</div>
+      <div class="text-slate-100">${p.description || 'No description provided.'}</div>
+    </div>
+    <div class="space-y-2 pt-2">
+      <div class="text-slate-400 text-sm">Tags</div>
+      <div class="flex flex-wrap gap-2">${(p.tags || []).map(t => `<span class="px-3 py-1 rounded-full bg-white/10 border border-white/10">${t}</span>`).join('')}</div>
+    </div>
+    <div class="space-y-2 pt-2">
+      <div class="text-slate-400 text-sm">Image</div>
+      <img src="${p.image}" alt="${p.name}" class="rounded-xl border border-white/10" />
+    </div>
+  `;
+
+  programModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  programModal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Events
+applyFiltersBtn.addEventListener('click', applyFilters);
+clearFiltersBtn.addEventListener('click', clearFilters);
+closeModalBtn.addEventListener('click', closeModal);
+programModal.addEventListener('click', (e) => {
+  if (e.target === programModal) closeModal();
+});
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  createBubbles();
+  setupReveal();
+  feather.replace();
+  fetchPrograms();
+});
+  </script>
+  <script>feather.replace();</script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

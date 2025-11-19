@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Fee Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#fdf4ff',
+                            100: '#fae8ff',
+                            200: '#f5d0fe',
+                            300: '#f0abfc',
+                            400: '#e879f9',
+                            500: '#d946ef',
+                            600: '#c026d3',
+                            700: '#a21caf',
+                            800: '#86198f',
+                            900: '#701a75',
+                        }
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <!-- Animated Background -->
+    <div class="fixed inset-0 z-0">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        <div class="bubble-container"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative z-10 px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+                        <span class="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+                            Fee Management System
+                        </span>
+                    </h1>
+                    <p class="text-gray-400">University of Excellence - Fee Configuration Portal</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-500/10 transition-all">
+                        <i data-feather="refresh-cw"></i>
+                        <span>Sync</span>
+                    </button>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-400 to-secondary-400 flex items-center justify-center text-white font-bold">
+                            FM
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 pb-12">
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-primary-500/20">
+                    <i data-feather="university" class="text-primary-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Total Faculties</h3>
+                    <p class="text-sm text-gray-400" id="totalFaculties">23</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-emerald-500/20">
+                    <i data-feather="dollar-sign" class="text-emerald-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Total Revenue</h3>
+                    <p class="text-sm text-gray-400" id="totalRevenue">$0</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-amber-500/20">
+                    <i data-feather="users" class="text-amber-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Departments</h3>
+                    <p class="text-sm text-gray-400" id="totalDepartments">7</p>
+                </div>
+            </div>
+            <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                <div class="p-3 rounded-lg bg-secondary-500/20">
+                    <i data-feather="trending-up" class="text-secondary-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold">Avg Fee</h3>
+                    <p class="text-sm text-gray-400" id="avgFee">$0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Filter -->
+        <div class="glass-card gradient-border p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <h2 class="text-xl font-bold text-white">Fee Configuration</h2>
+                <div class="flex gap-4">
+                    <select id="departmentFilter" class="form-select">
+                        <option value="">All Departments</option>
+                        <option value="medicine">Medicine</option>
+                        <option value="business">Business</option>
+                        <option value="social">Social Sciences</option>
+                        <option value="marine">Marine Studies</option>
+                        <option value="agriculture">Agriculture</option>
+                        <option value="technology">Technology</option>
+                    </select>
+                    <button id="addNewFeeBtn" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+                        <i data-feather="plus" class="w-4 h-4"></i>
+                        Quick Set Fee
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Faculty Cards Grid -->
+        <div id="facultiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Faculty cards will be dynamically inserted here -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <div class="glass-card p-8 inline-block rounded-lg">
+                <div class="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p class="text-gray-400">Loading faculty fees...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Fee Setting Modal -->
+    <div id="feeModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Set Faculty Fee</h2>
+                <button id="closeModalBtn" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <form id="feeForm" class="space-y-4">
+                <div>
+                    <label for="facultyName" class="form-label">Faculty</label>
+                    <input type="text" id="facultyName" class="form-input" readonly>
+                </div>
+                
+                <div>
+                    <label for="department" class="form-label">Department</label>
+                    <input type="text" id="department" class="form-input" readonly>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="semester1Fee" class="form-label">Semester 1 Fee (USD)</label>
+                        <input type="number" id="semester1Fee" class="form-input" placeholder="0" required>
+                    </div>
+                    <div>
+                        <label for="semester2Fee" class="form-label">Semester 2 Fee (USD)</label>
+                        <input type="number" id="semester2Fee" class="form-input" placeholder="0" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="totalAmount" class="form-label">Total Annual Fee (USD)</label>
+                        <input type="number" id="totalAmount" class="form-input" placeholder="0" readonly>
+                    </div>
+                    <div>
+                        <label for="currency" class="form-label">Currency</label>
+                        <select id="currency" class="form-select">
+                            <option value="USD">USD ($)</option>
+                            <option value="UGX">UGX (UGX)</option>
+                            <option value="EUR">EUR (€)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="notes" class="form-label">Additional Notes (Optional)</label>
+                    <textarea id="notes" class="form-input" rows="3" placeholder="Enter any additional fee details..."></textarea>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full glass-card py-2 rounded-lg bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                        <i data-feather="save" class="w-4 h-4"></i>
+                        Save Fee Structure
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Fee Set Modal -->
+    <div id="quickFeeModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Quick Fee Configuration</h2>
+                <button id="closeQuickModalBtn" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <form id="quickFeeForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="quickSemester1Fee" class="form-label">Default Semester 1 Fee (USD)</label>
+                        <input type="number" id="quickSemester1Fee" class="form-input" placeholder="600" value="600" required>
+                    </div>
+                    <div>
+                        <label for="quickSemester2Fee" class="form-label">Default Semester 2 Fee (USD)</label>
+                        <input type="number" id="quickSemester2Fee" class="form-input" placeholder="600" value="600" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Select Faculties to Apply This Fee:</label>
+                    <div class="grid grid-cols-2 gap-2 mt-2 max-h-60 overflow-y-auto">
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" class="rounded text-primary-500" value="Bachelor of Medicine and Surgery (MBBS)" checked>
+                            <span>MBBS</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" class="rounded text-primary-500" value="Bachelor of Business Administration" checked>
+                            <span>BBA</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" class="rounded text-primary-500" value="Bachelor of Computer Science (Software Engineering)" checked>
+                            <span>CS - Software</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" class="rounded text-primary-500" value="Bachelor of Public Administration" checked>
+                            <span>Public Admin</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" class="rounded text-primary-500" value="Bachelor of Science in Agriculture" checked>
+                            <span>Agriculture</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" class="rounded text-primary-500" value="Bachelor of Climate Change and Environmental Studies" checked>
+                            <span>Environmental Studies</span>
+                        </label>
+                        <!-- More checkboxes will be added dynamically -->
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full glass-card py-2 rounded-lg bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                        <i data-feather="zap" class="w-4 h-4"></i>
+                        Apply to Selected Faculties
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>feather.replace();</script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

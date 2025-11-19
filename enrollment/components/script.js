@@ -54,6 +54,7 @@ const facultyOptions = {
         "Bachelor of Engineering (Electrical Engineering)",
         "Bachelor of Engineering (Telecommunication Engineering)"
     ]
+    
 };
 
 /* Utility */

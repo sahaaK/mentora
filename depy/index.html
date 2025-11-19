@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Registration System</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+   <style>
+     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+/* Glass panel styles */
+.glass-card {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
+    border-radius: 16px;
+}
+
+.glass-card:hover {
+    background: rgba(15, 23, 42, 0.8);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated gradient border */
+.gradient-border {
+    position: relative;
+    z-index: 1;
+}
+
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #06b6d4, #0ea5e9, #3b82f6);
+    z-index: -1;
+    border-radius: 18px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.glass-card:hover .gradient-border::before {
+    opacity: 1;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Faculty image styling */
+.faculty-img {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    aspect-ratio: 1/1;
+}
+
+.faculty-img::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3));
+    z-index: 1;
+}
+
+.faculty-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.glass-card:hover .faculty-img img {
+    transform: scale(1.05);
+}
+
+/* Stats styling */
+.stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Bubble animation container */
+.bubble-container {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.05));
+    backdrop-filter: blur(1px);
+    animation: float 20s infinite ease-in-out;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) translateX(0) scale(1);
+    }
+    33% {
+        transform: translateY(-100px) translateX(50px) scale(1.1);
+    }
+    66% {
+        transform: translateY(50px) translateX(-50px) scale(0.9);
+    }
+}
+
+/* Department image styling */
+.department-img {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.department-img::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.1));
+    z-index: 1;
+}
+
+.department-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.glass-card:hover .department-img img {
+    transform: scale(1.05);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(6, 182, 212, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.5);
+}
+
+/* Animation classes */
+.animate-slide-up {
+    animation: slideInUp 0.6s ease forwards;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pulse animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glass-card {
+        margin: 0 10px;
+    }
+    
+    .department-img {
+        height: 200px;
+    }
+}
+
+/* Form styles */
+.form-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+   </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+    <!-- Animated Background -->
+    <div class="bubble-container"></div>
+
+    <!-- Header -->
+    <header class="px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">
+                        <span class="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                            Department Registration
+                        </span>
+                    </h1>
+                    <p class="text-gray-400">Manage your academic departments securely</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-cyan-500/10 transition-all">
+                        <i data-feather="bell"></i>
+                        <span>Notifications</span>
+                    </button>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold">
+                            AD
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- Dashboard Overview -->
+        <div class="glass-card gradient-border p-6 mb-8 animate-slide-up">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Stats Section -->
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold mb-6">Department Overview</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="stat-item">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-lg bg-cyan-500/20">
+                                    <i data-feather="home" class="text-cyan-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm">Total Departments</p>
+                                    <p class="text-2xl font-bold" id="totalDepartments">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-lg bg-blue-500/20">
+                                    <i data-feather="user-check" class="text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm">Deans</p>
+                                    <p class="text-2xl font-bold" id="deansCount">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-lg bg-purple-500/20">
+                                    <i data-feather="users" class="text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm">Total Students</p>
+                                    <p class="text-2xl font-bold" id="totalStudents">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-lg bg-rose-500/20">
+                                    <i data-feather="calendar" class="text-rose-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm">Avg. Duration</p>
+                                    <p class="text-2xl font-bold" id="avgDuration">0 yrs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Chart -->
+                    <div class="glass-card p-4 rounded-xl">
+                        <h3 class="font-semibold mb-3">Department Growth</h3>
+                        <div class="h-32 flex items-end gap-2">
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t" style="height: 60%"></div>
+                                <span class="text-xs mt-1 text-gray-400">Jan</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t" style="height: 75%"></div>
+                                <span class="text-xs mt-1 text-gray-400">Feb</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t" style="height: 45%"></div>
+                                <span class="text-xs mt-1 text-gray-400">Mar</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t" style="height: 90%"></div>
+                                <span class="text-xs mt-1 text-gray-400">Apr</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t" style="height: 65%"></div>
+                                <span class="text-xs mt-1 text-gray-400">May</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t" style="height: 80%"></div>
+                                <span class="text-xs mt-1 text-gray-400">Jun</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Image Section -->
+                <div class="lg:w-1/3">
+                    <div class="faculty-img w-full h-64 rounded-xl overflow-hidden">
+                        <img src="http://static.photos/education/640x360/5" alt="Department Management" class="w-full h-full object-cover" />
+                    </div>
+                    <div class="mt-4 glass-card p-4 rounded-xl">
+                        <h3 class="font-semibold mb-2">Quick Actions</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="addDepartmentBtn" class="glass-card py-2 rounded-lg text-center hover:bg-cyan-500/10 transition-all flex items-center justify-center gap-1">
+                                <i data-feather="plus" class="w-4 h-4"></i>
+                                <span>Add Dept</span>
+                            </button>
+                            <button class="glass-card py-2 rounded-lg text-center hover:bg-blue-500/10 transition-all flex items-center justify-center gap-1">
+                                <i data-feather="bar-chart-2" class="w-4 h-4"></i>
+                                <span>Reports</span>
+                            </button>
+                            <button class="glass-card py-2 rounded-lg text-center hover:bg-purple-500/10 transition-all flex items-center justify-center gap-1">
+                                <i data-feather="settings" class="w-4 h-4"></i>
+                                <span>Settings</span>
+                            </button>
+                            <button class="glass-card py-2 rounded-lg text-center hover:bg-rose-500/10 transition-all flex items-center justify-center gap-1">
+                                <i data-feather="help-circle" class="w-4 h-4"></i>
+                                <span>Support</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Management -->
+        <div class="glass-card  p-6 mb-8 animate-slide-up" style="animation-delay: 0.2s">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Department Management</h2>
+                <button id="addDepartmentBtnTop" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+                    <i data-feather="plus" class="w-4 h-4"></i>
+                    Add Department
+                </button>
+            </div>
+            
+            <!-- Department Cards Grid -->
+            <div id="departmentsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Departments will be dynamically inserted here -->
+            </div>
+            
+            <!-- Pagination -->
+            <div class="flex justify-center items-center mt-8 gap-2">
+                <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <button class="glass-card p-2 rounded-lg bg-cyan-500 text-white">
+                    1
+                </button>
+                <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    2
+                </button>
+                <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    3
+                </button>
+                <button class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Department Modal -->
+    <div id="addDepartmentModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Register New Department</h2>
+                <button id="closeModalBtn" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <form id="departmentForm" class="space-y-4">
+                <div>
+                    <label for="deptName" class="form-label">Department Name</label>
+                    <input type="text" id="deptName" class="form-input" placeholder="e.g. Computer Science" required>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" class="form-input" placeholder="Login username" required>
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="Login password" required>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="deanName" class="form-label">Department Dean</label>
+                        <input type="text" id="deanName" class="form-input" placeholder="e.g. Dr. John Doe" required>
+                    </div>
+                    
+                    <div>
+                        <label for="duration" class="form-label">Duration (Years)</label>
+                        <select id="duration" class="form-select" required>
+                            <option value="">Select Duration</option>
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="deptDescription" class="form-label">Description</label>
+                    <textarea id="deptDescription" class="form-input" rows="3" placeholder="Brief description of the department"></textarea>
+                </div>
+                
+                <div>
+                    <label for="deptImage" class="form-label">Department Image URL (optional)</label>
+                    <input type="text" id="deptImage" class="form-input" placeholder="Leave blank for default image">
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full glass-card py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                        <i data-feather="save" class="w-4 h-4"></i>
+                        Register Department
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+            authDomain: "mentora-71f5c.firebaseapp.com",
+            projectId: "mentora-71f5c",
+            storageBucket: "mentora-71f5c.appspot.com",
+            messagingSenderId: "16685388211",
+            appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+            measurementId: "G-BL98PXGK2G"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // DOM elements
+        const addDepartmentBtn = document.getElementById('addDepartmentBtn');
+        const addDepartmentBtnTop = document.getElementById('addDepartmentBtnTop');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const addDepartmentModal = document.getElementById('addDepartmentModal');
+        const departmentForm = document.getElementById('departmentForm');
+        const departmentsContainer = document.getElementById('departmentsContainer');
+
+        // Create bubbles
+        function createBubbles() {
+            const container = document.querySelector('.bubble-container');
+            const bubbleCount = 15;
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                const size = Math.random() * 100 + 50;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const delay = Math.random() * 10;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.top = `${top}%`;
+                bubble.style.animationDelay = `${delay}s`;
+                
+                container.appendChild(bubble);
+            }
+        }
+
+        // Modal functions
+        function openModal() {
+            addDepartmentModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            addDepartmentModal.classList.add('hidden');
+            document.body.style.overflow = '';
+            departmentForm.reset();
+        }
+
+        // Create department card HTML
+        function createDepartmentCard(deptData) {
+            const defaultImage = deptData.image || `http://static.photos/education/320x240/${Math.floor(Math.random() * 10) + 1}`;
+            
+            return `
+                <div class="glass-card  p-0 overflow-hidden">
+                    <div class="flex flex-col md:flex-row">
+                        <div class="p-6 flex-1">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold">${deptData.name}</h3>
+                                    <p class="text-cyan-400">${deptData.duration} years</p>
+                                </div>
+                                <span class="px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-xs">
+                                    ${deptData.dean || 'Dean: N/A'}
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-feather="user" class="text-cyan-400 w-4 h-4"></i>
+                                    <span>Username: ${deptData.username}@gmail.com</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-feather="calendar" class="text-blue-400 w-4 h-4"></i>
+                                    <span>Duration: ${deptData.duration} years</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-feather="user-check" class="text-green-400 w-4 h-4"></i>
+                                    <span>Dean: ${deptData.dean || 'N/A'}</span>
+                                </div>
+                            </div>
+                            
+                            <p class="text-gray-400 text-sm mb-4 line-clamp-2">${deptData.description || 'No description provided'}</p>
+                            
+                            <div class="flex gap-2">
+                                <button class="flex-1 glass-card py-2 rounded-lg text-center hover:bg-cyan-500/10 transition-all flex items-center justify-center gap-1 edit-dept-btn" data-id="${deptData.id}">
+                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <button class="flex-1 glass-card py-2 rounded-lg text-center hover:bg-rose-500/10 transition-all flex items-center justify-center gap-1 delete-dept-btn" data-id="${deptData.id}">
+                                    <i data-feather="trash" class="w-4 h-4"></i>
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="department-img w-full md:w-40">
+                            <img src="${defaultImage}" alt="${deptData.name}" />
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load departments from Firestore
+        function loadDepartments() {
+            db.collection('departments').get().then((querySnapshot) => {
+                departmentsContainer.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    departmentsContainer.innerHTML = `
+                        <div class="glass-card p-8 text-center col-span-3">
+                            <i data-feather="alert-circle" class="w-12 h-12 text-rose-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">No Departments Found</h3>
+                            <p class="text-gray-400">Create your first department to get started</p>
+                        </div>
+                    `;
+                    feather.replace();
+                    updateStats(0, 0, 0, 0);
+                    return;
+                }
+                
+                const departments = [];
+                querySnapshot.forEach((doc) => {
+                    const deptData = doc.data();
+                    deptData.id = doc.id;
+                    departments.push(deptData);
+                    departmentsContainer.innerHTML += createDepartmentCard(deptData);
+                });
+                
+                // Update stats
+                const totalDepts = departments.length;
+                const deanSet = new Set(departments.map(d => d.dean).filter(Boolean));
+                const deansCount = deanSet.size;
+                const avgDuration = totalDepts > 0 ? 
+                    (departments.reduce((sum, dept) => sum + parseInt(dept.duration), 0) / totalDepts).toFixed(1) : 0;
+                const totalStudents = totalDepts * Math.floor(Math.random() * 100 + 50); // Simulated student count
+                
+                updateStats(totalDepts, deansCount, totalStudents, avgDuration);
+                
+                feather.replace();
+                
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-dept-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const deptId = this.getAttribute('data-id');
+                        deleteDepartment(deptId);
+                    });
+                });
+            }).catch((error) => {
+                console.error("Error getting departments: ", error);
+            });
+        }
+
+        // Update dashboard stats
+        function updateStats(totalDepts, deansCount, totalStudents, avgDuration) {
+            document.getElementById('totalDepartments').textContent = totalDepts;
+            document.getElementById('deansCount').textContent = deansCount;
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('avgDuration').textContent = `${avgDuration} yrs`;
+        }
+
+        // Delete department
+        function deleteDepartment(deptId) {
+            if (confirm('Are you sure you want to delete this department?')) {
+                // First delete the auth user
+                db.collection('departments').doc(deptId).get().then((doc) => {
+                    if (doc.exists) {
+                        const deptData = doc.data();
+                        const email = `${deptData.username}@gmail.com`;
+                        
+                        // Find and delete the user from Firebase Auth
+                        auth.fetchSignInMethodsForEmail(email).then((signInMethods) => {
+                            if (signInMethods.length > 0) {
+                                // User exists, delete from auth
+                                auth.signInWithEmailAndPassword(email, deptData.password).then((userCredential) => {
+                                    const user = userCredential.user;
+                                    user.delete().then(() => {
+                                        console.log("Auth user deleted");
+                                        // Then delete from Firestore
+                                        db.collection('departments').doc(deptId).delete().then(() => {
+                                            loadDepartments();
+                                        }).catch((error) => {
+                                            console.error("Error deleting department: ", error);
+                                        });
+                                    }).catch((error) => {
+                                        console.error("Error deleting auth user: ", error);
+                                        // Still delete from Firestore even if auth delete fails
+                                        db.collection('departments').doc(deptId).delete().then(() => {
+                                            loadDepartments();
+                                        }).catch((error) => {
+                                            console.error("Error deleting department: ", error);
+                                        });
+                                    });
+                                }).catch((error) => {
+                                    console.error("Error signing in to delete user: ", error);
+                                    // Still delete from Firestore even if auth delete fails
+                                    db.collection('departments').doc(deptId).delete().then(() => {
+                                        loadDepartments();
+                                    }).catch((error) => {
+                                        console.error("Error deleting department: ", error);
+                                    });
+                                });
+                            } else {
+                                // User doesn't exist in auth, just delete from Firestore
+                                db.collection('departments').doc(deptId).delete().then(() => {
+                                    loadDepartments();
+                                }).catch((error) => {
+                                    console.error("Error deleting department: ", error);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        // Event listeners
+        addDepartmentBtn.addEventListener('click', openModal);
+        addDepartmentBtnTop.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+
+        departmentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const deptName = document.getElementById('deptName').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const deanName = document.getElementById('deanName').value;
+            const duration = document.getElementById('duration').value;
+            const deptDescription = document.getElementById('deptDescription').value;
+            const deptImage = document.getElementById('deptImage').value;
+            
+            // Create email from username
+            const email = `${username}@gmail.com`;
+            
+            // Create user in Firebase Authentication
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // User created successfully
+                    const user = userCredential.user;
+                    console.log("User created:", user.uid);
+                    
+                    // Save department data to Firestore
+                    return db.collection('departments').add({
+                        name: deptName,
+                        username: username,
+                        password: password, // In a real app, this should be hashed or not stored
+                        dean: deanName,
+                        duration: duration,
+                        description: deptDescription,
+                        image: deptImage || '',
+                        authUserId: user.uid, // Store the auth user ID
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    closeModal();
+                    loadDepartments();
+                })
+                .catch((error) => {
+                    console.error("Error creating user or adding department: ", error);
+                    alert("Error: " + error.message);
+                });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createBubbles();
+            feather.replace();
+            loadDepartments();
+        });
+
+        feather.replace();
+        
+        // Close modal when clicking outside
+        document.getElementById('addDepartmentModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addDepartmentModal')) {
+                document.getElementById('addDepartmentModal').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+</body>
+</html>

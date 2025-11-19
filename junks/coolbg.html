@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dean Portal Login</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            border-radius: 20px;
+        }
+        
+        .glass-card:hover {
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+        
+        .gradient-border {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+            z-index: -1;
+            border-radius: 22px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .glass-card:hover .gradient-border::before {
+            opacity: 1;
+        }
+        
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .form-input::placeholder {
+            color: #64748b;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .error-shake {
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .success-pulse {
+            animation: pulse 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .vanta-canvas {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: -1;
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .login-card {
+            max-width: 420px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .logo-container {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        
+        .logo i {
+            color: white;
+            font-size: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+        }
+        
+        .input-with-icon {
+            padding-left: 48px;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: #e2e8f0;
+        }
+        
+        .error-message {
+            color: #f87171;
+            font-size: 12px;
+            margin-top: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .error-message.show {
+            opacity: 1;
+        }
+        
+        .success-message {
+            color: #34d399;
+            font-size: 12px;
+            margin-top: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .success-message.show {
+            opacity: 1;
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #6366f1;
+        }
+        
+        .forgot-link {
+            color: #6366f1;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-link:hover {
+            color: #8b5cf6;
+            text-decoration: underline;
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-primary.loading .loading-spinner {
+            display: inline-block;
+        }
+        
+        .btn-primary.loading .btn-text {
+            opacity: 0.7;
+        }
+        
+        .additional-links {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .additional-links a {
+            color: #6366f1;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .additional-links a:hover {
+            color: #8b5cf6;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 24px;
+            }
+            
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .logo i {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div id="vanta-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+        
+        <div class="login-card glass-card gradient-border fade-in" data-aos="fade-up" data-aos-duration="800">
+            <div class="logo-container">
+                <div class="logo floating-animation">
+                    <i data-feather="shield"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-2">Dean Portal</h1>
+                <p class="text-gray-400">Secure access to your department</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-wrapper">
+                        <i data-feather="user" class="input-icon"></i>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input input-with-icon" 
+                            placeholder="Enter your username"
+                            required
+                        >
+                    </div>
+                    <div class="error-message" id="usernameError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <i data-feather="lock" class="input-icon"></i>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input input-with-icon" 
+                            placeholder="Enter your password"
+                            required
+                        >
+                        <i data-feather="eye" class="password-toggle" id="togglePassword"></i>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+                
+                <div class="remember-forgot">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                        <span class="text-sm">Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full" id="loginBtn">
+                    <div class="loading-spinner"></div>
+                    <span class="btn-text">Login to Portal</span>
+                </button>
+            </form>
+            
+            <div class="additional-links">
+                <p>Need help? <a href="#">Contact Support</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+    <script>
+        // Initialize Vanta.js background
+        VANTA.GLOBE({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x6366f1,
+            color2: 0x8b5cf6,
+            backgroundColor: 0x0f172a,
+            size: 1.2
+        });
+        
+        // Initialize Feather Icons
+        feather.replace();
+        
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+        
+        // Form elements
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const togglePassword = document.getElementById('togglePassword');
+        const usernameError = document.getElementById('usernameError');
+        const passwordError = document.getElementById('passwordError');
+        
+        // Mock dean credentials (in a real app, this would be handled server-side)
+        const validCredentials = [
+            { username: 'dean_cs', password: 'cs2024', department: 'Computer Science' },
+            { username: 'dean_medical', password: 'med2024', department: 'Medical' },
+            { username: 'dean_engineering', password: 'eng2024', department: 'Engineering' },
+            { username: 'dean_business', password: 'bus2024', department: 'Business' },
+            { username: 'dean_arts', password: 'arts2024', department: 'Arts' }
+        ];
+        
+        // Toggle password visibility
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Update icon
+            this.setAttribute('data-feather', type === 'password' ? 'eye' : 'eye-off');
+            feather.replace();
+        });
+        
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            
+            // Reset error messages
+            usernameError.textContent = '';
+            passwordError.textContent = '';
+            usernameError.classList.remove('show');
+            passwordError.classList.remove('show');
+            
+            // Validate username
+            if (!usernameInput.value.trim()) {
+                usernameError.textContent = 'Username is required';
+                usernameError.classList.add('show');
+                usernameInput.parentElement.classList.add('error-shake');
+                isValid = false;
+            }
+            
+            // Validate password
+            if (!passwordInput.value) {
+                passwordError.textContent = 'Password is required';
+                passwordError.classList.add('show');
+                passwordInput.parentElement.classList.add('error-shake');
+                isValid = false;
+            }
+            
+            // Remove shake animation after it completes
+            setTimeout(() => {
+                usernameInput.parentElement.classList.remove('error-shake');
+                passwordInput.parentElement.classList.remove('error-shake');
+            }, 500);
+            
+            return isValid;
+        }
+        
+        // Simulate login process
+        function simulateLogin(username, password) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    const user = validCredentials.find(cred => 
+                        cred.username === username && cred.password === password
+                    );
+                    
+                    if (user) {
+                        resolve(user);
+                    } else {
+                        reject(new Error('Invalid credentials'));
+                    }
+                }, 1500); // Simulate network delay
+            });
+        }
+        
+        // Handle form submission
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading state
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+            
+            try {
+                const user = await simulateLogin(usernameInput.value.trim(), passwordInput.value);
+                
+                // Store login data
+                const loginData = {
+                    username: user.username,
+                    department: user.department,
+                    loginTime: new Date().toISOString(),
+                    rememberMe: document.getElementById('rememberMe').checked
+                };
+                
+                // Store in localStorage or sessionStorage
+                if (document.getElementById('rememberMe').checked) {
+                    localStorage.setItem('deanLoginData', JSON.stringify(loginData));
+                } else {
+                    sessionStorage.setItem('deanLoginData', JSON.stringify(loginData));
+                }
+                
+                // Show success state
+                loginBtn.classList.add('success-pulse');
+                loginBtn.innerHTML = '<span class="btn-text">Login Successful!</span>';
+                
+                // Redirect to dean portal
+                setTimeout(() => {
+                    window.location.href = 'dean-portal.html';
+                }, 1000);
+                
+            } catch (error) {
+                // Show error state
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+                
+                // Display error message
+                passwordError.textContent = 'Invalid username or password';
+                passwordError.classList.add('show');
+                passwordInput.parentElement.classList.add('error-shake');
+                
+                setTimeout(() => {
+                    passwordInput.parentElement.classList.remove('error-shake');
+                }, 500);
+            }
+        });
+        
+        // Check for saved login data
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('deanLoginData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                usernameInput.value = data.username;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+        
+        // Forgot password handler
+        document.querySelector('.forgot-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Password reset functionality would be implemented here. Please contact your system administrator.');
+        });
+        
+        // Input focus effects
+        [usernameInput, passwordInput].forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Real-time validation
+        usernameInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                usernameError.classList.remove('show');
+            }
+        });
+        
+        passwordInput.addEventListener('input', function() {
+            if (this.value) {
+                passwordError.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

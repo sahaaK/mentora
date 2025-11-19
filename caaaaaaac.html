@@ -3,305 +3,609 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Import Students | Mentora</title>
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>Class Management | MedGlass Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        inter: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                        },
-                        secondary: {
-                            400: '#d946ef',
-                            500: '#c026d3',
-                            600: '#a21caf',
-                            700: '#86198f',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-        :root {
-            --primary: #10b981;     /* Emerald 500 */
-            --secondary: #c026d3;   /* Fuchsia 600 */
-            --bg: #0f172a;          /* Slate 900 */
-            --panel: rgba(255,255,255,0.06);
-        }
-
-        * { box-sizing: border-box; }
-        html, body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
+            background: #0f172a;
             color: #e2e8f0;
-            min-height: 100vh;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+        /* Glass panel styles */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        .glass-panel:hover {
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            border-radius: 16px;
         }
 
-        .form-input {
-            background: rgba(15, 23, 42, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
-            padding: 0.875rem 1.25rem;
+        .glass-card:hover {
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Gradient border */
+        .gradient-border {
+            position: relative;
+            z-index: 1;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+            z-index: -1;
+            border-radius: 18px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .glass-card:hover .gradient-border::before {
+            opacity: 1;
+        }
+
+        /* Bubble background */
+        .bubble-container {
+            position: fixed;
             width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.05));
+            backdrop-filter: blur(1px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+            33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
+            66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
+        }
+
+        /* Student card specific styles */
+        .student-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 2px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(147, 51, 234, 0.5), rgba(236, 72, 153, 0.5));
+            border-radius: 18px;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: xor;
+            -webkit-mask-composite: xor;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .student-card:hover::before {
+            opacity: 1;
+        }
+
+        .student-avatar {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(147, 51, 234, 0.2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
             color: #e2e8f0;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .student-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .blood-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .progress-ring {
+            width: 48px;
+            height: 48px;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 4;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            stroke-linecap: round;
+        }
+
+        .progress-bg {
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            stroke: url(#grad-attendance);
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .progress-fill.exam {
+            stroke: url(#grad-exam);
+        }
+
+        .stat-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            text-align: center;
             transition: all 0.3s ease;
         }
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+
+        .stat-pill:hover {
+            background: rgba(255, 255, 255, 0.08);
         }
 
-        .drop-zone {
-            background: rgba(255,255,255,0.04);
-            border: 2px dashed rgba(255,255,255,0.18);
-            transition: all 0.25s ease;
-        }
-        .drop-zone.dragover {
-            background: rgba(16,185,129,0.08);
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) inset;
+        .metric-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        #toast.show {
-            opacity: 1 !important;
+        .metric-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .grade-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .floating-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: all 0.3s ease;
+        }
+
+        .student-card:hover .floating-actions {
+            opacity: 1;
             transform: translateY(0);
         }
 
-        .progress {
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .progress > div {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            width: 0%;
-            transition: width 0.25s ease;
+        .action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .row-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 14px;
-            transition: all 0.25s ease;
-        }
-        .row-card:hover {
-            background: rgba(255,255,255,0.06);
-            transform: translateY(-1px);
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(99, 102, 241, 0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.35); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.55); }
+        /* Blood type colors */
+        .blood-Aplus { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+        .blood-Aminus { background: rgba(249, 115, 22, 0.2); color: #fdba74; border-color: rgba(249, 115, 22, 0.3); }
+        .blood-Bplus { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: rgba(34, 197, 94, 0.3); }
+        .blood-Bminus { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.3); }
+        .blood-ABplus { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border-color: rgba(168, 85, 247, 0.3); }
+        .blood-ABminus { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; border-color: rgba(236, 72, 153, 0.3); }
+        .blood-Oplus { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+        .blood-Ominus { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border-color: rgba(6, 182, 212, 0.3); }
+
+        /* Color-coded progress bars */
+        .progress-fill.green { stroke: #22c55e; }
+        .progress-fill.yellow { stroke: #f59e0b; }
+        .progress-fill.red { stroke: #ef4444; }
+
+        /* Form styles */
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            color: white;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: modalEnter 0.3s ease-out;
+        }
+
+        @keyframes modalEnter {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+
+        /* Animation classes */
+        .animate-slide-up {
+            animation: slideInUp 0.6s ease forwards;
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .glass-card {
+                margin: 0 10px;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="sidebar.css">
 </head>
+<body class="min-h-screen overflow-x-hidden">
+    <!-- Animated Background -->
+    <div class="bubble-container"></div>
+     <div id="sidebar-root"></div>
+    <script src="sidebar.js"></script>
 
-<body class="min-h-screen p-6">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="glass-panel rounded-2xl p-6 mb-6" data-aos="fade-up">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center">
-                        <i data-feather="upload-cloud" class="w-6 h-6 text-primary-400"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Bulk Student Import</h1>
-                        <p class="text-gray-400 text-sm">Upload an Excel sheet, assign profile pictures, then import all at once</p>
-                    </div>
+    <!-- Header -->
+    <header class="px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">
+                        <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                            MedGlass Cloud
+                        </span>
+                    </h1>
+                    <p class="text-gray-400">MBBS Year 1 - Semester 1</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="index.html" class="action-btn">
-                        <i data-feather="arrow-left" class="w-4 h-4"></i>
-                        Back to Registration
-                    </a>
-                    <button id="btnDownloadSample" class="action-btn">
-                        <i data-feather="download" class="w-4 h-4"></i>
-                        Sample Excel
+                <div class="flex items-center gap-4">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all">
+                        <i data-feather="bell"></i>
+                        <span>Notifications</span>
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 1: Upload Excel -->
-        <div class="glass-panel rounded-2xl p-6 mb-6" data-aos="fade-up" data-aos-delay="50">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-8 h-8 rounded-lg bg-primary-600/20 flex items-center justify-center">
-                    <i data-feather="file-text" class="w-5 h-5 text-primary-400"></i>
-                </div>
-                <h2 class="text-xl font-semibold text-white">Step 1 — Upload Excel File</h2>
-            </div>
-
-            <div id="dropZone" class="drop-zone rounded-xl p-8 text-center">
-                <i data-feather="upload" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
-                <p class="text-gray-200 font-medium">Drag & drop Excel file here or click to choose</p>
-                <p class="text-gray-400 text-sm mt-1">.xlsx / .xls supported</p>
-                <input id="excelFileInput" type="file" accept=".xlsx,.xls" class="hidden">
-            </div>
-
-            <div id="fileMeta" class="mt-4 hidden text-sm text-gray-300"></div>
-        </div>
-
-        <!-- Step 2: Assign Profile Pictures -->
-        <div class="glass-panel rounded-2xl p-6 mb-6" data-aos="fade-up" data-aos-delay="100">
-            <div class="flex items-center justify-between gap-2 mb-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-secondary-600/20 flex items-center justify-center">
-                        <i data-feather="image" class="w-5 h-5 text-secondary-400"></i>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold">
+                            DR
+                        </div>
                     </div>
-                    <h2 class="text-xl font-semibold text-white">Step 2 — Assign Profile Pictures</h2>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button id="btnAssignRandom" class="py-2 px-3 rounded bg-secondary-600/20 text-secondary-200 text-sm hover:bg-secondary-600/30">
-                        <i data-feather="shuffle" class="w-4 h-4 inline mr-1"></i> Randomize Placeholders
-                    </button>
-                    <button id="btnClearAllImages" class="py-2 px-3 rounded bg-gray-600/20 text-gray-200 text-sm hover:bg-gray-600/30">
-                        <i data-feather="trash" class="w-4 h-4 inline mr-1"></i> Clear All
-                    </button>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="text-gray-300 text-sm">
-                            <th class="p-3">Student</th>
-                            <th class="p-3">Phone</th>
-                            <th class="p-3">Department</th>
-                            <th class="p-3">Faculty</th>
-                            <th class="p-3">Picture</th>
-                            <th class="p-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="studentsTbody" class="divide-y divide-white/5"></tbody>
-                </table>
             </div>
         </div>
+    </header>
 
-        <!-- Step 3: Import -->
-        <div class="glass-panel rounded-2xl p-6" data-aos="fade-up" data-aos-delay="150">
-            <div class="flex items-center justify-between gap-2 mb-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-primary-600/20 flex items-center justify-center">
-                        <i data-feather="database" class="w-5 h-5 text-primary-400"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-white">Step 3 — Import to Firestore</h2>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- Class Header -->
+        <div class="glass-card gradiant-border p-6 mb-8 animate-slide-up">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="class-img w-full md:w-1/3 h-48">
+                    <img src="http://static.photos/medical/1200x630/1" alt="MBBS Year 1" class="w-full h-full object-cover">
                 </div>
-                <div class="text-sm text-gray-300">
-                    <span id="progressSummary">0 selected</span>
-                </div>
-            </div>
-
-            <div class="progress mb-3" aria-hidden="true">
-                <div id="overallProgress"></div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <button id="btnImport" class="w-full md:w-auto py-3 px-6 bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-                    <span class="flex items-center justify-center gap-2">
-                        <i data-feather="upload-cloud" class="w-5 h-5"></i>
-                        <span>Import All to Firestore</span>
-                    </span>
-                </button>
-                <button id="btnReset" class="py-3 px-6 glass-panel rounded-lg hover:bg-white/10">
-                    <span class="flex items-center gap-2 text-gray-200">
-                        <i data-feather="refresh-ccw" class="w-4 h-4"></i>
-                        Reset
-                    </span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast -->
-    <div id="toast" class="fixed top-4 right-4 glass-panel rounded-lg p-3 text-sm text-white shadow-lg opacity-0 pointer-events-none transition-all duration-300">
-        <div class="flex items-center gap-2">
-            <i data-feather="check-circle" class="w-4 h-4 text-primary-400"></i>
-            <span id="toastText">Action completed</span>
-        </div>
-    </div>
-
-    <!-- Template Row -->
-    <template id="rowTemplate">
-        <tr class="row-card">
-            <td class="p-3">
-                <div class="font-medium text-white" data-role="name"></div>
-                <div class="text-xs text-gray-400" data-role="grad"></div>
-            </td>
-            <td class="p-3">
-                <span class="text-gray-200" data-role="phone"></span>
-            </td>
-            <td class="p-3">
-                <span class="text-gray-200" data-role="dept"></span>
-            </td>
-            <td class="p-3">
-                <span class="text-gray-200" data-role="faculty"></span>
-            </td>
-            <td class="p-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full overflow-hidden border border-white/10">
-                        <img data-role="preview" class="w-full h-full object-cover" src="" alt="">
-                    </div>
-                    <div>
-                        <label class="py-1.5 px-3 inline-flex items-center gap-2 rounded bg-primary-600/20 text-primary-200 cursor-pointer hover:bg-primary-600/30 text-sm">
-                            <i data-feather="camera" class="w-4 h-4"></i>
-                            <span>Choose</span>
-                            <input data-role="file" type="file" accept="image/*" class="hidden">
-                        </label>
-                        <button data-role="clear" class="ml-2 py-1.5 px-3 rounded bg-gray-600/20 text-gray-200 hover:bg-gray-600/30 text-sm">
-                            <i data-feather="trash" class="w-4 h-4 inline mr-1"></i> Clear
+                <div class="flex-1">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold">MBBS Year 1 - Semester 1</h2>
+                            <p class="text-indigo-400">Anatomy & Physiology</p>
+                        </div>
+                        <button id="addStudentBtn" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+                            <i data-feather="user-plus" class="w-4 h-4"></i>
+                            Add Students
                         </button>
                     </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div class="stat-item">
+                            <div class="flex items-center gap-2">
+                                <i data-feather="users" class="text-emerald-400"></i>
+                                <span>Students</span>
+                            </div>
+                            <p class="text-xl font-bold mt-1" id="studentCount">0</p>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex items-center gap-2">
+                                <i data-feather="calendar" class="text-amber-400"></i>
+                                <span>Schedule</span>
+                            </div>
+                            <p class="text-xl font-bold mt-1">Mon/Wed/Fri</p>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex items-center gap-2">
+                                <i data-feather="clock" class="text-rose-400"></i>
+                                <span>Time</span>
+                            </div>
+                            <p class="text-xl font-bold mt-1">9:00-11:00</p>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex items-center gap-2">
+                                <i data-feather="activity" class="text-purple-400"></i>
+                                <span>Avg Grade</span>
+                            </div>
+                            <p class="text-xl font-bold mt-1">B+</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-sm text-gray-400">Course Progress</span>
+                        <span class="text-sm font-medium text-emerald-400">75%</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500" style="width: 75%"></div>
+                    </div>
                 </div>
-            </td>
-            <td class="p-3">
-                <span data-role="status" class="text-xs text-gray-400">No image</span>
-            </td>
-        </tr>
-    </template>
+            </div>
+        </div>
+
+        <!-- Students Section -->
+        <div class="glass-card gradiant-border p-6 mb-8 animate-slide-up" style="animation-delay: 0.1s">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold">Students</h2>
+                    <p class="text-gray-400 text-sm">Manage enrolled students for this class</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input id="studentSearch" type="text" placeholder="Search students..." class="form-input pl-10 w-64">
+                    </div>
+                    <select id="bloodFilter" class="form-select w-40">
+                        <option value="">All Blood Types</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                    <select id="gradeFilter" class="form-select w-32">
+                        <option value="">All Grades</option>
+                        <option value="A+">A+</option>
+                        <option value="A">A</option>
+                        <option value="B+">B+</option>
+                        <option value="B">B</option>
+                        <option value="C+">C+</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="F">F</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Student Grid -->
+            <div id="studentsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Student cards will be injected here -->
+            </div>
+        </div>
+
+        <!-- Performance Analytics -->
+        <!-- <div class="glass-card gradiant-border p-6 animate-slide-up" style="animation-delay: 0.2s">
+            <h2 class="text-xl font-bold mb-6">Performance Analytics</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-4 rounded-lg">
+                    <h3 class="font-medium mb-4">Attendance Distribution</h3>
+                    <canvas id="attendanceChart" height="250"></canvas>
+                </div>
+                <div class="glass-card p-4 rounded-lg">
+                    <h3 class="font-medium mb-4">Exam Performance</h3>
+                    <canvas id="performanceChart" height="250"></canvas>
+                </div>
+            </div>
+        </div> -->
+    </main>
+
+    <!-- Add Students Modal -->
+    <div id="addStudentModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-3xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Add Students to Class</h2>
+                <button id="closeAddStudentModal" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="flex gap-4">
+                    <div class="relative flex-1">
+                        <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input id="studentDirectorySearch" type="text" placeholder="Search all students..." class="form-input pl-10">
+                    </div>
+                    <select id="facultyFilter" class="form-select w-64">
+                        <option value="">All Faculties</option>
+                        <optgroup label="Medicine">
+                            <option>Bachelor of Medicine and Surgery (MBBS)</option>
+                            <option>Bachelor of Clinical Medicine</option>
+                            <option>Bachelor of Clinical Midwifery</option>
+                            <option>Bachelor of Medical Laboratory</option>
+                            <option>Bachelor of Nursing</option>
+                            <option>Bachelor of Nutrition and Food Science</option>
+                            <option>Bachelor of Health Service Management</option>
+                        </optgroup>
+                        <optgroup label="Business">
+                            <option>Bachelor of Business Administration</option>
+                            <option>Bachelor of Accounting & Finance</option>
+                            <option>Bachelor of Banking & Finance</option>
+                            <option>Bachelor of Procurement & Supply Chain Management</option>
+                            <option>Bachelor of Public Finance Management</option>
+                            <option>Bachelor of Human Resources Management</option>
+                        </optgroup>
+                        <optgroup label="Technology">
+                            <option>Bachelor of Computer Science (Software Engineering)</option>
+                            <option>Bachelor of Computer Science (Data Science)</option>
+                            <option>Bachelor of Computer Science (Cyber Security)</option>
+                            <option>Bachelor of Computer Science (Artificial Intelligence)</option>
+                            <option>Bachelor of Computer Science (Networking)</option>
+                            <option>Bachelor of Engineering (Electrical Engineering)</option>
+                            <option>Bachelor of Engineering (Telecommunication Engineering)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div class="glass-card p-4 rounded-lg max-h-96 overflow-y-auto">
+                    <div id="studentDirectory" class="space-y-3">
+                        <!-- Student directory will be injected here -->
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button id="confirmAddStudents" class="w-full glass-card py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                        <i data-feather="user-plus" class="w-4 h-4"></i>
+                        Add Selected Students
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Detail Modal -->
+    <div id="studentModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Student Details</h2>
+                <button id="closeStudentModal" class="glass-card p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <div id="studentModalBody" class="space-y-6">
+                <!-- Student modal content will be injected here -->
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Firebase config
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
             authDomain: "mentora-71f5c.firebaseapp.com",
@@ -312,481 +616,739 @@
             measurementId: "G-BL98PXGK2G"
         };
 
-        // App state
-        let db;
-        let students = []; // parsed Excel rows
-        const profileMap = new Map(); // id -> {file, dataUrl, status}
-
-        const defaultProfileSrc = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop';
-
-        // Utilities
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = toast.querySelector('i');
-            const text = document.getElementById('toastText');
-            text.textContent = message;
-            icon.className = 'w-4 h-4 ' + (type === 'error' ? 'text-red-400' : 'text-primary-400');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Get class ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const classId = urlParams.get('id');
+        
+    // DOM elements
+    const addStudentBtn = document.getElementById('addStudentBtn');
+    // renamed element refs to avoid colliding with function names below
+    const closeAddStudentModalBtn = document.getElementById('closeAddStudentModal');
+    const addStudentModal = document.getElementById('addStudentModal');
+    const closeStudentModalBtn = document.getElementById('closeStudentModal');
+    const studentModal = document.getElementById('studentModal');
+        const studentsGrid = document.getElementById('studentsGrid');
+        const studentDirectory = document.getElementById('studentDirectory');
+        const studentSearch = document.getElementById('studentSearch');
+        const bloodFilter = document.getElementById('bloodFilter');
+        const gradeFilter = document.getElementById('gradeFilter');
+        const studentDirectorySearch = document.getElementById('studentDirectorySearch');
+        const facultyFilter = document.getElementById('facultyFilter');
+        const confirmAddStudents = document.getElementById('confirmAddStudents');
+        const studentCount = document.getElementById('studentCount');
+        
+        // Chart variables
+        let attendanceChart, performanceChart;
+        
+        // Create bubbles for background
+        function createBubbles() {
+            const container = document.querySelector('.bubble-container');
+            const bubbleCount = 15;
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                const size = Math.random() * 100 + 50;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const delay = Math.random() * 10;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.top = `${top}%`;
+                bubble.style.animationDelay = `${delay}s`;
+                
+                container.appendChild(bubble);
+            }
         }
-
-        function normalizeHeader(h) {
-            return String(h || '')
-                .trim()
-                .toLowerCase()
-                .replace(/\s+/g, '')
-                .replace(/[_\-]/g, '');
+        
+        // Utility functions
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         }
-
-        function sanitizeStudentData(raw) {
+        
+        function getBloodClass(bloodType) {
+            return `blood-${bloodType.replace('+', 'plus').replace('-', 'minus')}`;
+        }
+        
+        function getPerformanceClass(value) {
+            if (value >= 85) return 'green';
+            if (value >= 70) return 'yellow';
+            return 'red';
+        }
+        
+        function getCircumference(radius = 20) {
+            return 2 * Math.PI * radius;
+        }
+        
+        // Generate random performance data for demo
+        function generateRandomPerformance() {
             return {
-                fullName: raw.fullName || '',
-                phone: raw.phone || '',
-                department: raw.department || '',
-                faculty: raw.faculty || '',
-                graduatedFrom: raw.graduatedFrom || '',
-                grade: raw.grade || '',
-                city: raw.city || '',
-                education: raw.education || '',
-                gender: raw.gender || '',
-                bloodType: raw.bloodType || '',
-                age: parseInt(raw.age || 0, 10),
-                guardianPhone: raw.guardianPhone || '',
-                guardianName: raw.guardianName || '',
-                createdAt: new Date()
+                attendance: Math.floor(Math.random() * 20) + 80,
+                examPerformance: Math.floor(Math.random() * 30) + 65,
+                grade: ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'][Math.floor(Math.random() * 8)]
             };
         }
+        
+        // Create student card HTML
+        function createStudentCard(student) {
+            const performance = generateRandomPerformance();
+            const attendanceCirc = getCircumference(20);
+            const examCirc = getCircumference(20);
+            const attendanceOffset = attendanceCirc - (performance.attendance / 100) * attendanceCirc;
+            const examOffset = examCirc - (performance.examPerformance / 100) * examCirc;
+            
+            return `
+                <div class="glass-card gradiant-border p-6 student-card relative animate-slide-up" style="animation-delay: ${Math.random() * 0.3}s" data-student-id="${student.id}">
+                    <!-- Floating Actions -->
+                    <div class="floating-actions">
+                        <button class="action-btn view-student" data-id="${student.id}" title="View Details">
+                            <i data-feather="eye" class="w-4 h-4"></i>
+                        </button>
+                        <button class="action-btn remove-student" data-id="${student.id}" title="Remove from Class">
+                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
 
-        // Image handling
-        async function prepareImageDataForFirestore(file, options = {}) {
-            if (!file) return null;
-            const { maxDim = 512, quality = 0.82, mime = 'image/jpeg' } = options;
-            const dataUrl = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(file);
-            });
-            const img = await new Promise((resolve, reject) => {
-                const image = new Image();
-                image.onload = () => resolve(image);
-                image.onerror = () => reject(new Error('Failed to load image'));
-                image.src = dataUrl;
-            });
-            const { width, height } = img;
-            const maxSide = Math.max(width, height);
-            let targetW = width;
-            let targetH = height;
-            if (maxSide > maxDim) {
-                const scale = maxDim / maxSide;
-                targetW = Math.round(width * scale);
-                targetH = Math.round(height * scale);
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = targetW;
-            canvas.height = targetH;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, targetW, targetH);
-            ctx.drawImage(img, 0, 0, targetW, targetH);
-            const outDataUrl = canvas.toDataURL(mime, quality);
-            return outDataUrl;
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="student-avatar">
+                            ${student.profileImageUrl ? `<img src="${student.profileImageUrl}" alt="${student.fullName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                            <div class="w-full h-full flex items-center justify-center" ${student.profileImageUrl ? 'style="display:none;"' : ''}>${getInitials(student.fullName)}</div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-lg font-bold truncate">${student.fullName}</h3>
+                            <p class="text-gray-400 text-sm">${student.phone}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+                        <span class="grade-badge">${performance.grade}</span>
+                    </div>
+
+                    <!-- Progress Rings -->
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex flex-col items-center gap-1">
+                            <svg class="progress-ring" viewBox="0 0 48 48">
+                                <defs>
+                                    <linearGradient id="grad-attendance" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="progress-bg" cx="24" cy="24" r="20" stroke-width="4"></circle>
+                                <circle class="progress-fill attendance ${getPerformanceClass(performance.attendance)}" cx="24" cy="24" r="20" stroke-width="4" 
+                                        stroke-dasharray="${attendanceCirc}" stroke-dashoffset="${attendanceOffset}"></circle>
+                            </svg>
+                            <span class="metric-label">Attendance</span>
+                            <span class="metric-value">${performance.attendance}%</span>
+                        </div>
+
+                        <div class="flex flex-col items-center gap-1">
+                            <svg class="progress-ring" viewBox="0 0 48 48">
+                                <defs>
+                                    <linearGradient id="grad-exam" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="progress-bg" cx="24" cy="24" r="20" stroke-width="4"></circle>
+                                <circle class="progress-fill exam ${getPerformanceClass(performance.examPerformance)}" cx="24" cy="24" r="20" stroke-width="4" 
+                                        stroke-dasharray="${examCirc}" stroke-dashoffset="${examOffset}"></circle>
+                            </svg>
+                            <span class="metric-label">Exam</span>
+                            <span class="metric-value">${performance.examPerformance}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Additional Stats -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="stat-pill">
+                            <div class="metric-label">Faculty</div>
+                            <div class="metric-value truncate">${student.faculty}</div>
+                        </div>
+                        <div class="stat-pill">
+                            <div class="metric-label">Department</div>
+                            <div class="metric-value truncate">${student.department}</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <button class="w-full glass-card mt-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 view-student-btn" data-id="${student.id}">
+                        <i data-feather="user" class="w-4 h-4"></i>
+                        View Profile
+                    </button>
+                </div>
+            `;
         }
+        
+        // Create student directory item
+        function createStudentDirectoryItem(student) {
+            return `
+                <div class="flex items-center justify-between glass-card p-3 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="student-avatar w-10 h-10">
+                            ${student.profileImageUrl ? `<img src="${student.profileImageUrl}" alt="${student.fullName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                            <div class="w-full h-full flex items-center justify-center" ${student.profileImageUrl ? 'style="display:none;"' : ''}>${getInitials(student.fullName)}</div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">${student.fullName}</h4>
+                            <p class="text-xs text-gray-400">${student.faculty || 'No faculty specified'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" class="form-checkbox rounded text-indigo-500 bg-gray-700 border-gray-600" data-id="${student.id}">
+                            <span class="ml-2 text-sm">Select</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load students in this class
+        async function loadClassStudents() {
+            if (!classId) return;
 
-        function getDataUrlByteLength(dataUrl) {
             try {
-                const base64 = (dataUrl.split(',')[1] || '');
-                return base64 ? atob(base64).length : 0;
-            } catch (e) { return 0; }
-        }
+                const querySnapshot = await db.collection('classes').doc(classId).collection('students').get();
+                studentsGrid.innerHTML = '';
 
-        async function handleProfileImageForStudent(studentId, file) {
-            if (!file) return null;
-            try {
-                const prepared = await prepareImageDataForFirestore(file, { maxDim: 512, quality: 0.82, mime: 'image/jpeg' });
-                const byteLength = getDataUrlByteLength(prepared);
-                const FIRESTORE_SAFE_BYTES = 900 * 1024; // ~900KB
-                if (byteLength > FIRESTORE_SAFE_BYTES) {
-                    showToast('Compressed image still too large for Firestore. Please choose a smaller image.', 'error');
-                    return null;
-                }
-                await db.collection('students').doc(studentId).update({
-                    profileImageData: prepared,
-                    profileImageName: file.name,
-                    profileImageType: file.type || 'image/jpeg',
-                    profileImageSize: file.size
-                });
-                return prepared;
-            } catch (err) {
-                console.error('Error storing profile image in Firestore:', err);
-                showToast('Failed to store profile image in Firestore.', 'error');
-                return null;
-            }
-        }
-
-        // Excel handling
-        function readExcel(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    try {
-                        const data = new Uint8Array(reader.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-                        resolve(rows);
-                    } catch (e) {
-                        reject(e);
-                    }
-                };
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        function mapRowsToStudents(rows) {
-            const mapped = rows.map(r => {
-                const obj = {};
-                const keys = Object.keys(r);
-                keys.forEach(k => obj[normalizeHeader(k)] = r[k]);
-                return {
-                    fullName: obj.fullname || obj.name || '',
-                    phone: obj.phone || obj.phonenumber || '',
-                    department: obj.department || '',
-                    faculty: obj.faculty || '',
-                    graduatedFrom: obj.graduatedfrom || obj.school || '',
-                    grade: obj.grade || '',
-                    city: obj.city || '',
-                    education: obj.education || obj.educationlevel || '',
-                    gender: obj.gender || '',
-                    bloodType: obj.bloodtype || '',
-                    age: obj.age || '',
-                    guardianPhone: obj.guardianphone || '',
-                    guardianName: obj.guardianname || '',
-                    profileImageUrl: obj.profileimageurl || '',
-                    profileImageData: obj.profileimagedata || '',
-                    profileImageName: obj.profileimagename || '',
-                    profileImageType: obj.profileimagetype || '',
-                    profileImageSize: obj.profileimagesize || 0
-                };
-            });
-            const requiredFields = ['fullName', 'phone', 'department', 'faculty', 'graduatedFrom', 'grade', 'city', 'education', 'gender', 'bloodType', 'age', 'guardianPhone', 'guardianName'];
-            const invalidRows = mapped.filter(row => requiredFields.some(f => !row[f] || String(row[f]).trim() === ''));
-            if (invalidRows.length > 0) {
-                throw new Error(`${invalidRows.length} row(s) missing required fields.`);
-            }
-            return mapped;
-        }
-
-        // UI rendering
-        function renderTable(list) {
-            const tbody = document.getElementById('studentsTbody');
-            tbody.innerHTML = '';
-            const tpl = document.getElementById('rowTemplate');
-
-            list.forEach((s, idx) => {
-                const node = tpl.content.firstElementChild.cloneNode(true);
-                node.dataset.index = String(idx);
-                node.querySelector('[data-role="name"]').textContent = s.fullName || '—';
-                node.querySelector('[data-role="grad"]').textContent = `${s.graduatedFrom || ''} • ${s.grade || ''}`;
-                node.querySelector('[data-role="phone"]').textContent = s.phone || '—';
-                node.querySelector('[data-role="dept"]').textContent = s.department || '—';
-                node.querySelector('[data-role="faculty"]').textContent = s.faculty || '—';
-
-                const img = node.querySelector('[data-role="preview"]');
-                img.src = defaultProfileSrc;
-                img.alt = s.fullName;
-
-                const fileInput = node.querySelector('[data-role="file"]');
-                const clearBtn = node.querySelector('[data-role="clear"]');
-                const status = node.querySelector('[data-role="status"]');
-
-                fileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    // Validate file
-                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                    if (!validTypes.includes(file.type)) {
-                        showToast('Please select a valid image (JPEG, PNG, JPG, WEBP)', 'error');
-                        e.target.value = '';
-                        return;
-                    }
-                    if (file.size > 5 * 1024 * 1024) {
-                        showToast('Image should be less than 5MB', 'error');
-                        e.target.value = '';
-                        return;
-                    }
-                    // Preview
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        img.src = ev.target.result;
-                    };
-                    reader.readAsDataURL(file);
-
-                    // Update map
-                    profileMap.set(idx, { file, status: 'selected' });
-                    status.textContent = 'Selected';
-                    status.className = 'text-xs text-primary-300';
-                    updateSummary();
-                });
-
-                clearBtn.addEventListener('click', () => {
-                    fileInput.value = '';
-                    img.src = defaultProfileSrc;
-                    profileMap.delete(idx);
-                    status.textContent = 'No image';
-                    status.className = 'text-xs text-gray-400';
-                    updateSummary();
-                });
-
-                tbody.appendChild(node);
-            });
-        }
-
-        function updateSummary() {
-            const progressSummary = document.getElementById('progressSummary');
-            const total = students.length;
-            const selected = Array.from(profileMap.values()).filter(x => x && x.file).length;
-            progressSummary.textContent = `${selected}/${total} selected`;
-        }
-
-        // Import logic
-        async function importAll() {
-            if (!students.length) {
-                showToast('Please upload an Excel file first.', 'error');
-                return;
-            }
-            if (typeof db === 'undefined' || db === null) {
-                try {
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
-                    }
-                    db = firebase.firestore();
-                } catch (err) {
-                    console.error('Firebase init failed', err);
-                    showToast('Firebase not initialized. Check console.', 'error');
+                if (querySnapshot.empty) {
+                    studentsGrid.innerHTML = `
+                        <div class="glass-card p-8 text-center col-span-full">
+                            <i data-feather="users" class="w-12 h-12 text-rose-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">No Students Found</h3>
+                            <p class="text-gray-400">Add students to get started</p>
+                        </div>
+                    `;
+                    feather.replace();
+                    studentCount.textContent = '0';
                     return;
                 }
-            }
 
-            // Validate files
-            const missing = students.reduce((acc, _, i) => {
-                if (!profileMap.has(i)) acc.push(i);
-                return acc;
-            }, []);
-            if (missing.length) {
-                const proceed = confirm(`You have ${missing.length} student(s) without a picture. Continue?`);
-                if (!proceed) return;
-            }
-
-            const btn = document.getElementById('btnImport');
-            btn.disabled = true;
-            btn.innerHTML = `<span class="flex items-center justify-center gap-2"><span>Importing...</span><div class="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin"></div></span>`;
-
-            const overallBar = document.getElementById('overallProgress');
-            let done = 0;
-
-            try {
-                // Save documents and attach images
-                for (let i = 0; i < students.length; i++) {
-                    const s = sanitizeStudentData(students[i]);
-                    // Create document first
-                    const ref = db.collection('students').doc();
-                    const studentId = ref.id;
-                    await ref.set(s);
-
-                    // Attach image if any
-                    const mapping = profileMap.get(i);
-                    if (mapping && mapping.file) {
-                        await handleProfileImageForStudent(studentId, mapping.file);
-                        setRowStatus(i, 'Uploaded', 'text-xs text-emerald-300');
-                    } else {
-                        setRowStatus(i, 'No image', 'text-xs text-gray-400');
+                // The class subcollection may store only { studentId, addedAt }.
+                // Resolve full student profiles by fetching from the `students` collection when necessary.
+                const studentPromises = querySnapshot.docs.map(async (doc) => {
+                    const data = doc.data();
+                    if (data.studentId) {
+                        // try to fetch full student profile
+                        try {
+                            const sDoc = await db.collection('students').doc(data.studentId).get();
+                            if (sDoc.exists) {
+                                const student = sDoc.data();
+                                student.id = sDoc.id;
+                                return student;
+                            }
+                        } catch (err) {
+                            console.warn('Failed to fetch student profile for', data.studentId, err);
+                        }
+                        // fallback to whatever was stored in the class subcollection
+                        return { id: data.studentId, fullName: data.name || 'Unknown Student', phone: data.phone || '', faculty: data.faculty || '', department: data.department || '' };
                     }
+                    // if the document already contains full student data
+                    return { id: doc.id, ...data };
+                });
 
-                    done++;
-                    const pct = Math.round((done / students.length) * 100);
-                    overallBar.style.width = pct + '%';
-                    await new Promise(r => setTimeout(r, 50));
-                }
-                showToast(`Imported ${done} student(s) to Firestore.`);
-            } catch (err) {
-                console.error(err);
-                showToast('Import failed. See console for details.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<span class="flex items-center justify-center gap-2">
-                    <i data-feather="upload-cloud" class="w-5 h-5"></i>
-                    <span>Import All to Firestore</span>
-                </span>`;
-                if (window.feather) feather.replace();
+                const students = await Promise.all(studentPromises);
+
+                renderStudents(students);
+                updateCharts(students);
+                studentCount.textContent = students.length;
+            } catch (error) {
+                console.error("Error loading students: ", error);
             }
         }
-
-        function setRowStatus(index, text, cls) {
-            const row = document.querySelector(`tr[data-index="${index}"]`);
-            if (!row) return;
-            const el = row.querySelector('[data-role="status"]');
-            el.textContent = text;
-            el.className = cls;
-        }
-
-        // Randomize placeholders (assigns different Unsplash portraits to rows)
-        function randomizePlaceholders() {
-            const faces = [
-                'https://images.unsplash.com/photo-1544725176-7c40e5a2c9f1?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1519340241574-2cec6aef0c01?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=200&auto=format&fit=crop'
-            ];
-            const tbody = document.getElementById('studentsTbody');
-            Array.from(tbody.querySelectorAll('tr')).forEach((tr, idx) => {
-                const img = tr.querySelector('[data-role="preview"]');
-                img.src = faces[idx % faces.length];
-                const status = tr.querySelector('[data-role="status"]');
-                status.textContent = 'Placeholder';
-                status.className = 'text-xs text-secondary-300';
+        
+        // Render students in grid
+        function renderStudents(students) {
+            studentsGrid.innerHTML = '';
+            
+            students.forEach(student => {
+                studentsGrid.innerHTML += createStudentCard(student);
             });
-            showToast('Assigned random placeholder images (for preview only).');
+            
+            feather.replace();
         }
-
-        // Clear all images
-        function clearAllImages() {
-            const tbody = document.getElementById('studentsTbody');
-            Array.from(tbody.querySelectorAll('tr')).forEach((tr) => {
-                const img = tr.querySelector('[data-role="preview"]');
-                img.src = defaultProfileSrc;
-                const status = tr.querySelector('[data-role="status"]');
-                status.textContent = 'No image';
-                status.className = 'text-xs text-gray-400';
-                tr.querySelector('[data-role="file"]').value = '';
+        
+        // Load all students for directory
+        function loadStudentDirectory(searchTerm = '', faculty = '') {
+            let query = db.collection('students');
+            
+            if (searchTerm) {
+                query = query.where('fullName', '>=', searchTerm)
+                           .where('fullName', '<=', searchTerm + '\uf8ff');
+            }
+            
+            if (faculty) {
+                query = query.where('faculty', '==', faculty);
+            }
+            
+            query.get()
+                .then(querySnapshot => {
+                    studentDirectory.innerHTML = '';
+                    const students = [];
+                    
+                    if (querySnapshot.empty) {
+                        studentDirectory.innerHTML = `
+                            <div class="glass-card p-6 text-center">
+                                <i data-feather="user-x" class="w-12 h-12 text-rose-400 mx-auto mb-4"></i>
+                                <h3 class="text-lg font-bold mb-2">No Students Found</h3>
+                                <p class="text-gray-400">Try adjusting your search criteria</p>
+                            </div>
+                        `;
+                        feather.replace();
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const student = doc.data();
+                        student.id = doc.id;
+                        students.push(student);
+                    });
+                    
+                    students.forEach(student => {
+                        studentDirectory.innerHTML += createStudentDirectoryItem(student);
+                    });
+                    
+                    feather.replace();
+                })
+                .catch(error => {
+                    console.error("Error loading student directory: ", error);
+                });
+        }
+        
+        // Add selected students to class
+        function addStudentsToClass() {
+            if (!classId) return;
+            
+            const checkboxes = document.querySelectorAll('#studentDirectory input[type="checkbox"]:checked');
+            const studentIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
+            
+            if (studentIds.length === 0) {
+                alert('Please select at least one student to add');
+                return;
+            }
+            
+            const batch = db.batch();
+            
+            studentIds.forEach(studentId => {
+                const ref = db.collection('classes').doc(classId).collection('students').doc(studentId);
+                batch.set(ref, { studentId, addedAt: new Date() });
             });
-            profileMap.clear();
-            updateSummary();
-            showToast('Cleared all images.');
+            
+            batch.commit()
+                .then(() => {
+                    alert(`${studentIds.length} students added successfully`);
+                    closeAddStudentModal();
+                    loadClassStudents();
+                })
+                .catch(error => {
+                    console.error("Error adding students: ", error);
+                    alert("Failed to add students. Please try again.");
+                });
         }
-
-        // Reset page
-        function resetPage() {
-            students = [];
-            profileMap.clear();
-            document.getElementById('studentsTbody').innerHTML = '';
-            document.getElementById('fileMeta').classList.add('hidden');
-            document.getElementById('fileMeta').innerHTML = '';
-            const dz = document.getElementById('dropZone');
-            dz.classList.remove('dragover');
-            document.getElementById('overallProgress').style.width = '0%';
-            updateSummary();
-            showToast('Reset complete.');
+        
+        // Remove student from class
+        function removeStudentFromClass(studentId) {
+            if (!classId || !studentId) return;
+            
+            if (!confirm('Are you sure you want to remove this student from the class?')) {
+                return;
+            }
+            
+            db.collection('classes').doc(classId).collection('students').doc(studentId).delete()
+                .then(() => {
+                    loadClassStudents();
+                })
+                .catch(error => {
+                    console.error("Error removing student: ", error);
+                    alert("Failed to remove student. Please try again.");
+                });
         }
-
-        // Download sample
-        function downloadSample() {
-            const sample = [
-                {
-                    fullName: 'Amina Ali',
-                    phone: '252612345678',
-                    department: 'technology',
-                    faculty: 'Bachelor of Computer Science (Software Engineering)',
-                    graduatedFrom: 'Hargeisa University',
-                    grade: 'A',
-                    city: 'Hargeisa',
-                    education: "Bachelor's Degree",
-                    gender: 'Female',
-                    bloodType: 'O+',
-                    age: '22',
-                    guardianPhone: '252631112233',
-                    guardianName: 'Ali Mohamed'
+        
+        // Update charts with student data
+        function updateCharts(students) {
+            // Mock data for demo - in real app you would use actual student performance data
+            const attendanceData = {
+                '80-100%': Math.floor(students.length * 0.6),
+                '60-79%': Math.floor(students.length * 0.3),
+                'Below 60%': Math.floor(students.length * 0.1)
+            };
+            
+            const examData = {
+                'A+': Math.floor(students.length * 0.1),
+                'A': Math.floor(students.length * 0.2),
+                'B+': Math.floor(students.length * 0.3),
+                'B': Math.floor(students.length * 0.2),
+                'C+': Math.floor(students.length * 0.1),
+                'C': Math.floor(students.length * 0.05),
+                'D': Math.floor(students.length * 0.03),
+                'F': Math.floor(students.length * 0.02)
+            };
+            
+            // Attendance chart
+            if (attendanceChart) attendanceChart.destroy();
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            attendanceChart = new Chart(attendanceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(attendanceData),
+                    datasets: [{
+                        data: Object.values(attendanceData),
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.7)',
+                            'rgba(234, 179, 8, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(234, 179, 8, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
                 },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e2e8f0'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Performance chart
+            if (performanceChart) performanceChart.destroy();
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(performanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(examData),
+                    datasets: [{
+                        label: 'Students',
+                        data: Object.values(examData),
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(124, 58, 237, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(168, 85, 247, 0.7)',
+                            'rgba(192, 38, 211, 0.7)',
+                            'rgba(217, 70, 239, 0.7)',
+                            'rgba(236, 72, 153, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(99, 102, 241, 1)',
+                            'rgba(124, 58, 237, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(168, 85, 247, 1)',
+                            'rgba(192, 38, 211, 1)',
+                            'rgba(217, 70, 239, 1)',
+                            'rgba(236, 72, 153, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#e2e8f0'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#e2e8f0'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Open student modal
+        function openStudentModal(studentId) {
+            db.collection('students').doc(studentId).get()
+                .then(doc => {
+                    if (!doc.exists) {
+                        throw new Error("Student not found");
+                    }
+                    
+                    const student = doc.data();
+                    const performance = generateRandomPerformance();
+                    
+                    document.getElementById('studentModalBody').innerHTML = `
+                        <div class="flex items-center gap-6">
+                            <div class="student-avatar w-20 h-20 text-2xl">
+                                ${student.profileImageUrl ? `<img src="${student.profileImageUrl}" alt="${student.fullName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                                <div class="w-full h-full flex items-center justify-center" ${student.profileImageUrl ? 'style="display:none;"' : ''}>${getInitials(student.fullName)}</div>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold">${student.fullName}</h3>
+                                <p class="text-gray-400">${student.phone}</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="blood-badge ${getBloodClass(student.bloodType)}">${student.bloodType}</span>
+                                    <span class="grade-badge">${performance.grade}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="stat-item">
+                                <div class="flex items-center gap-2">
+                                    <i data-feather="check-circle" class="text-emerald-400"></i>
+                                    <span>Attendance</span>
+                                </div>
+                                <p class="text-2xl font-bold mt-2">${performance.attendance}%</p>
+                                <div class="performance-bar mt-2">
+                                    <div class="performance-fill ${getPerformanceClass(performance.attendance)}" style="width: ${performance.attendance}%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="flex items-center gap-2">
+                                    <i data-feather="file-text" class="text-indigo-400"></i>
+                                    <span>Exam Performance</span>
+                                </div>
+                                <p class="text-2xl font-bold mt-2">${performance.examPerformance}%</p>
+                                <div class="performance-bar mt-2">
+                                    <div class="performance-fill exam ${getPerformanceClass(performance.examPerformance)}" style="width: ${performance.examPerformance}%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="stat-pill">
+                                <div class="metric-label">Overall</div>
+                                <div class="metric-value">${Math.round((performance.attendance + performance.examPerformance) / 2)}%</div>
+                            </div>
+                            <div class="stat-pill">
+                                <div class="metric-label">Status</div>
+                                <div class="metric-value ${performance.attendance >= 85 && performance.examPerformance >= 85 ? 'text-emerald-400' : performance.attendance >= 70 && performance.examPerformance >= 70 ? 'text-amber-400' : 'text-rose-400'}">
+                                    ${performance.attendance >= 85 && performance.examPerformance >= 85 ? 'Excellent' : performance.attendance >= 70 && performance.examPerformance >= 70 ? 'Good' : 'Needs Attention'}
+                                </div>
+                            </div>
+                            <div class="stat-pill">
+                                <div class="metric-label">Risk</div>
+                                <div class="metric-value ${performance.attendance < 70 || performance.examPerformance < 70 ? 'text-rose-400' : 'text-emerald-400'}">
+                                    ${performance.attendance < 70 || performance.examPerformance < 70 ? 'High' : 'Low'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="font-medium mb-2">Personal Details</h4>
+                                <div class="glass-card p-4 rounded-lg">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-xs text-gray-400">Age</p>
+                                            <p class="font-medium">${student.age || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">Gender</p>
+                                            <p class="font-medium">${student.gender || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">City</p>
+                                            <p class="font-medium">${student.city || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">Education</p>
+                                            <p class="font-medium">${student.education || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-medium mb-2">Academic Details</h4>
+                                <div class="glass-card p-4 rounded-lg">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-xs text-gray-400">Faculty</p>
+                                            <p class="font-medium">${student.faculty || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">Department</p>
+                                            <p class="font-medium">${student.department || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">Graduated From</p>
+                                            <p class="font-medium">${student.graduatedFrom || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400">Guardian</p>
+                                            <p class="font-medium">${student.guardianName || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-4">
+                            <button class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                                <i data-feather="mail" class="w-4 h-4"></i>
+                                Message
+                            </button>
+                            <button class="flex-1 glass-card py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                                <i data-feather="download" class="w-4 h-4"></i>
+                                Export
+                            </button>
+                        </div>
+                    `;
+                    
+                    studentModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    feather.replace();
+                })
+                .catch(error => {
+                    console.error("Error loading student details: ", error);
+                    alert("Failed to load student details. Please try again.");
+                });
+        }
+        
+        // Close student modal
+        function closeStudentModal() {
+            studentModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // Open add student modal
+        function openAddStudentModal() {
+            addStudentModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            loadStudentDirectory();
+        }
+        
+        // Close add student modal
+        function closeAddStudentModal() {
+            addStudentModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // Filter students in grid
+        function filterStudents() {
+            const searchTerm = studentSearch.value.toLowerCase();
+            const bloodType = bloodFilter.value;
+            const grade = gradeFilter.value;
+            
+            // In a real app, you would filter the actual data from Firestore
+            // For this demo, we'll just simulate it
+            console.log(`Filtering by: search=${searchTerm}, blood=${bloodType}, grade=${grade}`);
+        }
+        
+        // Demo loader used when no classId is provided (local testing)
+        function loadDemoStudents() {
+            const demo = [
                 {
-                    fullName: 'Mohamed Ahmed',
-                    phone: '252661112233',
-                    department: 'business',
-                    faculty: 'Bachelor of Business Administration',
-                    graduatedFrom: 'Burao College',
-                    grade: 'B+',
-                    city: 'Burao',
-                    education: "Bachelor's Degree",
-                    gender: 'Male',
-                    bloodType: 'A+',
-                    age: '24',
-                    guardianPhone: '252612223344',
-                    guardianName: 'Ahmed Hassan'
+                    id: 'demo1',
+                    fullName: 'Demo Student',
+                    phone: 'N/A',
+                    bloodType: 'O+',
+                    faculty: 'MBBS',
+                    department: 'Anatomy',
+                    profileImageUrl: ''
                 }
             ];
-            const ws = XLSX.utils.json_to_sheet(sample);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Students');
-            XLSX.writeFile(wb, 'sample_students.xlsx');
+            renderStudents(demo);
+            updateCharts(demo);
+            studentCount.textContent = demo.length;
         }
-
-        // Event bindings
-        function bindEvents() {
-            const dz = document.getElementById('dropZone');
-            const fileInput = document.getElementById('excelFileInput');
-            dz.addEventListener('click', () => fileInput.click());
-            dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
-            dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-            dz.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                dz.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file) await handleExcelFile(file);
-            });
-            fileInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (file) await handleExcelFile(file);
-            });
-
-            document.getElementById('btnImport').addEventListener('click', importAll);
-            document.getElementById('btnReset').addEventListener('click', resetPage);
-            document.getElementById('btnAssignRandom').addEventListener('click', randomizePlaceholders);
-            document.getElementById('btnClearAllImages').addEventListener('click', clearAllImages);
-            document.getElementById('btnDownloadSample').addEventListener('click', downloadSample);
-        }
-
-        async function handleExcelFile(file) {
-            try {
-                const rows = await readExcel(file);
-                const mapped = mapRowsToStudents(rows);
-                students = mapped;
-                renderTable(students);
-                profileMap.clear();
-                updateSummary();
-
-                const meta = document.getElementById('fileMeta');
-                meta.classList.remove('hidden');
-                meta.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <i data-feather="file" class="w-4 h-4 text-emerald-400"></i>
-                        <span class="text-emerald-300">${file.name}</span>
-                        <span class="text-gray-400">•</span>
-                        <span class="text-gray-300">${rows.length} row(s) loaded</span>
-                    </div>
-                `;
-                if (window.feather) feather.replace();
-                showToast('Excel loaded. Assign images then import.');
-            } catch (err) {
-                console.error(err);
-                showToast(err.message || 'Failed to read Excel.', 'error');
-            }
-        }
-
-        // Init
+        
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.feather) feather.replace();
-            AOS.init();
-            bindEvents();
-            updateSummary();
+            createBubbles();
+            feather.replace();
 
-            // Preload default icon states
-            gsap.from('.glass-panel', { opacity: 0, y: 12, duration: 0.5, stagger: 0.05, ease: 'power2.out' });
+            if (classId) {
+                loadClassStudents();
+            } else {
+                // No classId provided — use demo data locally instead of redirecting
+                console.warn("No class ID specified. Running in demo mode.");
+                loadDemoStudents();
+            }
+
+            // Event listeners
+            addStudentBtn.addEventListener('click', openAddStudentModal);
+            closeAddStudentModalBtn.addEventListener('click', closeAddStudentModal);
+            closeStudentModalBtn.addEventListener('click', closeStudentModal);
+            confirmAddStudents.addEventListener('click', addStudentsToClass);
+            
+            studentSearch.addEventListener('input', filterStudents);
+            bloodFilter.addEventListener('change', filterStudents);
+            gradeFilter.addEventListener('change', filterStudents);
+            
+            studentDirectorySearch.addEventListener('input', (e) => {
+                loadStudentDirectory(e.target.value, facultyFilter.value);
+            });
+            
+            facultyFilter.addEventListener('change', (e) => {
+                loadStudentDirectory(studentDirectorySearch.value, e.target.value);
+            });
+            
+            // Delegate events for student cards
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.view-student') || e.target.closest('.view-student-btn')) {
+                    const studentId = e.target.closest('[data-student-id]')?.dataset.studentId || 
+                                    e.target.dataset.id;
+                    openStudentModal(studentId);
+                }
+                
+                if (e.target.closest('.remove-student')) {
+                    const studentId = e.target.closest('[data-student-id]')?.dataset.studentId;
+                    removeStudentFromClass(studentId);
+                }
+            });
+            
+            // Close modals when clicking outside
+            addStudentModal.addEventListener('click', (e) => {
+                if (e.target === addStudentModal) {
+                    closeAddStudentModal();
+                }
+            });
+            
+            studentModal.addEventListener('click', (e) => {
+                if (e.target === studentModal) {
+                    closeStudentModal();
+                }
+            });
+            
+            // Close modals with escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAddStudentModal();
+                    closeStudentModal();
+                }
+            });
         });
     </script>
+    <script>feather.replace();</script>
 </body>
 </html>

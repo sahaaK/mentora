@@ -1,0 +1,499 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    overflow-x: hidden;
+}
+
+/* Glass morphism styles */
+.glass-card {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
+    border-radius: 16px;
+}
+
+.glass-card:hover {
+    background: rgba(15, 23, 42, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated gradient border */
+.gradient-border {
+    position: relative;
+    z-index: 1;
+}
+
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #0ea5e9, #d946ef, #0ea5e9);
+    background-size: 200% 200%;
+    z-index: -1;
+    border-radius: 18px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: gradientShift 3s ease-in-out infinite;
+}
+
+.glass-card:hover .gradient-border::before {
+    opacity: 1;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Faculty card specific styles */
+.faculty-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faculty-card:hover {
+    transform: translateY(-8px) scale(1.02);
+}
+
+.faculty-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--dept-color, #0ea5e9), transparent);
+    opacity: 0.1;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.faculty-card:hover::before {
+    opacity: 0.2;
+}
+
+.faculty-image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    aspect-ratio: 16/9;
+    margin-bottom: 1rem;
+}
+
+.faculty-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(217, 70, 239, 0.1));
+    z-index: 1;
+}
+
+.faculty-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.faculty-card:hover .faculty-image img {
+    transform: scale(1.05);
+}
+
+/* Department specific colors */
+.dept-medicine {
+    --dept-color: #ef4444;
+}
+
+.dept-business {
+    --dept-color: #f59e0b;
+}
+
+.dept-social {
+    --dept-color: #8b5cf6;
+}
+
+.dept-marine {
+    --dept-color: #06b6d4;
+}
+
+.dept-agriculture {
+    --dept-color: #10b981;
+}
+
+.dept-technology {
+    --dept-color: #3b82f6;
+}
+
+/* Department badge styles */
+.dept-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+}
+
+.dept-medicine .dept-badge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fecaca;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.dept-business .dept-badge {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fed7aa;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.dept-social .dept-badge {
+    background: rgba(139, 92, 246, 0.2);
+    color: #ddd6fe;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.dept-marine .dept-badge {
+    background: rgba(6, 182, 212, 0.2);
+    color: #a7f3d0;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.dept-agriculture .dept-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #bbf7d0;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dept-technology .dept-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Fee display styles */
+.fee-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.fee-display:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+.fee-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #0ea5e9, #d946ef);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Form styles */
+.form-input,
+.form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: rgba(14, 165, 233, 0.5);
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+
+/* Bubble animation */
+.bubble-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(14, 165, 233, 0.1), rgba(217, 70, 239, 0.05));
+    backdrop-filter: blur(1px);
+    animation: float 20s infinite ease-in-out;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) translateX(0) scale(1);
+    }
+    33% {
+        transform: translateY(-100px) translateX(50px) scale(1.1);
+    }
+    66% {
+        transform: translateY(50px) translateX(-50px) scale(0.9);
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(14, 165, 233, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 233, 0.5);
+}
+
+/* Animation classes */
+.animate-slide-up {
+    animation: slideInUp 0.6s ease forwards;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Status indicators */
+.status-set {
+    position: relative;
+}
+
+.status-set::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-pending {
+    opacity: 0.7;
+    filter: grayscale(0.3);
+}
+
+.status-pending::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: #f59e0b;
+    border-radius: 50%;
+}
+
+/* Progress indicators */
+.progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0ea5e9, #d946ef);
+    border-radius: 2px;
+    transition: width 1s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glass-card {
+        margin: 0 10px;
+    }
+    
+    .faculty-image {
+        height: 160px;
+    }
+
+    .modal-content {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .grid-cols-1 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+}
+
+/* Loading states */
+.loading-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Hover effects */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Button styles */
+.btn-primary {
+    background: linear-gradient(45deg, #0ea5e9, #d946ef);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+}
+
+/* Tooltip styles */
+.tooltip {
+    position: relative;
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.tooltip:hover::before {
+    opacity: 1;
+}
