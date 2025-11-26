@@ -16,1120 +16,652 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: #e2e8f0;
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
-        /* Glass panel styles */
-        .glass-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border-radius: 20px;
-            overflow: hidden;
-        }
-
-        .glass-card:hover {
-            background: rgba(15, 23, 42, 0.8);
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Gradient border */
-        .gradient-border {
-            position: relative;
-            z-index: 1;
-        }
-
-        .gradient-border::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #06b6d4, #0ea5e9, #3b82f6, #6366f1, #8b5cf6);
-            background-size: 200% 200%;
-            z-index: -1;
-            border-radius: 22px;
-            opacity: 0.7;
-            transition: all 0.5s ease;
-            animation: gradientBG 8s ease infinite;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .glass-card:hover .gradient-border::before {
-            opacity: 1;
-        }
-
-        /* Faculty image styling */
-        .faculty-img {
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            aspect-ratio: 1/1;
-            transition: all 0.5s ease;
-        }
-
-        .faculty-img::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(147, 51, 234, 0.1));
-            z-index: 1;
-            transition: all 0.5s ease;
-        }
-
-        .faculty-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-
-        .glass-card:hover .faculty-img img {
-            transform: scale(1.05);
-        }
-
-        /* Stats styling */
-        .stat-item {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .stat-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
-        }
-
-        /* Performance bar */
-        .performance-bar {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .performance-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #6366f1, #8b5cf6);
-            border-radius: 4px;
-            transition: width 1s ease;
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.3);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.5);
-        }
-
-        /* Floating particles */
-        .particles-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.2), rgba(147, 51, 234, 0.1));
-            backdrop-filter: blur(1px);
-            animation: float 15s infinite ease-in-out;
-            opacity: 0.7;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0) translateX(0) scale(1);
-            }
-            33% {
-                transform: translateY(-80px) translateX(40px) scale(1.1);
-            }
-            66% {
-                transform: translateY(40px) translateX(-40px) scale(0.9);
-            }
-        }
-
-        /* Button styles */
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-            opacity: 0.9;
-        }
-
-        /* Notification badge */
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 18px;
-            height: 18px;
-            background: #ef4444;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: white;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .glass-card {
-                margin: 0 10px;
-            }
-            
-            .faculty-img {
-                height: 180px;
-            }
-        }
-          /* Glass card effect */
-        .glass-card {
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s ease;
-            border-radius: 16px;
-        }
-
-        .glass-card:hover {
-            background: rgba(15, 23, 42, 0.8);
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Animated gradient border */
-        .gradient-border {
-            position: relative;
-            z-index: 1;
-        }
-
-        .gradient-border::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--primary), var(--primary-dark), #a78bfa);
-            z-index: -1;
-            border-radius: 18px;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-
-        .glass-card:hover .gradient-border::before {
-            opacity: 1;
-        }
-
-        /* Gradient text */
-        .gradient-text {
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        /* Program card styles - Style 3: Image Zoom with Overlay Panel */
-        .program-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            transition: all 0.5s ease;
-        }
-
-        .program-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 16px 40px rgba(89, 111, 245, 0.25);
-        }
-
-        .program-image {
-            transition: transform 0.7s ease;
-        }
-
-        .program-card:hover .program-image {
-            transform: scale(1.1);
-        }
-
-        .overlay-shine {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.06) 50%, transparent 70%);
-            transform: translateX(-120%);
-            transition: transform 0.8s ease;
-            pointer-events: none;
-        }
-
-        .program-card:hover .overlay-shine {
-            transform: translateX(120%);
-        }
-
-        /* Floating animation for background blobs */
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0) scale(1); }
-            33% { transform: translateY(-20px) translateX(40px) scale(1.03); }
-            66% { transform: translateY(10px) translateX(-20px) scale(0.97); }
-        }
-
-        .floating {
-            animation: float 10s ease-in-out infinite;
-        }
-
-        /* Bubble background */
-        .bubble {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(89, 111, 245, 0.12), rgba(167, 139, 250, 0.06));
-            backdrop-filter: blur(1px);
-            animation: float 18s infinite ease-in-out;
-            pointer-events: none;
-        }
-
-        /* Modal styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: rgba(15, 23, 42, 0.9);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: modalEnter 0.3s ease-out;
-        }
-
-        @keyframes modalEnter {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        /* Loading skeleton */
-        .skeleton {
-            background-color: rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .skeleton::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* Form inputs */
-        .form-input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            width: 100%;
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: rgba(89, 111, 245, 0.5);
-            box-shadow: 0 0 0 2px rgba(89, 111, 245, 0.2);
-        }
-
-        .form-select {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            width: 100%;
-            color: white;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1em;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .glass-card {
-                margin: 0 10px;
-            }
-        }
-    </style>
+    
+    <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="/enrollment/components/sidebar.css">
 </head>
-<body class="min-h-screen overflow-x-hidden">
-    <!-- Floating Particles -->
-    <div class="particles-container"></div>
+
+    <body class="min-h-screen overflow-x-hidden">
+        <!-- Floating Particles -->
+        <div class="particles-container"></div>
     
-    <!-- Sidebar -->
-    <div id="sidebar-root"></div>
-    <script src="sidebar.js"></script>
+        <!-- Sidebar -->
+        <div id="sidebar-root"></div>
+        <script src="sidebar.js"></script>
 
-    <!-- Main Content Container -->
-    <div class="ml-0 md:ml-74 transition-all duration-300">
-        <!-- Header -->
-        <header class="px-6 py-6">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-3xl md:text-4xl font-bold text-white animate__animated animate__fadeIn">
-                            <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent" id="portalTitle">
-                                Dean's Portal
-                            </span>
-                        </h1>
-                        <p class="text-gray-400 text-sm animate__animated animate__fadeIn animate__delay-1s" id="departmentName">Department Management Portal</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all relative animate__animated animate__fadeIn animate__delay-1s">
-                            <i data-feather="bell"></i>
-                            <span class="hidden md:inline">Notifications</span>
-                            <div class="notification-badge">3</div>
-                        </button>
-                        <div class="glass-card p-2 rounded-full animate__animated animate__fadeIn animate__delay-1s">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold shadow-lg" id="userInitial">
-                                D
-                            </div>
+        <!-- Main Content Container -->
+        <div class="ml-0 md:ml-74 transition-all duration-300">
+            <!-- Header -->
+            <header class="px-6 py-6">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold text-white animate__animated animate__fadeIn">
+                                <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent" id="portalTitle">
+                                    Dean's Portal
+                                </span>
+                            </h1>
+                            <p class="text-gray-400 text-sm animate__animated animate__fadeIn animate__delay-1s" id="departmentName">Department Management Portal</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-6 pb-12">
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate__animated animate__fadeInUp">
-                <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
-                    <div class="p-3 rounded-lg bg-indigo-500/20">
-                        <i data-feather="users" class="text-indigo-400"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-bold" id="studentCount">0</h3>
-                        <p class="text-sm text-gray-400">Students</p>
-                    </div>
-                </div>
-                <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
-                    <div class="p-3 rounded-lg bg-emerald-500/20">
-                        <i data-feather="book" class="text-emerald-400"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-bold" id="courseCount">0</h3>
-                        <p class="text-sm text-gray-400">Courses</p>
-                    </div>
-                </div>
-                <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
-                    <div class="p-3 rounded-lg bg-amber-500/20">
-                        <i data-feather="user-check" class="text-amber-400"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-bold" id="facultyCount">0</h3>
-                        <p class="text-sm text-gray-400">Faculty</p>
-                    </div>
-                </div>
-                <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
-                    <div class="p-3 rounded-lg bg-rose-500/20">
-                        <i data-feather="trending-up" class="text-rose-400"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-bold" id="enrollmentRate">0%</h3>
-                        <p class="text-sm text-gray-400">Enrollment Rate</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dean Dashboard -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <!-- Dean Profile -->
-                <div class="glass-card gradient-border p-6 lg:col-span-1 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s">
-                    <div class="flex flex-col items-center gap-4">
-                        <div class="faculty-img w-40 h-40">
-                            <img src="http://static.photos/office/640x360/7" id="deanImage" alt="Dean Profile" />
-                        </div>
-                        <div class="text-center">
-                            <h2 class="text-2xl font-bold" id="deanName">Dr. Dean Name</h2>
-                            <p class="text-indigo-400" id="deanTitle">Dean of Department</p>
-                            <div class="flex justify-center gap-2 mt-2">
-                                <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs">PhD</span>
-                                <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs" id="deanExperience">10 Years Exp</span>
-                            </div>
-                        </div>
-                        <div class="w-full mt-4 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-400">Classes</span>
-                                <span class="font-bold">6</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-400">Students</span>
-                                <span class="font-bold" id="profileStudentCount">0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-400">Research Papers</span>
-                                <span class="font-bold">42</span>
-                            </div>
-                        </div>
-                        <button class="w-full mt-4 btn-primary flex items-center justify-center gap-2">
-                            <i data-feather="user"></i>
-                            View Full Profile
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Performance Metrics -->
-                <div class="glass-card gradient-border p-6 lg:col-span-2 animate__animated animate__fadeInRight" style="animation-delay: 0.3s">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold">Performance Metrics</h2>
-                        <div class="flex items-center gap-2">
-                            <button class="glass-card p-2 rounded-lg hover:bg-indigo-500/10 transition-all">
-                                <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                        <div class="flex items-center gap-4">
+                            <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all relative animate__animated animate__fadeIn animate__delay-1s">
+                                <i data-feather="bell"></i>
+                                <span class="hidden md:inline">Notifications</span>
+                                <div class="notification-badge">3</div>
                             </button>
-                            <button class="glass-card p-2 rounded-lg hover:bg-indigo-500/10 transition-all">
-                                <i data-feather="more-horizontal" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="stat-item">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-400">Average Attendance</span>
-                                <span class="text-sm font-bold text-white">87%</span>
-                            </div>
-                            <div class="performance-bar">
-                                <div class="performance-fill" style="width: 87%"></div>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-400">Pass Percentage</span>
-                                <span class="text-sm font-bold text-white">92%</span>
-                            </div>
-                            <div class="performance-bar">
-                                <div class="performance-fill" style="width: 92%"></div>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-400">Student Satisfaction</span>
-                                <span class="text-sm font-bold text-white">94%</span>
-                            </div>
-                            <div class="performance-bar">
-                                <div class="performance-fill" style="width: 94%"></div>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-400">Research Output</span>
-                                <span class="text-sm font-bold text-white">78%</span>
-                            </div>
-                            <div class="performance-bar">
-                                <div class="performance-fill" style="width: 78%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Charts -->
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="glass-card p-4 rounded-xl">
-                            <h3 class="font-semibold mb-3 text-gray-300">Attendance Trend</h3>
-                            <div class="chart-wrapper" style="height:200px;">
-                                <canvas id="attendanceChart" style="width:100%; height:100%;"></canvas>
-                            </div>
-                        </div>
-                        <div class="glass-card p-4 rounded-xl">
-                            <h3 class="font-semibold mb-3 text-gray-300">Performance Overview</h3>
-                            <div class="chart-wrapper" style="height:200px;">
-                                <canvas id="performanceChart" style="width:100%; height:100%;"></canvas>
+                            <div class="glass-card p-2 rounded-full animate__animated animate__fadeIn animate__delay-1s">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold shadow-lg" id="userInitial">
+                                    D
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
-             <div class="glass-card gradient-border rounded-2xl p-4 mb-6">
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="flex-1 min-w-[200px]">
-                        <label for="search" class="sr-only">Search</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i data-feather="search" class="text-gray-400 w-4 h-4"></i>
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto px-6 pb-12">
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate__animated animate__fadeInUp">
+                    <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                        <div class="p-3 rounded-lg bg-indigo-500/20">
+                            <i data-feather="users" class="text-indigo-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold" id="studentCount">0</h3>
+                            <p class="text-sm text-gray-400">Students</p>
+                        </div>
+                    </div>
+                    <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                        <div class="p-3 rounded-lg bg-emerald-500/20">
+                            <i data-feather="book" class="text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold" id="courseCount">0</h3>
+                            <p class="text-sm text-gray-400">Courses</p>
+                        </div>
+                    </div>
+                    <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                        <div class="p-3 rounded-lg bg-amber-500/20">
+                            <i data-feather="user-check" class="text-amber-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold" id="facultyCount">0</h3>
+                            <p class="text-sm text-gray-400">Faculty</p>
+                        </div>
+                    </div>
+                    <div class="glass-card gradient-border p-6 flex items-center gap-4 hover:scale-[1.02] transition-transform">
+                        <div class="p-3 rounded-lg bg-rose-500/20">
+                            <i data-feather="trending-up" class="text-rose-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold" id="enrollmentRate">0%</h3>
+                            <p class="text-sm text-gray-400">Enrollment Rate</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dean Dashboard -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Dean Profile -->
+                    <div class="glass-card gradient-border p-6 lg:col-span-1 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s">
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="faculty-img w-40 h-40">
+                                <img src="http://static.photos/office/640x360/7" id="deanImage" alt="Dean Profile" />
                             </div>
-                            <input 
-                                type="text" 
-                                id="search" 
-                                class="form-input pl-10"
-                                placeholder="Search programs..."
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold" id="deanName">Dr. Dean Name</h2>
+                                <p class="text-indigo-400" id="deanTitle">Dean of Department</p>
+                                <div class="flex justify-center gap-2 mt-2">
+                                    <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs">PhD</span>
+                                    <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs" id="deanExperience">10 Years Exp</span>
+                                </div>
+                            </div>
+                            <div class="w-full mt-4 space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Classes</span>
+                                    <span class="font-bold">6</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Students</span>
+                                    <span class="font-bold" id="profileStudentCount">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Research Papers</span>
+                                    <span class="font-bold">42</span>
+                                </div>
+                            </div>
+
+                             <button id="openAddBachelorModal"
+                class="group relative btn-primary inline-flex items-center gap-3 px-6 py-3.5 rounded-xl text-white font-semibold bg-gradient-to-br from-primary to-secondary hover:from-primary-600 hover:to-secondary-600 focus:outline-none focus:ring-4 focus:ring-primary/30 transition-all duration-200 shadow-lg hover:shadow-primary/30 hover-lift">
+            <span class="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
+            <i data-feather="plus-circle" class="w-5 h-5"></i>
+            <span>Add Bachelor</span>
+        </button>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="glass-card gradient-border p-6 lg:col-span-2 animate__animated animate__fadeInRight" style="animation-delay: 0.3s">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">Performance Metrics</h2>
+                            <div class="flex items-center gap-2">
+                                <button class="glass-card p-2 rounded-lg hover:bg-indigo-500/10 transition-all">
+                                    <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                                </button>
+                                <button class="glass-card p-2 rounded-lg hover:bg-indigo-500/10 transition-all">
+                                    <i data-feather="more-horizontal" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="stat-item">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-gray-400">Average Attendance</span>
+                                    <span class="text-sm font-bold text-white">87%</span>
+                                </div>
+                                <div class="performance-bar">
+                                    <div class="performance-fill" style="width: 87%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-gray-400">Pass Percentage</span>
+                                    <span class="text-sm font-bold text-white">92%</span>
+                                </div>
+                                <div class="performance-bar">
+                                    <div class="performance-fill" style="width: 92%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-gray-400">Student Satisfaction</span>
+                                    <span class="text-sm font-bold text-white">94%</span>
+                                </div>
+                                <div class="performance-bar">
+                                    <div class="performance-fill" style="width: 94%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-gray-400">Research Output</span>
+                                    <span class="text-sm font-bold text-white">78%</span>
+                                </div>
+                                <div class="performance-bar">
+                                    <div class="performance-fill" style="width: 78%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <!-- Charts -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="glass-card p-4 rounded-xl">
+                                <h3 class="font-semibold mb-3 text-gray-300">Attendance Trend</h3>
+                                <div class="chart-wrapper" style="height:200px;">
+                                    <canvas id="attendanceChart" style="width:100%; height:100%;"></canvas>
+                                </div>
+                            </div>
+                            <div class="glass-card p-4 rounded-xl">
+                                <h3 class="font-semibold mb-3 text-gray-300">Performance Overview</h3>
+                                <div class="chart-wrapper" style="height:200px;">
+                                    <canvas id="performanceChart" style="width:100%; height:100%;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="glass-card gradient-border rounded-2xl p-4 mb-6">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="search" class="sr-only">Search</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-feather="search" class="text-gray-400 w-4 h-4"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="search" 
+                                    class="form-input pl-10"
+                                    placeholder="Search programs..."
+                                >
+                            </div>
+                        </div>
+                        <div class="w-full md:w-auto">
+                            <label for="duration" class="sr-only">Duration</label>
+                            <select 
+                                id="duration" 
+                                class="form-select"
                             >
+                                <option value="">All durations</option>
+                                <option value="1">1 Year</option>
+                                <option value="2">2 Years</option>
+                                <option value="3">3 Years</option>
+                                <option value="4">4 Years</option>
+                                <option value="5">5 Years</option>
+                                <option value="6">6 Years</option>
+                            </select>
+                        </div>
+                        <div class="w-full md:w-auto">
+                            <button 
+                                id="applyFilters"
+                                class="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-white bg-undefined-500 hover:bg-undefined-600 transition-all"
+                            >
+                                <i data-feather="filter" class="w-4 h-4"></i>
+                                Apply Filters
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full md:w-auto">
-                        <label for="duration" class="sr-only">Duration</label>
-                        <select 
-                            id="duration" 
-                            class="form-select"
-                        >
-                            <option value="">All durations</option>
-                            <option value="1">1 Year</option>
-                            <option value="2">2 Years</option>
-                            <option value="3">3 Years</option>
-                            <option value="4">4 Years</option>
-                            <option value="5">5 Years</option>
-                            <option value="6">6 Years</option>
-                        </select>
+                </div>
+
+                <div id="programsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Loading skeletons -->
+                    <div class="program-card glass-card gradient-border overflow-hidden">
+                        <div class="relative h-56">
+                            <div class="absolute inset-0 skeleton"></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                            <div class="h-6 w-3/4 skeleton rounded"></div>
+                            <div class="h-4 w-full skeleton rounded"></div>
+                            <div class="flex gap-2">
+                                <div class="h-6 w-16 skeleton rounded-full"></div>
+                                <div class="h-6 w-16 skeleton rounded-full"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="w-full md:w-auto">
-                        <button 
-                            id="applyFilters"
-                            class="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-white bg-undefined-500 hover:bg-undefined-600 transition-all"
-                        >
-                            <i data-feather="filter" class="w-4 h-4"></i>
-                            Apply Filters
-                        </button>
+                    <div class="program-card glass-card gradient-border overflow-hidden">
+                        <div class="relative h-56">
+                            <div class="absolute inset-0 skeleton"></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                            <div class="h-6 w-3/4 skeleton rounded"></div>
+                            <div class="h-4 w-full skeleton rounded"></div>
+                            <div class="flex gap-2">
+                                <div class="h-6 w-16 skeleton rounded-full"></div>
+                                <div class="h-6 w-16 skeleton rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="program-card glass-card gradient-border overflow-hidden">
+                        <div class="relative h-56">
+                            <div class="absolute inset-0 skeleton"></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                            <div class="h-6 w-3/4 skeleton rounded"></div>
+                            <div class="h-4 w-full skeleton rounded"></div>
+                            <div class="flex gap-2">
+                                <div class="h-6 w-16 skeleton rounded-full"></div>
+                                <div class="h-6 w-16 skeleton rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<!-- Program Details Modal (moved to component) -->
+<div id="programModal" class="modal-overlay opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="modal-content transform scale-95 transition-transform duration-500">
+        <div class="relative">
+            <button id="closeModal" class="absolute top-4 right-4 z-10 text-white bg-slate-800/50 hover:bg-slate-800/80 rounded-full p-2">
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="relative h-56 md:h-64 overflow-hidden rounded-t-2xl">
+                <img id="modalImage" src="" alt="Program Image" class="w-full h-full object-cover program-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-slate-900/10"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 id="modalName" class="text-xl md:text-2xl font-bold text-white"></h3>
+                            <div class="flex items-center gap-2 text-white/80 text-sm">
+                                <i data-feather="clock" class="w-4 h-4"></i>
+                                <span id="modalDuration"></span>
+                                <span>•</span>
+                                <span id="modalCredits"></span>
+                            </div>
+                        </div>
+                        <span id="modalCode" class="px-3 py-1 bg-undefined-500/20 text-undefined-300 rounded-full text-sm font-medium"></span>
                     </div>
                 </div>
             </div>
-
-            <div id="programsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Loading skeletons -->
-                <div class="program-card glass-card gradient-border overflow-hidden">
-                    <div class="relative h-56">
-                        <div class="absolute inset-0 skeleton"></div>
-                    </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-                        <div class="h-6 w-3/4 skeleton rounded"></div>
-                        <div class="h-4 w-full skeleton rounded"></div>
-                        <div class="flex gap-2">
-                            <div class="h-6 w-16 skeleton rounded-full"></div>
-                            <div class="h-6 w-16 skeleton rounded-full"></div>
+            
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-2">Description</h4>
+                    <p id="modalDescription" class="text-gray-300"></p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-2">Specializations</h4>
+                    <div id="modalSpecializations" class="flex flex-wrap gap-2"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-2">Program Details</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
+                                    <i data-feather="calendar" class="text-undefined-400 w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400">Duration</p>
+                                    <p id="modalFullDuration" class="text-sm text-white"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
+                                    <i data-feather="bookmark" class="text-undefined-400 w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400">Total Credits</p>
+                                    <p id="modalFullCredits" class="text-sm text-white"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
+                                    <i data-feather="clock" class="text-undefined-400 w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400">Created</p>
+                                    <p id="modalCreated" class="text-sm text-white"></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="program-card glass-card gradient-border overflow-hidden">
-                    <div class="relative h-56">
-                        <div class="absolute inset-0 skeleton"></div>
-                    </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-                        <div class="h-6 w-3/4 skeleton rounded"></div>
-                        <div class="h-4 w-full skeleton rounded"></div>
-                        <div class="flex gap-2">
-                            <div class="h-6 w-16 skeleton rounded-full"></div>
-                            <div class="h-6 w-16 skeleton rounded-full"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="program-card glass-card gradient-border overflow-hidden">
-                    <div class="relative h-56">
-                        <div class="absolute inset-0 skeleton"></div>
-                    </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-                        <div class="h-6 w-3/4 skeleton rounded"></div>
-                        <div class="h-4 w-full skeleton rounded"></div>
-                        <div class="flex gap-2">
-                            <div class="h-6 w-16 skeleton rounded-full"></div>
-                            <div class="h-6 w-16 skeleton rounded-full"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activities -->
-            <!-- <div class="glass-card gradient-border p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.4s">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold">Recent Activities</h2>
-                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-500/10 transition-all">
-                        <i data-feather="plus" class="w-4 h-4"></i>
-                        <span>Add New</span>
+                
+                <div class="pt-4 flex justify-end gap-3">
+                    <button id="editProgram" class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-undefined-500 hover:bg-undefined-600 transition-all">
+                        <i data-feather="edit"></i>
+                        Edit Program
+                    </button>
+                    <button id="deleteProgram" class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-rose-600 hover:bg-rose-700 transition-all">
+                        <i data-feather="trash-2"></i>
+                        Delete
                     </button>
                 </div>
-                
-                <div class="space-y-4">
-                    <div class="flex items-start gap-4 p-4 hover:bg-indigo-500/10 rounded-lg transition-all">
-                        <div class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400">
-                            <i data-feather="book-open"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-medium">Course Syllabus Updated</h4>
-                            <p class="text-sm text-gray-400">Updated the syllabus for "Advanced Database Systems"</p>
-                        </div>
-                        <div class="text-xs text-gray-500">2 hours ago</div>
-                    </div>
-                    
-                    <div class="flex items-start gap-4 p-4 hover:bg-emerald-500/10 rounded-lg transition-all">
-                        <div class="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
-                            <i data-feather="user-plus"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-medium">New Faculty Member</h4>
-                            <p class="text-sm text-gray-400">Dr. Sarah Johnson joined the Computer Science department</p>
-                        </div>
-                        <div class="text-xs text-gray-500">1 day ago</div>
-                    </div>
-                    
-                    <div class="flex items-start gap-4 p-4 hover:bg-amber-500/10 rounded-lg transition-all">
-                        <div class="p-2 rounded-lg bg-amber-500/20 text-amber-400">
-                            <i data-feather="award"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-medium">Research Grant Awarded</h4>
-                            <p class="text-sm text-gray-400">Received $250,000 grant for AI research project</p>
-                        </div>
-                        <div class="text-xs text-gray-500">3 days ago</div>
-                    </div>
-                </div>
-            </div> -->
+            </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Program Details Modal -->
-    <div id="programModal" class="modal-overlay opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="modal-content transform scale-95 transition-transform duration-500">
-            <div class="relative">
-                <button id="closeModal" class="absolute top-4 right-4 z-10 text-white bg-slate-800/50 hover:bg-slate-800/80 rounded-full p-2">
-                    <i data-feather="x" class="w-5 h-5"></i>
-                </button>
-                
-                <div class="relative h-56 md:h-64 overflow-hidden rounded-t-2xl">
-                    <img id="modalImage" src="" alt="Program Image" class="w-full h-full object-cover program-image">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-slate-900/10"></div>
-                    <div class="absolute bottom-0 left-0 right-0 p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 id="modalName" class="text-xl md:text-2xl font-bold text-white"></h3>
-                                <div class="flex items-center gap-2 text-white/80 text-sm">
-                                    <i data-feather="clock" class="w-4 h-4"></i>
-                                    <span id="modalDuration"></span>
-                                    <span>•</span>
-                                    <span id="modalCredits"></span>
-                                </div>
-                            </div>
-                            <span id="modalCode" class="px-3 py-1 bg-undefined-500/20 text-undefined-300 rounded-full text-sm font-medium"></span>
-                        </div>
-                    </div>
+
+
+                <!-- Add Bachelor Modal (moved to component) -->
+<div id="addBachelorModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-all duration-200">
+    <!-- Backdrop for modal clicks and dimming -->
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-200 pointer-events-none"></div>
+    <!-- Modal Panel -->
+    <div class="relative w-full max-w-7xl max-h-[92vh] overflow-hidden">
+          <div class="glass-card rounded-2xl shadow-2xl border border-white/10 modal-enter modal-enter-active relative z-10"
+              id="modalPanel">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">
+                        <span class="gradient-text">Add New Bachelor Program</span>
+                    </h1>
+                    <p class="text-gray-400 text-sm">Register new undergraduate programs for your department</p>
                 </div>
-                
-                <div class="p-6 space-y-6">
-                    <div>
-                        <h4 class="text-lg font-semibold text-white mb-2">Description</h4>
-                        <p id="modalDescription" class="text-gray-300"></p>
-                    </div>
-                    
-                    <div>
-                        <h4 class="text-lg font-semibold text-white mb-2">Specializations</h4>
-                        <div id="modalSpecializations" class="flex flex-wrap gap-2"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h4 class="text-lg font-semibold text-white mb-2">Program Details</h4>
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
-                                        <i data-feather="calendar" class="text-undefined-400 w-4 h-4"></i>
-                                    </div>
+                <div class="flex items-center gap-2">
+                    <button id="closeModalBtn"
+                            class="glass-card p-2 rounded-lg hover:bg-primary/10 transition-all"
+                            title="Close">
+                        <i data-feather="x" class="w-5 h-5 text-gray-300"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="overflow-y-auto max-h-[calc(92vh-72px)]">
+                <main class="p-6">
+                    <!-- Two Column Layout -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Form Section -->
+                        <div class="lg:col-span-2">
+                            <div class="glass-card rounded-2xl p-6" data-aos="fade-right">
+                                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                    <i data-feather="plus-circle" class="text-primary-400"></i>
+                                    Program Details
+                                </h2>
+
+                                <form id="bachelorForm" class="space-y-5">
+                                    <!-- Program Name -->
                                     <div>
-                                        <p class="text-xs text-gray-400">Duration</p>
-                                        <p id="modalFullDuration" class="text-sm text-white"></p>
+                                        <label for="programName" class="block text-sm font-medium text-gray-300 mb-2">Program Name</label>
+                                        <input
+                                            type="text"
+                                            id="programName"
+                                            class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="Bachelor of Medicine and Bachelor of Surgery (MBBS)"
+                                            required
+                                        />
+                                    </div>
+                                    <!-- Program Code -->
+                                    <div>
+                                        <label for="programCode" class="block text-sm font-medium text-gray-300 mb-2">Program Code</label>
+                                        <input
+                                            type="text"
+                                            id="programCode"
+                                            class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="MBBS"
+                                            required
+                                        />
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div>
+                                        <label for="programDescription" class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                                        <textarea
+                                            id="programDescription"
+                                            rows="4"
+                                            class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="A comprehensive medical program that prepares students..."
+                                        ></textarea>
+                                    </div>
+
+                                    <!-- Duration and Credits -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="programDuration" class="block text-sm font-medium text-gray-300 mb-2">Duration (Years)</label>
+                                            <select
+                                                id="programDuration"
+                                                class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                required
+                                            >
+                                                <option value="">Select duration</option>
+                                                <option value="1">1 Year</option>
+                                                <option value="2">2 Years</option>
+                                                <option value="3">3 Years</option>
+                                                <option value="4" selected>4 Years</option>
+                                                <option value="5">5 Years</option>
+                                                <option value="6">6 Years</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="programCredits" class="block text-sm font-medium text-gray-300 mb-2">Total Credits</label>
+                                            <input
+                                                type="number"
+                                                id="programCredits"
+                                                class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                placeholder="120"
+                                                value="120"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Specializations -->
+                                    <div>
+                                        <label for="programSpecializations" class="block text-sm font-medium text-gray-300 mb-2">Specializations (Optional)</label>
+                                        <div id="specializationsContainer" class="space-y-2">
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="addSpecialization"
+                                            class="mt-2 text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1"
+                                        >
+                                            <i data-feather="plus" class="w-4 h-4"></i>
+                                            Add Specialization
+                                        </button>
+                                    </div>
+
+                                    <!-- Image URL -->
+                                    <div>
+                                        <label for="programImage" class="block text-sm font-medium text-gray-300 mb-2">Program Image (URL)</label>
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                id="programImage"
+                                                class="flex-1 form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                placeholder="https://example.com/image.jpg"
+                                                value="http://static.photos/technology/640x360"
+                                            />
+                                            <button
+                                                type="button"
+                                                id="randomImage"
+                                                class="glass-card px-3 py-3 rounded-lg hover:bg-primary-500/10 transition-all"
+                                                title="Random Image"
+                                            >
+                                                <i data-feather="shuffle" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <div class="pt-2">
+                                        <button
+                                            type="submit"
+                                            id="submitButton"
+                                            class="w-full flex justify-center items-center gap-2 py-3.5 px-6 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200"
+                                        >
+                                            <i data-feather="save" class="w-5 h-5"></i>
+                                            Register Program
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="lg:col-span-1">
+                            <div class="sticky top-0 space-y-4">
+                                <!-- Program Preview -->
+                                <div class="glass-card rounded-2xl p-5" data-aos="fade-left">
+                                    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                                        <i data-feather="eye" class="text-primary-400"></i>
+                                        Program Preview
+                                    </h2>
+
+                                    <p class="text-gray-400 text-sm mb-4">This is how your program will appear to students</p>
+
+                                    <div class="bachelor-card">
+                                        <div class="bachelor-card-inner glass-card rounded-xl overflow-hidden border border-slate-700/50 hover:border-primary-400/30 transition-all">
+                                            <!-- Program Image -->
+                                            <div class="relative h-36 sm:h-40 overflow-hidden">
+                                                <div class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 z-10"></div>
+                                                <img
+                                                    src="http://static.photos/technology/640x360"
+                                                    alt="Program Preview"
+                                                    id="previewImage"
+                                                    class="bachelor-image w-full h-full object-cover"
+                                                />
+                                            </div>
+
+                                            <!-- Program Content -->
+                                            <div class="p-5">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <h3 id="previewName" class="text-lg sm:text-xl font-bold text-white">New Program</h3>
+                                                    <span id="previewCode" class="px-2 py-1 bg-primary-500/20 text-primary-300 rounded-full text-xs font-medium">CODE</span>
+                                                </div>
+
+                                                <p id="previewDuration" class="text-sm text-gray-400 mb-3">Duration: 4 Years</p>
+
+                                                <p id="previewDescription" class="text-sm text-gray-300 line-clamp-3 mb-4">
+                                                    Program description will appear here...
+                                                </p>
+
+                                                <div class="flex flex-wrap gap-2" id="previewSpecializations">
+                                                    <span class="px-2 py-1 bg-slate-800/50 text-slate-300 rounded-full text-xs">General</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
-                                        <i data-feather="bookmark" class="text-undefined-400 w-4 h-4"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-400">Total Credits</p>
-                                        <p id="modalFullCredits" class="text-sm text-white"></p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
-                                        <i data-feather="clock" class="text-undefined-400 w-4 h-4"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-400">Created</p>
-                                        <p id="modalCreated" class="text-sm text-white"></p>
-                                    </div>
+
+                                <!-- Tips Section -->
+                                <div class="glass-card rounded-2xl p-5" data-aos="fade-left" data-aos-delay="100">
+                                    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                                        <i data-feather="info" class="text-emerald-400"></i>
+                                        Tips for Adding Programs
+                                    </h2>
+
+                                    <ul class="space-y-2.5 text-sm text-gray-400">
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Use clear and descriptive program names that students will recognize</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Standard program codes help with administration and reporting</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Highlight unique aspects of your program in the description</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Add specializations to show different tracks within your program</span>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="pt-4 flex justify-end gap-3">
-                        <button id="editProgram" class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-undefined-500 hover:bg-undefined-600 transition-all">
-                            <i data-feather="edit"></i>
-                            Edit Program
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!-- Success Modal -->
+        <div id="successModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-500 scale-90">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="check-circle" class="w-10 h-10 text-emerald-400"></i>
+                    </div>
+
+                    <h3 class="text-2xl font-bold text-white mb-2">Program Added Successfully!</h3>
+                    <p class="text-gray-400 mb-6">The new bachelor program has been registered in your department.</p>
+
+                    <div class="flex gap-4 justify-center">
+                        <button
+                            id="addAnother"
+                            class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 transition-all"
+                        >
+                            <i data-feather="plus"></i>
+                            Add Another
                         </button>
-                        <button id="deleteProgram" class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-rose-600 hover:bg-rose-700 transition-all">
-                            <i data-feather="trash-2"></i>
-                            Delete
+                        <button
+                            id="viewPrograms"
+                            class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-slate-700 hover:bg-slate-600 transition-all"
+                        >
+                            <i data-feather="list"></i>
+                            View Programs
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-        </main>
-    </div>
+            </main>
+        </div>
 
-    <script>
-        // Initialize Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
-            authDomain: "mentora-71f5c.firebaseapp.com",
-            projectId: "mentora-71f5c",
-            storageBucket: "mentora-71f5c.appspot.com",
-            messagingSenderId: "16685388211",
-            appId: "1:16685388211:web:7eed812660439dec7b3bc6",
-            measurementId: "G-BL98PXGK2G"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        
-
-        // Create floating particles
-        function createParticles() {
-            const container = document.querySelector('.particles-container');
-            const particleCount = 20;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                const size = Math.random() * 100 + 50;
-                const left = Math.random() * 100;
-                const top = Math.random() * 100;
-                const delay = Math.random() * 10;
-                const duration = Math.random() * 10 + 10;
-                
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${left}%`;
-                particle.style.top = `${top}%`;
-                particle.style.animationDelay = `${delay}s`;
-                particle.style.animationDuration = `${duration}s`;
-                
-                container.appendChild(particle);
-            }
-        }
-
-        
-
-        // Initialize charts
-        function initCharts() {
-            // Attendance Chart
-            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-            new Chart(attendanceCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'Attendance Rate',
-                        data: [82, 85, 88, 87, 89, 92],
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        borderColor: 'rgb(99, 102, 241)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: 'white',
-                        pointBorderColor: 'rgb(99, 102, 241)',
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleColor: '#e2e8f0',
-                            bodyColor: '#94a3b8',
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1,
-                            padding: 12,
-                            usePointStyle: true,
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.parsed.y}%`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            min: 70,
-                            max: 100,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        }
-                    },
-                    elements: {
-                        line: {
-                            borderJoinStyle: 'round'
-                        }
-                    }
-                }
-            });
-
-            // Performance Chart
-            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-            new Chart(performanceCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
-                    datasets: [{
-                        label: 'Average Score',
-                        data: [78, 85, 88, 82, 90],
-                        backgroundColor: [
-                            'rgba(139, 92, 246, 0.7)',
-                            'rgba(124, 58, 237, 0.7)',
-                            'rgba(109, 40, 217, 0.7)',
-                            'rgba(91, 33, 182, 0.7)',
-                            'rgba(76, 29, 149, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgba(139, 92, 246, 1)',
-                            'rgba(124, 58, 237, 1)',
-                            'rgba(109, 40, 217, 1)',
-                            'rgba(91, 33, 182, 1)',
-                            'rgba(76, 29, 149, 1)'
-                        ],
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleColor: '#e2e8f0',
-                            bodyColor: '#94a3b8',
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1,
-                            padding: 12,
-                            usePointStyle: true
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            min: 70,
-                            max: 100,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            createParticles();
-            initCharts();
-            
-            // Animate performance fills
-            setTimeout(() => {
-                document.querySelectorAll('.performance-fill').forEach(bar => {
-                    const width = bar.style.width;
-                    bar.style.width = '0%';
-                    setTimeout(() => {
-                        bar.style.width = width;
-                    }, 200);
-                });
-            }, 500);
-            
-            // Check authentication
-            auth.onAuthStateChanged(async (user) => {
-                if (!user) {
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                // Get current department ID from localStorage
-                const deptId = localStorage.getItem('currentDeptId');
-                if (!deptId) {
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                try {
-                    // Fetch department data
-                    const doc = await db.collection('departments').doc(deptId).get();
-                    if (!doc.exists) {
-                        throw new Error('Department not found');
-                    }
-
-                    const deptData = doc.data();
-                    
-                    // Update UI with department information
-                    document.getElementById('portalTitle').textContent = `${deptData.dean.split(' ')[0] || 'Dean'}'s Portal`;
-                    document.getElementById('departmentName').textContent = `${deptData.name} Management Portal`;
-                    document.getElementById('userInitial').textContent = deptData.dean.charAt(0) || 'D';
-                    document.getElementById('deanName').textContent = deptData.dean;
-                    document.getElementById('deanTitle').textContent = `Dean of ${deptData.name}`;
-                    
-                    // Set mock statistics
-                    const studentCount = Math.floor(Math.random() * 500) + 200;
-                    document.getElementById('studentCount').textContent = studentCount;
-                    document.getElementById('profileStudentCount').textContent = studentCount;
-                    document.getElementById('courseCount').textContent = Math.floor(Math.random() * 30) + 15;
-                    document.getElementById('facultyCount').textContent = Math.floor(Math.random() * 20) + 10;
-                    document.getElementById('enrollmentRate').textContent = `${Math.floor(Math.random() * 20) + 80}%`;
-                    
-                    // Set dean experience
-                    const experience = Math.floor(Math.random() * 15) + 5;
-                    document.getElementById('deanExperience').textContent = `${experience} Years Exp`;
-                    
-                } catch (error) {
-                    console.error("Error loading department data: ", error);
-                }
-            });
-
-            feather.replace();
-        });
-    </script>
-    <script type="module" src="cards.js"></script>
-</body>
-</html>
+        <script src="components/modal-loader.js"></script>
+        <script type="module" src="cards.js"></script>
+        <script type="module" src="get.js"></script>
+        <script src="main.js"></script>
+    </body>
+    </html>

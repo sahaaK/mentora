@@ -1,0 +1,237 @@
+<!-- Add Bachelor Modal (moved to component) -->
+<div id="addBachelorModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-all duration-200">
+    <!-- Backdrop for modal clicks and dimming -->
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-200 pointer-events-none"></div>
+    <!-- Modal Panel -->
+    <div class="relative w-full max-w-7xl max-h-[92vh] overflow-hidden">
+          <div class="glass-card rounded-2xl shadow-2xl border border-white/10 modal-enter modal-enter-active relative z-10"
+              id="modalPanel">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">
+                        <span class="gradient-text">Add New Bachelor Program</span>
+                    </h1>
+                    <p class="text-gray-400 text-sm">Register new undergraduate programs for your department</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="closeModalBtn"
+                            class="glass-card p-2 rounded-lg hover:bg-primary/10 transition-all"
+                            title="Close">
+                        <i data-feather="x" class="w-5 h-5 text-gray-300"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="overflow-y-auto max-h-[calc(92vh-72px)]">
+                <main class="p-6">
+                    <!-- Two Column Layout -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Form Section -->
+                        <div class="lg:col-span-2">
+                            <div class="glass-card rounded-2xl p-6" data-aos="fade-right">
+                                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                    <i data-feather="plus-circle" class="text-primary-400"></i>
+                                    Program Details
+                                </h2>
+
+                                <form id="bachelorForm" class="space-y-5">
+                                    <!-- Program Name -->
+                                    <div>
+                                        <label for="programName" class="block text-sm font-medium text-gray-300 mb-2">Program Name</label>
+                                        <input
+                                            type="text"
+                                            id="programName"
+                                            class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="Bachelor of Medicine and Bachelor of Surgery (MBBS)"
+                                            required
+                                        />
+                                    </div>
+                                    <!-- Program Code -->
+                                    <div>
+                                        <label for="programCode" class="block text-sm font-medium text-gray-300 mb-2">Program Code</label>
+                                        <input
+                                            type="text"
+                                            id="programCode"
+                                            class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="MBBS"
+                                            required
+                                        />
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div>
+                                        <label for="programDescription" class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                                        <textarea
+                                            id="programDescription"
+                                            rows="4"
+                                            class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="A comprehensive medical program that prepares students..."
+                                        ></textarea>
+                                    </div>
+
+                                    <!-- Duration and Credits -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="programDuration" class="block text-sm font-medium text-gray-300 mb-2">Duration (Years)</label>
+                                            <select
+                                                id="programDuration"
+                                                class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                required
+                                            >
+                                                <option value="">Select duration</option>
+                                                <option value="1">1 Year</option>
+                                                <option value="2">2 Years</option>
+                                                <option value="3">3 Years</option>
+                                                <option value="4" selected>4 Years</option>
+                                                <option value="5">5 Years</option>
+                                                <option value="6">6 Years</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="programCredits" class="block text-sm font-medium text-gray-300 mb-2">Total Credits</label>
+                                            <input
+                                                type="number"
+                                                id="programCredits"
+                                                class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                placeholder="120"
+                                                value="120"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Specializations -->
+                                    <div>
+                                        <label for="programSpecializations" class="block text-sm font-medium text-gray-300 mb-2">Specializations (Optional)</label>
+                                        <div id="specializationsContainer" class="space-y-2">
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="addSpecialization"
+                                            class="mt-2 text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1"
+                                        >
+                                            <i data-feather="plus" class="w-4 h-4"></i>
+                                            Add Specialization
+                                        </button>
+                                    </div>
+
+                                    <!-- Image URL -->
+                                    <div>
+                                        <label for="programImage" class="block text-sm font-medium text-gray-300 mb-2">Program Image (URL)</label>
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                id="programImage"
+                                                class="flex-1 form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                placeholder="https://example.com/image.jpg"
+                                                value="http://static.photos/technology/640x360"
+                                            />
+                                            <button
+                                                type="button"
+                                                id="randomImage"
+                                                class="glass-card px-3 py-3 rounded-lg hover:bg-primary-500/10 transition-all"
+                                                title="Random Image"
+                                            >
+                                                <i data-feather="shuffle" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <div class="pt-2">
+                                        <button
+                                            type="submit"
+                                            id="submitButton"
+                                            class="w-full flex justify-center items-center gap-2 py-3.5 px-6 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200"
+                                        >
+                                            <i data-feather="save" class="w-5 h-5"></i>
+                                            Register Program
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="lg:col-span-1">
+                            <div class="sticky top-0 space-y-4">
+                                <!-- Program Preview -->
+                                <div class="glass-card rounded-2xl p-5" data-aos="fade-left">
+                                    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                                        <i data-feather="eye" class="text-primary-400"></i>
+                                        Program Preview
+                                    </h2>
+
+                                    <p class="text-gray-400 text-sm mb-4">This is how your program will appear to students</p>
+
+                                    <div class="bachelor-card">
+                                        <div class="bachelor-card-inner glass-card rounded-xl overflow-hidden border border-slate-700/50 hover:border-primary-400/30 transition-all">
+                                            <!-- Program Image -->
+                                            <div class="relative h-36 sm:h-40 overflow-hidden">
+                                                <div class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 z-10"></div>
+                                                <img
+                                                    src="http://static.photos/technology/640x360"
+                                                    alt="Program Preview"
+                                                    id="previewImage"
+                                                    class="bachelor-image w-full h-full object-cover"
+                                                />
+                                            </div>
+
+                                            <!-- Program Content -->
+                                            <div class="p-5">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <h3 id="previewName" class="text-lg sm:text-xl font-bold text-white">New Program</h3>
+                                                    <span id="previewCode" class="px-2 py-1 bg-primary-500/20 text-primary-300 rounded-full text-xs font-medium">CODE</span>
+                                                </div>
+
+                                                <p id="previewDuration" class="text-sm text-gray-400 mb-3">Duration: 4 Years</p>
+
+                                                <p id="previewDescription" class="text-sm text-gray-300 line-clamp-3 mb-4">
+                                                    Program description will appear here...
+                                                </p>
+
+                                                <div class="flex flex-wrap gap-2" id="previewSpecializations">
+                                                    <span class="px-2 py-1 bg-slate-800/50 text-slate-300 rounded-full text-xs">General</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tips Section -->
+                                <div class="glass-card rounded-2xl p-5" data-aos="fade-left" data-aos-delay="100">
+                                    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                                        <i data-feather="info" class="text-emerald-400"></i>
+                                        Tips for Adding Programs
+                                    </h2>
+
+                                    <ul class="space-y-2.5 text-sm text-gray-400">
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Use clear and descriptive program names that students will recognize</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Standard program codes help with administration and reporting</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Highlight unique aspects of your program in the description</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                                            <span>Add specializations to show different tracks within your program</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
