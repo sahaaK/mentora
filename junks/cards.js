@@ -191,7 +191,6 @@
                     modalSpecializations.appendChild(span);
                 });
             }
-
             // Show modal
             if (programModal) programModal.classList.remove('opacity-0', 'pointer-events-none');
             if (modalContent) modalContent.classList.remove('scale-95');
@@ -251,7 +250,7 @@
         // Edit program
         function editCurrentProgram() {
             if (!currentProgramId) return;
-            window.location.href = `edit-program.html?id=${currentProgramId}`;
+            window.location.href = `programs.html?id=${currentProgramId}`;
         }
 
         // NOTE: Event listeners are attached after DOMContentLoaded when elements exist

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Program Modals - 3 Styles</title>
+
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'undefined-50':  '#f3f6ff',
+                        'undefined-100': '#e6edff',
+                        'undefined-200': '#d0dcff',
+                        'undefined-300': '#a9bfff',
+                        'undefined-400': '#7d9cff',
+                        'undefined-500': '#5477ff',
+                        'undefined-600': '#3b5ef0',
+                        'undefined-700': '#2d48bf',
+                        'undefined-800': '#243a97',
+                        'undefined-900': '#1e317a',
+                        'undefined-950': '#171f4d'
+                    },
+                    boxShadow: {
+                        'glass': '0 10px 40px rgba(0,0,0,0.25)',
+                    },
+                    keyframes: {
+                        'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        'scale-in': { '0%': { opacity: 0, transform: 'scale(.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+                        'pop': { '0%': { transform: 'scale(.9)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                        'slide-up': { '0%': { transform: 'translateY(12px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+                        'bar-fill': { '0%': { height: '0%' }, '100%': { height: 'var(--h)' } },
+                    },
+                    animation: {
+                        'fade-in': 'fade-in .2s ease-out',
+                        'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+                        'pop': 'pop .18s ease-out',
+                        'slide-up': 'slide-up .28s ease-out',
+                        'bar-fill': 'bar-fill .9s ease-out var(--delay, 0s) forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        /* Modal overlay and panel transitions (consistent open/close) */
+        .modal-overlay {
+            transition: opacity .28s ease, visibility .28s ease;
+        }
+        .modal-panel {
+            transition: transform .28s cubic-bezier(.2,.9,.3,1), opacity .28s ease;
+        }
+        .modal-open .modal-panel {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .modal-open .modal-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Floating blob background for style-2 */
+        .blob {
+            filter: blur(42px);
+            opacity: .5;
+            transform: translateZ(0);
+            animation: float 16s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,100% { transform: translate(0,0) scale(1) }
+            50% { transform: translate(10px,-14px) scale(1.08) }
+        }
+
+        /* Glass card for style-2 */
+        .glass {
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            border: 1px solid rgba(255,255,255,.12);
+            backdrop-filter: blur(12px);
+        }
+
+        /* Tiny progress bar utility */
+        .tiny-bar {
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+            overflow: hidden;
+        }
+        .tiny-bar > i {
+            display: block;
+            height: 100%;
+            width: var(--w, 50%);
+            background: linear-gradient(90deg, rgba(84,119,255,1) 0%, rgba(84,119,255,.2) 100%);
+            border-radius: inherit;
+            transition: width .7s cubic-bezier(.22,.9,.3,1);
+        }
+
+        /* Sparkline path animation */
+        .spark path {
+            stroke-dasharray: 300;
+            stroke-dashoffset: 300;
+            animation: draw 1.6s ease forwards .25s;
+        }
+        @keyframes draw { to { stroke-dashoffset: 0 } }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-undefined-500/30 selection:text-white">
+    <header class="sticky top-0 z-10 bg-slate-950/70 backdrop-blur border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-undefined-500 to-undefined-700 grid place-items-center shadow-glass">
+                    <i data-feather="layers" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold tracking-tight">Program Gallery</h1>
+                    <p class="text-sm text-slate-400">Three unique modal styles</p>
+                </div>
+            </div>
+            <a href="#" class="hidden sm:inline-flex text-sm text-slate-400 hover:text-white transition">
+                Documentation
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <p class="text-slate-400 mb-6">Click a program card to open the corresponding modal style.</p>
+
+        <div id="programsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Style 1: Classic Header + Content -->
+    <div id="modalStyle1" class="modal-overlay fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0 bg-black/60"></div>
+        <div class="modal-panel relative max-w-3xl w-full bg-slate-900 border border-white/10 rounded-2xl shadow-glass overflow-hidden scale-[.96] opacity-0">
+            <button class="absolute top-3 right-3 z-20 text-white/80 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition" data-close>
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Header media -->
+            <div class="relative h-56 md:h-64 overflow-hidden">
+                <img id="m1-image" alt="Program Image" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <div class="flex items-end justify-between gap-4">
+                        <div>
+                            <h3 id="m1-name" class="text-2xl font-bold tracking-tight"></h3>
+                            <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+                                <span class="inline-flex items-center gap-1">
+                                    <i data-feather="clock" class="w-4 h-4"></i>
+                                    <span id="m1-duration"></span>
+                                </span>
+                                <span>•</span>
+                                <span id="m1-credits"></span>
+                            </div>
+                        </div>
+                        <span id="m1-code" class="px-3 py-1 rounded-full text-xs font-medium bg-undefined-500/20 text-undefined-300 ring-1 ring-inset ring-undefined-400/30"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-lg font-semibold mb-2">Description</h4>
+                    <p id="m1-desc" class="text-slate-300"></p>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-3">Overview</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Duration</div>
+                            <div id="m1-full-duration" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Total Credits</div>
+                            <div id="m1-full-credits" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Created</div>
+                            <div id="m1-created" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Status</div>
+                            <div id="m1-status" class="mt-1 font-semibold"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Style 1 Graph: Engagement + Trend -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-3">Weekly Engagement</h4>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-slate-400">Students active (last 7 days)</div>
+                            <div class="text-sm font-semibold"><span id="m1-total"></span></div>
+                        </div>
+                        <div class="mt-3 grid grid-cols-7 gap-2 items-end h-28">
+                            <div class="tiny-bar"><i style="--w:52%"></i></div>
+                            <div class="tiny-bar"><i style="--w:64%"></i></div>
+                            <div class="tiny-bar"><i style="--w:71%"></i></div>
+                            <div class="tiny-bar"><i style="--w:49%"></i></div>
+                            <div class="tiny-bar"><i style="--w:82%"></i></div>
+                            <div class="tiny-bar"><i style="--w:68%"></i></div>
+                            <div class="tiny-bar"><i style="--w:91%"></i></div>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="text-xs text-slate-400">Completion</div>
+                            <div id="m1-completion" class="text-xs font-semibold"></div>
+                        </div>
+                        <div class="mt-2 tiny-bar"><i id="m1-completion-bar" style="--w:0%"></i></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3">
+                    <button class="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                        Close
+                    </button>
+                    <button class="px-5 py-2.5 rounded-lg bg-undefined-500 hover:bg-undefined-600 text-white text-sm flex items-center gap-2 transition">
+                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                        Edit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Style 2: Glass + Side Media -->
+    <div id="modalStyle2" class="modal-overlay fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0 bg-black/60"></div>
+
+        <div class="modal-panel relative w-full max-w-5xl glass rounded-3xl shadow-glass scale-[.96] opacity-0 overflow-hidden">
+            <button class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition" data-close>
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Floating blobs -->
+            <div class="pointer-events-none absolute -top-16 -right-16 w-72 h-72 blob bg-undefined-500/60 rounded-full"></div>
+            <div class="pointer-events-none absolute -bottom-20 -left-12 w-80 h-80 blob bg-fuchsia-500/30 rounded-full"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 relative">
+                <!-- Left media -->
+                <div class="relative h-72 lg:h-[28rem] overflow-hidden">
+                    <img id="m2-image" alt="Program Image" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/30 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <div class="flex items-end justify-between gap-4">
+                            <div>
+                                <h3 id="m2-name" class="text-2xl font-bold tracking-tight"></h3>
+                                <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+                                    <span class="inline-flex items-center gap-1">
+                                        <i data-feather="clock" class="w-4 h-4"></i>
+                                        <span id="m2-duration"></span>
+                                    </span>
+                                    <span>•</span>
+                                    <span id="m2-credits"></span>
+                                </div>
+                            </div>
+                            <span id="m2-code" class="px-3 py-1 rounded-full text-xs font-medium bg-undefined-500/20 text-undefined-300 ring-1 ring-inset ring-undefined-400/30"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right content -->
+                <div class="p-6 md:p-8 space-y-6">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">About this program</h4>
+                        <p id="m2-desc" class="text-slate-300"></p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Duration</div>
+                            <div id="m2-full-duration" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Credits</div>
+                            <div id="m2-full-credits" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Created</div>
+                            <div id="m2-created" class="mt-1 font-semibold"></div>
+                        </div>
+                    </div>
+
+                    <!-- Style 2 Graph: Circular gauge + sparkline -->
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-slate-300">Program health</div>
+                            <div id="m2-score" class="text-lg font-bold"></div>
+                        </div>
+                        <div class="mt-4 flex items-center gap-6">
+                            <!-- Circular Gauge -->
+                            <div class="relative w-28 h-28">
+                                <svg viewBox="0 0 120 120" class="w-28 h-28 -rotate-90">
+                                    <defs>
+                                        <linearGradient id="grad2" x1="0" x2="1" y1="0" y2="1">
+                                            <stop offset="0%" stop-color="#5477ff"/>
+                                            <stop offset="100%" stop-color="#7d9cff"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,.08)" stroke-width="14" fill="none"/>
+                                    <circle id="m2-gauge" cx="60" cy="60" r="50" stroke="url(#grad2)" stroke-width="14" fill="none"
+                                            stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
+                                            class="transition-all duration-1000 ease-out"/>
+                                </svg>
+                                <div class="absolute inset-0 grid place-items-center">
+                                    <div class="text-center">
+                                        <div class="text-xs text-slate-400">Completion</div>
+                                        <div id="m2-gauge-text" class="text-lg font-bold">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sparkline -->
+                            <div class="flex-1">
+                                <div class="text-xs text-slate-400 mb-2">Weekly trend</div>
+                                <div class="spark">
+                                    <svg viewBox="0 0 300 80" class="w-full h-16">
+                                        <defs>
+                                            <linearGradient id="sparkGrad" x1="0" x2="0" y1="0" y2="1">
+                                                <stop offset="0%" stop-color="#5477ff" stop-opacity=".9"/>
+                                                <stop offset="100%" stop-color="#5477ff" stop-opacity=".1"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M0,60 C40,40 60,50 100,35 C140,20 160,30 200,25 C240,20 260,28 300,18"
+                                              fill="none" stroke="#7d9cff" stroke-width="2.5"/>
+                                        <path d="M0,80 L0,60 C40,40 60,50 100,35 C140,20 160,30 200,25 C240,20 260,28 300,18 L300,80 Z"
+                                              fill="url(#sparkGrad)" opacity=".25"/>
+                                    </svg>
+                                </div>
+                                <div class="mt-3 flex items-center gap-3 text-xs text-slate-400">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Active
+                                    </span>
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-undefined-400"></span> Avg score
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                            Close
+                        </button>
+                        <button class="px-5 py-2.5 rounded-lg bg-undefined-500 hover:bg-undefined-600 text-white text-sm flex items-center gap-2 transition">
+                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                            Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Style 3: Magazine Split + Timeline -->
+    <div id="modalStyle3" class="modal-overlay fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0 bg-black/60"></div>
+
+        <div class="modal-panel relative max-w-5xl w-full bg-slate-900/90 border border-white/10 rounded-3xl shadow-glass scale-[.96] opacity-0 overflow-hidden">
+            <button class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition" data-close>
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5">
+                <!-- Left hero -->
+                <div class="relative lg:col-span-2 h-72 lg:h-auto overflow-hidden">
+                    <img id="m3-image" alt="Program Image" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/10"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 id="m3-name" class="text-2xl font-bold tracking-tight"></h3>
+                        <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+                            <span class="inline-flex items-center gap-1">
+                                <i data-feather="clock" class="w-4 h-4"></i>
+                                <span id="m3-duration"></span>
+                            </span>
+                            <span>•</span>
+                            <span id="m3-credits"></span>
+                        </div>
+                        <div class="mt-3">
+                            <span id="m3-code" class="px-3 py-1 rounded-full text-xs font-medium bg-undefined-500/20 text-undefined-300 ring-1 ring-inset ring-undefined-400/30"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right content -->
+                <div class="lg:col-span-3 p-6 md:p-8 space-y-6">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">Description</h4>
+                        <p id="m3-desc" class="text-slate-300"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Duration</div>
+                            <div id="m3-full-duration" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Credits</div>
+                            <div id="m3-full-credits" class="mt-1 font-semibold"></div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                            <div class="text-xs text-slate-400">Created</div>
+                            <div id="m3-created" class="mt-1 font-semibold"></div>
+                        </div>
+                    </div>
+
+                    <!-- Style 3 Graph: Vertical Bar Chart -->
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-slate-300">Interest by category</div>
+                            <div class="text-xs text-slate-400">Total <span id="m3-total"></span></div>
+                        </div>
+                        <div id="m3-bars" class="mt-4 h-40 flex items-end gap-4">
+                            <!-- Bars injected by JS with animation -->
+                        </div>
+                        <div class="mt-3 flex items-center justify-end gap-3">
+                            <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                                Close
+                            </button>
+                            <button class="px-4 py-2 rounded-lg bg-undefined-500 hover:bg-undefined-600 text-white text-sm flex items-center gap-2 transition">
+                                <i data-feather="edit-2" class="w-4 h-4"></i>
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample program data
+        const programs = [
+            {
+                id: 'CS101',
+                name: 'Foundations of Computer Science',
+                duration: '8 weeks',
+                credits: '3 credits',
+                code: 'CS-101',
+                image: 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop',
+                description: 'A rigorous introduction to problem-solving, algorithms, and data structures. Build a strong foundation for advanced study in computer science.',
+                fullDuration: '8 weeks (64 contact hours)',
+                fullCredits: '3',
+                created: 'Jan 2023',
+                status: 'Active',
+                completion: 76,
+                total: 1248,
+                healthScore: 82,
+                categories: [
+                    { label: 'Algorithms', value: 42 },
+                    { label: 'Data Structures', value: 58 },
+                    { label: 'Logic', value: 35 },
+                    { label: 'Complexity', value: 25 },
+                    { label: 'Practice', value: 47 },
+                ],
+                style: 1
+            },
+            {
+                id: 'DATA201',
+                name: 'Data Science with Python',
+                duration: '10 weeks',
+                credits: '4 credits',
+                code: 'DATA-201',
+                image: 'https://images.unsplash.com/photo-1551281044-8a6b5e0a1f2d?q=80&w=1600&auto=format&fit=crop',
+                description: 'Hands-on course covering pandas, visualization, and machine learning. Work on real datasets and present data-driven insights.',
+                fullDuration: '10 weeks (80 contact hours)',
+                fullCredits: '4',
+                created: 'Mar 2023',
+                status: 'Active',
+                completion: 89,
+                total: 2134,
+                healthScore: 91,
+                categories: [
+                    { label: 'Cleaning', value: 38 },
+                    { label: 'EDA', value: 52 },
+                    { label: 'Modeling', value: 44 },
+                    { label: 'Viz', value: 61 },
+                    { label: 'Deploy', value: 28 },
+                ],
+                style: 2
+            },
+            {
+                id: 'WEB301',
+                name: 'Modern Web Development',
+                duration: '12 weeks',
+                credits: '5 credits',
+                code: 'WEB-301',
+                image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop',
+                description: 'Build performant web apps with HTML5, CSS3, and JavaScript. Learn frameworks, tooling, and best practices for production.',
+                fullDuration: '12 weeks (96 contact hours)',
+                fullCredits: '5',
+                created: 'May 2022',
+                status: 'Active',
+                completion: 67,
+                total: 1870,
+                healthScore: 74,
+                categories: [
+                    { label: 'HTML', value: 49 },
+                    { label: 'CSS', value: 55 },
+                    { label: 'JS', value: 63 },
+                    { label: 'APIs', value: 40 },
+                    { label: 'Ops', value: 30 },
+                ],
+                style: 3
+            }
+        ];
+
+        // Render sample cards
+        const grid = document.getElementById('programsGrid');
+        grid.innerHTML = programs.map(p => `
+            <button data-program="${p.id}" class="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition text-left">
+                <div class="aspect-video overflow-hidden">
+                    <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"/>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="font-semibold">${p.name}</h3>
+                        <span class="px-2 py-1 rounded-full text-[10px] font-medium bg-undefined-500/20 text-undefined-300 ring-1 ring-inset ring-undefined-400/30">${p.code}</span>
+                    </div>
+                    <div class="mt-1 text-sm text-slate-400">${p.duration} • ${p.credits}</div>
+                    <div class="mt-3 inline-flex items-center gap-2 text-xs text-slate-300">
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="cpu" class="w-3.5 h-3.5"></i> Style ${p.style}
+                        </span>
+                    </div>
+                </div>
+            </button>
+        `).join('');
+
+        // Modal elements
+        const modals = {
+            1: document.getElementById('modalStyle1'),
+            2: document.getElementById('modalStyle2'),
+            3: document.getElementById('modalStyle3'),
+        };
+
+        function openModalById(id) {
+            const program = programs.find(p => p.id === id);
+            if (!program) return;
+            if (program.style === 1) fillStyle1(program);
+            if (program.style === 2) fillStyle2(program);
+            if (program.style === 3) fillStyle3(program);
+
+            const m = modals[program.style];
+            m.classList.remove('opacity-0', 'pointer-events-none');
+            m.classList.add('modal-open');
+
+            // Focus trap (simple)
+            const focusables = m.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            function trap(e) {
+                if (e.key !== 'Tab') return;
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault(); last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault(); first.focus();
+                }
+            }
+            m.dataset.trap = '1';
+            m.addEventListener('keydown', trap);
+            setTimeout(() => first?.focus(), 10);
+        }
+
+        function closeModal(modalEl) {
+            modalEl.classList.add('opacity-0', 'pointer-events-none');
+            modalEl.classList.remove('modal-open');
+            if (modalEl.dataset.trap) {
+                modalEl.removeEventListener('keydown', () => {});
+                delete modalEl.dataset.trap;
+            }
+        }
+
+        // Close interactions
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', (e) => closeModal(e.target.closest('.modal-overlay')));
+        });
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) {
+                    closeModal(overlay);
+                }
+            });
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.modal-open').forEach(closeModal);
+            }
+        });
+
+        // Open modal from cards
+        grid.querySelectorAll('[data-program]').forEach(card => {
+            card.addEventListener('click', () => openModalById(card.dataset.program));
+        });
+
+        // Fill functions
+        function fillStyle1(p) {
+            const m = modals[1];
+            m.querySelector('#m1-image').src = p.image;
+            m.querySelector('#m1-name').textContent = p.name;
+            m.querySelector('#m1-duration').textContent = p.duration;
+            m.querySelector('#m1-credits').textContent = p.credits;
+            m.querySelector('#m1-code').textContent = p.code;
+            m.querySelector('#m1-desc').textContent = p.description;
+            m.querySelector('#m1-full-duration').textContent = p.fullDuration;
+            m.querySelector('#m1-full-credits').textContent = p.fullCredits;
+            m.querySelector('#m1-created').textContent = p.created;
+            m.querySelector('#m1-status').textContent = p.status;
+
+            m.querySelector('#m1-total').textContent = p.total.toLocaleString();
+            m.querySelector('#m1-completion').textContent = `${p.completion}%`;
+            const bar = m.querySelector('#m1-completion-bar');
+            bar.style.setProperty('--w', `${p.completion}%`);
+        }
+
+        function fillStyle2(p) {
+            const m = modals[2];
+            m.querySelector('#m2-image').src = p.image;
+            m.querySelector('#m2-name').textContent = p.name;
+            m.querySelector('#m2-duration').textContent = p.duration;
+            m.querySelector('#m2-credits').textContent = p.credits;
+            m.querySelector('#m2-code').textContent = p.code;
+            m.querySelector('#m2-desc').textContent = p.description;
+            m.querySelector('#m2-full-duration').textContent = p.fullDuration;
+            m.querySelector('#m2-full-credits').textContent = p.fullCredits;
+            m.querySelector('#m2-created').textContent = p.created;
+            m.querySelector('#m2-score').textContent = `${p.healthScore}/100`;
+
+            // Gauge animation
+            const circle = m.querySelector('#m2-gauge');
+            const text = m.querySelector('#m2-gauge-text');
+            const C = 2 * Math.PI * 50;
+            const target = C * (1 - p.healthScore / 100);
+            circle.setAttribute('stroke-dasharray', String(C));
+            requestAnimationFrame(() => {
+                circle.setAttribute('stroke-dashoffset', String(target));
+            });
+            animateCount(text, 0, p.healthScore, 800, v => `${Math.round(v)}%`);
+        }
+
+        function fillStyle3(p) {
+            const m = modals[3];
+            m.querySelector('#m3-image').src = p.image;
+            m.querySelector('#m3-name').textContent = p.name;
+            m.querySelector('#m3-duration').textContent = p.duration;
+            m.querySelector('#m3-credits').textContent = p.credits;
+            m.querySelector('#m3-code').textContent = p.code;
+            m.querySelector('#m3-desc').textContent = p.description;
+            m.querySelector('#m3-full-duration').textContent = p.fullDuration;
+            m.querySelector('#m3-full-credits').textContent = p.fullCredits;
+            m.querySelector('#m3-created').textContent = p.created;
+
+            const total = p.categories.reduce((a,b) => a + b.value, 0);
+            m.querySelector('#m3-total').textContent = total;
+
+            const bars = m.querySelector('#m3-bars');
+            bars.innerHTML = '';
+            p.categories.forEach((c, i) => {
+                const pct = (c.value / total) * 100;
+                const bar = document.createElement('div');
+                bar.className = 'flex-1 flex flex-col items-center gap-2';
+                bar.innerHTML = `
+                    <div class="w-full bg-white/10 rounded-full overflow-hidden h-28 flex items-end">
+                        <i class="block w-full bg-gradient-to-t from-undefined-600 to-undefined-400 rounded-full transition-all duration-700"
+                           style="--h:${pct}%; height: 0%"></i>
+                    </div>
+                    <div class="text-[11px] text-slate-400 text-center">${c.label}</div>
+                `;
+                bars.appendChild(bar);
+                // Animate height after insertion
+                requestAnimationFrame(() => {
+                    const fill = bar.querySelector('i');
+                    fill.style.setProperty('--h', `${pct}%`);
+                    fill.style.height = `${pct}%`;
+                });
+            });
+        }
+
+        // Number counter util
+        function animateCount(el, from, to, duration, format = v => Math.round(v)) {
+            const start = performance.now();
+            function tick(now) {
+                const t = Math.min(1, (now - start) / duration);
+                const val = from + (to - from) * t;
+                el.textContent = format(val);
+                if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // Initialize icons
+        feather.replace();
+    </script>
+</body>
+</html>

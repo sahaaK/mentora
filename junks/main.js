@@ -225,7 +225,6 @@
                     window.location.href = 'index.html';
                     return;
                 }
-
                 try {
                     // Fetch department data
                     const doc = await db.collection('departments').doc(deptId).get();

@@ -19,8 +19,105 @@
     
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="/enrollment/components/sidebar.css">
-</head>
+     <style>
+        /* Modal overlay and panel transitions (consistent open/close) */
+        .modal-overlay {
+            transition: opacity .28s ease, visibility .28s ease;
+        }
+        .modal-panel {
+            transition: transform .28s cubic-bezier(.2,.9,.3,1), opacity .28s ease;
+        }
+        .modal-open .modal-panel {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .modal-open .modal-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
 
+        /* Floating blob background for style-2 */
+        .blob {
+            filter: blur(42px);
+            opacity: .5;
+            transform: translateZ(0);
+            animation: float 16s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,100% { transform: translate(0,0) scale(1) }
+            50% { transform: translate(10px,-14px) scale(1.08) }
+        }
+
+        /* Glass card for style-2 */
+        .glass {
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            border: 1px solid rgba(255,255,255,.12);
+            backdrop-filter: blur(12px);
+        }
+
+        /* Tiny progress bar utility */
+        .tiny-bar {
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+            overflow: hidden;
+        }
+        .tiny-bar > i {
+            display: block;
+            height: 100%;
+            width: var(--w, 50%);
+            background: linear-gradient(90deg, rgba(84,119,255,1) 0%, rgba(84,119,255,.2) 100%);
+            border-radius: inherit;
+            transition: width .7s cubic-bezier(.22,.9,.3,1);
+        }
+
+        /* Sparkline path animation */
+        .spark path {
+            stroke-dasharray: 300;
+            stroke-dashoffset: 300;
+            animation: draw 1.6s ease forwards .25s;
+        }
+        @keyframes draw { to { stroke-dashoffset: 0 } }
+    </style>
+</head>
+ <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'undefined-50':  '#f3f6ff',
+                        'undefined-100': '#e6edff',
+                        'undefined-200': '#d0dcff',
+                        'undefined-300': '#a9bfff',
+                        'undefined-400': '#7d9cff',
+                        'undefined-500': '#5477ff',
+                        'undefined-600': '#3b5ef0',
+                        'undefined-700': '#2d48bf',
+                        'undefined-800': '#243a97',
+                        'undefined-900': '#1e317a',
+                        'undefined-950': '#171f4d'
+                    },
+                    boxShadow: {
+                        'glass': '0 10px 40px rgba(0,0,0,0.25)',
+                    },
+                    keyframes: {
+                        'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        'scale-in': { '0%': { opacity: 0, transform: 'scale(.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+                        'pop': { '0%': { transform: 'scale(.9)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                        'slide-up': { '0%': { transform: 'translateY(12px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+                        'bar-fill': { '0%': { height: '0%' }, '100%': { height: 'var(--h)' } },
+                    },
+                    animation: {
+                        'fade-in': 'fade-in .2s ease-out',
+                        'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+                        'pop': 'pop .18s ease-out',
+                        'slide-up': 'slide-up .28s ease-out',
+                        'bar-fill': 'bar-fill .9s ease-out var(--delay, 0s) forwards',
+                    }
+                }
+            }
+        }
+    </script>
     <body class="min-h-screen overflow-x-hidden">
         <!-- Floating Particles -->
         <div class="particles-container"></div>
@@ -297,94 +394,137 @@
                         </div>
                     </div>
                 </div>
-<!-- Program Details Modal (moved to component) -->
-<div id="programModal" class="modal-overlay opacity-0 pointer-events-none transition-opacity duration-300">
-    <div class="modal-content transform scale-95 transition-transform duration-500">
-        <div class="relative">
-            <button id="closeModal" class="absolute top-4 right-4 z-10 text-white bg-slate-800/50 hover:bg-slate-800/80 rounded-full p-2">
-                <i data-feather="x" class="w-5 h-5"></i>
-            </button>
-            
-            <div class="relative h-56 md:h-64 overflow-hidden rounded-t-2xl">
-                <img id="modalImage" src="" alt="Program Image" class="w-full h-full object-cover program-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-slate-900/10"></div>
+<!-- Program Details Modal (style: glass + side media + floating blobs) -->
+<div id="programModal" class="modal-root fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+    <!-- backdrop sits here and keeps .modal-content out of the blurred stacking context -->
+    <div class="modal-overlay absolute inset-0 bg-black/60 z-10"></div>
+
+    <!-- Modal panel mapped to existing JS (modalContent) -->
+    <div class="modal-content modal-panel relative w-full max-w-5xl glass rounded-3xl shadow-glass scale-95 overflow-hidden z-20" style="backdrop-filter: none; -webkit-backdrop-filter: none; filter: none;">
+        <button id="closeModal" class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition">
+            <i data-feather="x" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Floating blobs (purely decorative) -->
+        <div class="pointer-events-none absolute -top-16 -right-16 w-72 h-72 blob bg-undefined-500/60 rounded-full"></div>
+        <div class="pointer-events-none absolute -bottom-20 -left-12 w-80 h-80 blob bg-fuchsia-500/30 rounded-full"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 relative">
+            <!-- Left media -->
+            <div class="relative h-72 lg:h-[28rem] overflow-hidden">
+                <img id="modalImage" alt="Program Image" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/30 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-end justify-between gap-4">
                         <div>
-                            <h3 id="modalName" class="text-xl md:text-2xl font-bold text-white"></h3>
-                            <div class="flex items-center gap-2 text-white/80 text-sm">
-                                <i data-feather="clock" class="w-4 h-4"></i>
-                                <span id="modalDuration"></span>
+                            <h3 id="modalName" class="text-2xl font-bold tracking-tight"></h3>
+                            <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+                                <span class="inline-flex items-center gap-1">
+                                    <i data-feather="clock" class="w-4 h-4"></i>
+                                    <span id="modalDuration"></span>
+                                </span>
                                 <span>•</span>
                                 <span id="modalCredits"></span>
                             </div>
                         </div>
-                        <span id="modalCode" class="px-3 py-1 bg-undefined-500/20 text-undefined-300 rounded-full text-sm font-medium"></span>
+                        <span id="modalCode" class="px-3 py-1 rounded-full text-xs font-medium bg-undefined-500/20 text-undefined-300 ring-1 ring-inset ring-undefined-400/30"></span>
                     </div>
                 </div>
             </div>
-            
-            <div class="p-6 space-y-6">
+
+            <!-- Right content -->
+            <div class="p-6 md:p-8 space-y-6">
                 <div>
-                    <h4 class="text-lg font-semibold text-white mb-2">Description</h4>
-                    <p id="modalDescription" class="text-gray-300"></p>
+                    <h4 class="text-lg font-semibold mb-2">About this program</h4>
+                    <p id="modalDescription" class="text-slate-300"></p>
                 </div>
-                
-                <div>
-                    <h4 class="text-lg font-semibold text-white mb-2">Specializations</h4>
-                    <div id="modalSpecializations" class="flex flex-wrap gap-2"></div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div class="text-xs text-slate-400">Duration</div>
+                        <div id="modalFullDuration" class="mt-1 font-semibold"></div>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div class="text-xs text-slate-400">Credits</div>
+                        <div id="modalFullCredits" class="mt-1 font-semibold"></div>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div class="text-xs text-slate-400">Created</div>
+                        <div id="modalCreated" class="mt-1 font-semibold"></div>
+                    </div>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="text-lg font-semibold text-white mb-2">Program Details</h4>
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
-                                    <i data-feather="calendar" class="text-undefined-400 w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400">Duration</p>
-                                    <p id="modalFullDuration" class="text-sm text-white"></p>
+
+                <!-- Program health gauge + sparkline (dynamic if data present) -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-slate-300">Program health</div>
+                        <div id="modalScore" class="text-lg font-bold">—</div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-6">
+                        <!-- Circular Gauge -->
+                        <div class="relative w-28 h-28">
+                            <svg viewBox="0 0 120 120" class="w-28 h-28 -rotate-90">
+                                <defs>
+                                    <linearGradient id="portalGrad" x1="0" x2="1" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#5477ff"/>
+                                        <stop offset="100%" stop-color="#7d9cff"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,.08)" stroke-width="14" fill="none"/>
+                                <circle id="modalGauge" cx="60" cy="60" r="50" stroke="url(#portalGrad)" stroke-width="14" fill="none"
+                                        stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
+                                        class="transition-all duration-1000 ease-out"/>
+                            </svg>
+                            <div class="absolute inset-0 grid place-items-center">
+                                <div class="text-center">
+                                    <div class="text-xs text-slate-400">Completion</div>
+                                    <div id="modalGaugeText" class="text-lg font-bold">0%</div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
-                                    <i data-feather="bookmark" class="text-undefined-400 w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400">Total Credits</p>
-                                    <p id="modalFullCredits" class="text-sm text-white"></p>
-                                </div>
+                        </div>
+
+                        <!-- Sparkline (static fallback) -->
+                        <div class="flex-1">
+                            <div class="text-xs text-slate-400 mb-2">Weekly trend</div>
+                            <div class="spark">
+                                <svg viewBox="0 0 300 80" class="w-full h-16">
+                                    <defs>
+                                        <linearGradient id="portalSpark" x1="0" x2="0" y1="0" y2="1">
+                                            <stop offset="0%" stop-color="#5477ff" stop-opacity=".9"/>
+                                            <stop offset="100%" stop-color="#5477ff" stop-opacity=".1"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M0,60 C40,40 60,50 100,35 C140,20 160,30 200,25 C240,20 260,28 300,18"
+                                          fill="none" stroke="#7d9cff" stroke-width="2.5"/>
+                                    <path d="M0,80 L0,60 C40,40 60,50 100,35 C140,20 160,30 200,25 C240,20 260,28 300,18 L300,80 Z"
+                                          fill="url(#portalSpark)" opacity=".25"/>
+                                </svg>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-undefined-500/10 flex items-center justify-center">
-                                    <i data-feather="clock" class="text-undefined-400 w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400">Created</p>
-                                    <p id="modalCreated" class="text-sm text-white"></p>
-                                </div>
+                            <div class="mt-3 flex items-center gap-3 text-xs text-slate-400">
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Active
+                                </span>
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-undefined-400"></span> Avg score
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="pt-4 flex justify-end gap-3">
-                    <button id="editProgram" class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-undefined-500 hover:bg-undefined-600 transition-all">
-                        <i data-feather="edit"></i>
-                        Edit Program
+
+                <div class="flex items-center justify-end gap-3">
+                    <button class="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                        Close
                     </button>
-                    <button id="deleteProgram" class="px-6 py-3 rounded-lg flex items-center gap-2 text-white bg-rose-600 hover:bg-rose-700 transition-all">
-                        <i data-feather="trash-2"></i>
-                        Delete
+                    <button id="editProgram" class="px-5 py-2.5 rounded-lg bg-undefined-500 hover:bg-undefined-600 text-white text-sm flex items-center gap-2 transition">
+                        <i data-feather="eye" class="w-4 h-4"></i>
+                        open
                     </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 
 
                 <!-- Add Bachelor Modal (moved to component) -->
@@ -659,7 +799,7 @@
             </main>
         </div>
 
-        <script src="components/modal-loader.js"></script>
+      
         <script type="module" src="cards.js"></script>
         <script type="module" src="get.js"></script>
         <script src="main.js"></script>
