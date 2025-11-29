@@ -19,6 +19,7 @@
      let modalFullCredits;
      let modalCreated;
      let modalSpecializations;
+    let viewProgramBtn;
      let editProgramBtn;
      let deleteProgramBtn;
 
@@ -53,7 +54,7 @@
             // Ensure container exists
             if (!programsContainer) {
                 console.error('Program container element not found: #programsContainer');
-                return;
+                let viewProgramBtn; // Button to view program
             }
 
             // Show loading skeletons
@@ -191,6 +192,16 @@
                     modalSpecializations.appendChild(span);
                 });
             }
+            // update view (open in new tab) button
+            if (viewProgramBtn) {
+                viewProgramBtn.disabled = false;
+                viewProgramBtn.onclick = () => {
+                    // open a small manager page in a new tab
+                    if (!currentProgramId) return;
+                    const url = `manage-program.html?id=${encodeURIComponent(currentProgramId)}`;
+                    window.open(url, '_blank');
+                };
+            }
             // Show modal
             if (programModal) programModal.classList.remove('opacity-0', 'pointer-events-none');
             if (modalContent) modalContent.classList.remove('scale-95');
@@ -204,6 +215,7 @@
             document.body.style.overflow = '';
             currentProgram = null;
             currentProgramId = null;
+            if (viewProgramBtn) viewProgramBtn.disabled = true;
         }
 
         // Delete program
@@ -277,6 +289,8 @@
             modalFullCredits = document.getElementById('modalFullCredits');
             modalCreated = document.getElementById('modalCreated');
             modalSpecializations = document.getElementById('modalSpecializations');
+            viewProgramBtn = document.getElementById('viewProgram');
+            if (viewProgramBtn) viewProgramBtn.disabled = true;
             editProgramBtn = document.getElementById('editProgram');
             deleteProgramBtn = document.getElementById('deleteProgram');
 
@@ -292,6 +306,12 @@
                 if (e.target === programModal) closeProgramModal();
             });
             if (editProgramBtn) editProgramBtn.addEventListener('click', editCurrentProgram);
+            if (viewProgramBtn) viewProgramBtn.addEventListener('click', () => {
+                // if user clicks view from modal, open in new tab (click handler also set when modal opens)
+                if (!currentProgramId) return;
+                const url = `manage-program.html?id=${encodeURIComponent(currentProgramId)}`;
+                window.open(url, '_blank');
+            });
             if (deleteProgramBtn) deleteProgramBtn.addEventListener('click', deleteCurrentProgram);
             if (applyFilters) applyFilters.addEventListener('click', () => {
                 fetchPrograms(searchInput?.value?.trim() || '', durationFilter?.value || '');

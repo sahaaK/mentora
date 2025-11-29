@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Program Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --glass: rgba(15, 23, 42, 0.55);
+      --glass-strong: rgba(15, 23, 42, 0.8);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+      background: #0f172a;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: var(--glass);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.35s ease;
+    }
+    .glass-card:hover {
+      background: var(--glass-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .gradient-border {
+      position: relative;
+      z-index: 1;
+    }
+    .gradient-border::before {
+      content: '';
+      position: absolute; inset: -2px;
+      /* background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899); */
+      border-radius: 18px;
+      opacity: 0.55;
+      transition: opacity .35s ease;
+      z-index: -1;
+      filter: blur(0.4px);
+    }
+    .glass-card:hover .gradient-border::before { opacity: 0.9; }
+
+    .bubble-container {
+      position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    }
+    .bubble {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.12), rgba(147, 51, 234, 0.06));
+      filter: blur(1px);
+      animation: float 20s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+      33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
+      66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
+    }
+
+    .modal-overlay {
+      position: fixed; inset: 0; display: none; place-items: center;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: grid; }
+    .modal-content {
+      background: var(--glass-strong);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      width: 95%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+      animation: modalEnter .28s ease-out;
+    }
+    @keyframes modalEnter {
+      from { opacity: 0; transform: translateY(12px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .form-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      border-radius: 10px; padding: .7rem .9rem;
+      width: 100%;
+      transition: all .25s ease;
+    }
+    .form-input:focus { outline: none; border-color: rgba(99,102,241,0.55); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .form-label { display:block; margin-bottom:.5rem; color: var(--muted); font-size:.9rem; }
+    .form-select {
+      appearance: none; width: 100%;
+      background: rgba(255,255,255,0.05) url("data:image/svg+xml;utf8,<svg stroke='white' fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right .75rem center / 1em;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text); border-radius: 10px; padding: .7rem .9rem;
+    }
+    .chip {
+      padding: .45rem .7rem; border-radius: 999px; font-size: .8rem;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+      color: #cbd5e1;
+    }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(99,102,241,0.08); }
+    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.55); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Animated background bubbles -->
+  <div class="bubble-container" id="bubbleContainer"></div>
+
+  <!-- Header -->
+  <header class="px-6 py-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-white">
+            <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              Program Manager
+            </span>
+          </h1>
+          <p class="text-sm text-slate-400 mt-1">Manage classes, students, and courses for the selected program</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="addStudent" class="glass-card gradient-border px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+            <i data-feather="user-plus"></i> Add Student
+          </button>
+          <button id="addCourse" class="glass-card gradient-border px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+            <i data-feather="book"></i> Add Course
+          </button>
+          <button id="closeBtn" class="glass-card px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 pb-12 space-y-8">
+    <!-- Status -->
+    <div id="status" class="glass-card gradient-border p-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+          <i data-feather="loader" class="w-5 h-5 text-indigo-400 animate-spin"></i>
+        </div>
+        <div>
+          <p class="font-semibold">Loading program details…</p>
+          <p class="text-sm text-slate-400">Please wait while we fetch the program information.</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="glass-card gradient-border p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm">Active Classes</p>
+            <p id="stat-classes" class="text-2xl font-bold mt-1">0</p>
+          </div>
+          <div class="p-3 rounded-xl bg-indigo-500/20">
+            <i data-feather="book-open" class="w-6 h-6 text-indigo-400"></i>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card gradient-border p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm">Total Students</p>
+            <p id="stat-students" class="text-2xl font-bold mt-1">0</p>
+          </div>
+          <div class="p-3 rounded-xl bg-emerald-500/20">
+            <i data-feather="users" class="w-6 h-6 text-emerald-400"></i>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card gradient-border p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm">Courses</p>
+            <p id="stat-courses" class="text-2xl font-bold mt-1">0</p>
+          </div>
+          <div class="p-3 rounded-xl bg-amber-500/20">
+            <i data-feather="book" class="w-6 h-6 text-amber-400"></i>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card gradient-border p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm">Avg Performance</p>
+            <p id="stat-performance" class="text-2xl font-bold mt-1">0%</p>
+          </div>
+          <div class="p-3 rounded-xl bg-rose-500/20">
+            <i data-feather="activity" class="w-6 h-6 text-rose-400"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Welcome Panel -->
+    <section id="welcomePanel" class="glass-card gradient-border p-0 overflow-hidden hidden">
+      <div class="flex flex-col md:flex-row">
+        <div class="p-6 md:p-8 flex-1">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="p-name" class="text-2xl md:text-3xl font-bold text-white">Program</h2>
+              <div id="p-meta" class="text-indigo-300 mt-1">Code: PROGRAM</div>
+            </div>
+            <div class="flex gap-2">
+              <span id="p-duration-chip" class="chip">Duration</span>
+              <span id="p-credits-chip" class="chip">Credits</span>
+            </div>
+          </div>
+          <p id="p-desc" class="text-slate-300 mt-4 leading-relaxed">Description goes here.</p>
+
+          <div class="mt-6">
+            <h3 class="text-sm uppercase tracking-wider text-slate-400 mb-3">Specializations</h3>
+            <div id="p-specs" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="mt-6 text-sm text-slate-400">
+            <span class="mr-4"><strong class="text-slate-200">Created:</strong> <span id="p-created">—</span></span>
+            <span><strong class="text-slate-200">Department:</strong> <span id="p-dept">—</span></span>
+          </div>
+        </div>
+        <div class="md:w-72 w-full relative">
+          <img id="p-image" alt="Program Image" class="w-full h-48 md:h-full object-cover"/>
+          <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-slate-900/60 to-transparent"></div>
+        </div>
+      </div>
+    </section>
+
+  
+
+    <!-- Class Management -->
+    <section class="glass-card gradient-border p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h2 class="text-xl font-bold">Class Management</h2>
+        <button id="addClassBtn" class="glass-card gradient-border px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+          <i data-feather="plus"></i> Add Class
+        </button>
+      </div>
+
+      <div class="flex flex-wrap gap-3 mb-6">
+        <select id="yearFilter" class="form-select max-w-[220px]">
+          <option value="">All Years</option>
+          <option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Year 6</option>
+        </select>
+        <select id="semesterFilter" class="form-select max-w-[220px]">
+          <option value="">All Semesters</option>
+          <option>Semester 1</option><option>Semester 2</option>
+        </select>
+        <button id="filterBtn" class="glass-card gradient-border px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+          <i data-feather="filter"></i> Filter
+        </button>
+      </div>
+
+      <div id="classesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <!-- Class cards will appear here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Add Class Modal -->
+  <div id="addClassModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold">Create New Class</h3>
+        <button id="closeModalBtn" class="glass-card p-2 rounded-lg hover:bg-white/10">
+          <i data-feather="x"></i>
+        </button>
+      </div>
+      <form id="classForm" class="space-y-4">
+        <div>
+          <label class="form-label" for="className">Class Name</label>
+          <input id="className" class="form-input" type="text" placeholder="e.g. MBBS Year 1 - Section A" required/>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label" for="classYear">Year</label>
+            <select id="classYear" class="form-select" required>
+              <option value="">Select Year</option>
+              <option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Year 6</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="classSemester">Semester</label>
+            <select id="classSemester" class="form-select" required>
+              <option value="">Select Semester</option>
+              <option>Semester 1</option><option>Semester 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label" for="classType">Class Type</label>
+            <select id="classType" class="form-select" required>
+              <option value="">Select Type</option>
+              <option>YEAR 1</option><option>YEAR 2</option><option>YEAR 3</option><option>YEAR 4</option><option>YEAR 5</option><option>YEAR 6</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="classSchedule">Schedule</label>
+            <input id="classSchedule" class="form-input" type="text" placeholder="e.g. Mon/Wed/Fri 09:00–11:00" required/>
+          </div>
+        </div>
+        <div>
+          <label class="form-label" for="classImage">Class Image URL (optional)</label>
+          <input id="classImage" class="form-input" type="text" placeholder="Leave blank for default image"/>
+        </div>
+        <div class="pt-2">
+          <button type="submit" class="w-full glass-card gradient-border py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+            <i data-feather="save"></i> Save Class
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Class Modal Container -->
+  <div id="viewClassModalContainer"></div>
+
+  <script>
+    // Firebase config (from your existing app)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+      authDomain: "mentora-71f5c.firebaseapp.com",
+      projectId: "mentora-71f5c",
+      storageBucket: "mentora-71f5c.appspot.com",
+      messagingSenderId: "16685388211",
+      appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+      measurementId: "G-BL98PXGK2G"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // DOM references
+    const statusEl = document.getElementById('status');
+    const welcomePanel = document.getElementById('welcomePanel');
+    const pName = document.getElementById('p-name');
+    const pMeta = document.getElementById('p-meta');
+    const pDesc = document.getElementById('p-desc');
+    const pCreated = document.getElementById('p-created');
+    const pDept = document.getElementById('p-dept');
+    const pSpecs = document.getElementById('p-specs');
+    const pImage = document.getElementById('p-image');
+    const pDurationChip = document.getElementById('p-duration-chip');
+    const pCreditsChip = document.getElementById('p-credits-chip');
+
+    const statClasses = document.getElementById('stat-classes');
+    const statStudents = document.getElementById('stat-students');
+    const statCourses = document.getElementById('stat-courses');
+    const statPerformance = document.getElementById('stat-performance');
+
+    const addClassBtn = document.getElementById('addClassBtn');
+    const addClassModal = document.getElementById('addClassModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const classForm = document.getElementById('classForm');
+    const classesContainer = document.getElementById('classesContainer');
+
+    const yearFilter = document.getElementById('yearFilter');
+    const semesterFilter = document.getElementById('semesterFilter');
+    const filterBtn = document.getElementById('filterBtn');
+
+    let programId = null;
+    let deptId = null;
+    let performanceChart = null;
+
+    // Background bubbles
+    function createBubbles() {
+      const container = document.getElementById('bubbleContainer');
+      const count = 18;
+      for (let i = 0; i < count; i++) {
+        const b = document.createElement('div');
+        b.className = 'bubble';
+        const size = Math.random() * 120 + 60;
+        b.style.width = b.style.height = size + 'px';
+        b.style.left = (Math.random() * 100) + '%';
+        b.style.top = (Math.random() * 100) + '%';
+        b.style.animationDelay = (Math.random() * 10) + 's';
+        b.style.animationDuration = (18 + Math.random() * 14) + 's';
+        container.appendChild(b);
+      }
+    }
+
+    // Helpers
+    const dateToStr = (d) => d ? new Date(d.toDate ? d.toDate() : d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+
+    function typeColorClass(type) {
+      const map = {
+        'YEAR 1': 'bg-indigo-500/20 text-indigo-300',
+        'YEAR 2': 'bg-emerald-500/20 text-emerald-300',
+        'YEAR 3': 'bg-purple-500/20 text-purple-300',
+        'YEAR 4': 'bg-rose-500/20 text-rose-300',
+        'YEAR 5': 'bg-amber-500/20 text-amber-300',
+        'YEAR 6': 'bg-amber-500/20 text-amber-300'
+      };
+      return map[type] || 'bg-amber-500/20 text-amber-300';
+    }
+
+    function defaultClassImage() {
+      const pool = [1,2,3,4,5,6,7,8,9,10];
+      const i = pool[Math.floor(Math.random() * pool.length)];
+      return `http://static.photos/medical/320x240/${i}`;
+    }
+
+    // Modal
+    function openModal() {
+      addClassModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      addClassModal.classList.remove('show');
+      document.body.style.overflow = '';
+      classForm.reset();
+    }
+
+    // Render class card
+    function createClassCard(cls, studentsCount = 0, coursesCount = 0) {
+      const defaultImg = cls.image || defaultClassImage();
+      const studentCount = studentsCount || Math.floor(Math.random() * 20) + 30;
+      const courseCount = coursesCount || Math.floor(Math.random() * 4) + 4;
+
+      return `
+        <div class="glass-card gradient-border overflow-hidden">
+          <div class="flex flex-col md:flex-row">
+            <div class="p-6 flex-1">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h3 class="text-xl font-bold">${cls.name}</h3>
+                  <p class="text-slate-300 text-sm">${cls.year} • ${cls.semester}</p>
+                </div>
+                <span class="px-2 py-1 ${typeColorClass(cls.type)} rounded-full text-xs">${cls.type}</span>
+              </div>
+
+              <div class="space-y-2 mb-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <i data-feather="users" class="w-4 h-4 text-emerald-400"></i>
+                  <span>${studentCount} Students</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-feather="book" class="w-4 h-4 text-amber-400"></i>
+                  <span>${courseCount} Courses</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-feather="clock" class="w-4 h-4 text-rose-400"></i>
+                  <span>${cls.schedule || '—'}</span>
+                </div>
+              </div>
+
+              <button class="w-full glass-card mt-2 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 view-class-btn" data-id="${cls.id}">
+                <i data-feather="eye"></i> View Class
+              </button>
+            </div>
+            <div class="w-full md:w-40 h-40 md:h-auto relative overflow-hidden">
+              <img src="${defaultImg}" alt="${cls.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"/>
+              <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-slate-900/60 to-transparent"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Firestore paths
+    const programRef = () => db.collection('departments').doc(deptId).collection('programs').doc(programId);
+    const classesCollRef = () => programRef().collection('classes');
+
+    // Load classes with optional filters
+    function loadClasses(year = '', semester = '') {
+      let query = classesCollRef();
+
+      // Filter by year/semester
+      if (year) query = query.where('year', '==', year);
+      if (semester) query = query.where('semester', '==', semester);
+
+      query.orderBy('createdAt', 'desc').get().then(async (snap) => {
+        classesContainer.innerHTML = '';
+        if (snap.empty) {
+          classesContainer.innerHTML = `
+            <div class="glass-card p-8 text-center col-span-3">
+              <i data-feather="alert-circle" class="w-12 h-12 text-rose-400 mx-auto mb-4"></i>
+              <h3 class="text-xl font-bold mb-2">No Classes Found</h3>
+              <p class="text-slate-400">Create your first class to get started</p>
+            </div>
+          `;
+          feather.replace();
+          return;
+        }
+
+        const docs = snap.docs;
+        // Preload student/course counts for accuracy
+        const enriched = await Promise.all(docs.map(async (docSnap) => {
+          const c = docSnap.data();
+          c.id = docSnap.id;
+          // Attempt to fetch subcollections counts if exist
+          const [studentsSnap, coursesSnap] = await Promise.all([
+            docSnap.ref.collection('students').get(),
+            docSnap.ref.collection('courses').get()
+          ]);
+          c._studentsCount = studentsSnap.size;
+          c._coursesCount = coursesSnap.size;
+          return c;
+        }));
+
+        // Render
+        enriched.forEach(cls => {
+          classesContainer.innerHTML += createClassCard(cls, cls._studentsCount, cls._coursesCount);
+        });
+        feather.replace();
+
+        // Wire view buttons (placeholder for now)
+        document.querySelectorAll('.view-class-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            // Inject and open view class modal
+            injectAndViewClassModal(id);
+          });
+        });
+      }).catch(err => {
+        console.error('Error loading classes', err);
+        classesContainer.innerHTML = `
+          <div class="glass-card p-6 text-center col-span-3">
+            <p class="text-rose-400">Failed to load classes. Please try again.</p>
+          </div>
+        `;
+      });
+    }
+
+    // Compute program stats
+    async function computeStats() {
+      const classesSnap = await classesCollRef().get();
+      const classes = classesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      let totalStudents = 0;
+      let totalCourses = 0;
+
+      // Use parallel fetches for subcollections
+      const subCounts = await Promise.all(classesSnap.docs.map(async (doc) => {
+        const [studentsSnap, coursesSnap] = await Promise.all([
+          doc.ref.collection('students').get(),
+          doc.ref.collection('courses').get()
+        ]);
+        return { students: studentsSnap.size, courses: coursesSnap.size };
+      }));
+
+      subCounts.forEach(sc => { totalStudents += sc.students; totalCourses += sc.courses; });
+
+      // Avg performance: weighted by students in class if available
+      let perfNumerator = 0, perfDenominator = 0;
+      classes.forEach((cls, i) => {
+        const students = subCounts[i]?.students || 0;
+        const performance = typeof cls.performance === 'number' ? cls.performance : Math.floor(Math.random() * 21) + 70; // fallback 70–90
+        perfNumerator += performance * Math.max(students, 1);
+        perfDenominator += Math.max(students, 1);
+      });
+
+      const avgPerformance = perfDenominator ? Math.round(perfNumerator / perfDenominator) : 0;
+
+      return {
+        classesCount: classes.length,
+        totalStudents,
+        totalCourses,
+        avgPerformance
+      };
+    }
+
+    // Initialize chart
+    function renderPerformanceChart() {
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      const labels = Array.from({ length: 12 }, (_, i) => `W${i + 1}`);
+      const data = labels.map(() => Math.floor(Math.random() * 21) + 70);
+
+      if (performanceChart) {
+        performanceChart.destroy();
+      }
+
+      performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Avg Score',
+            data,
+            tension: 0.35,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+            fill: true,
+            pointRadius: 3,
+            pointBackgroundColor: '#8b5cf6',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(148,163,184,0.15)' },
+              ticks: { color: '#94a3b8' }
+            },
+            y: {
+              grid: { color: 'rgba(148,163,184,0.15)' },
+              ticks: { color: '#94a3b8', callback: (v) => v + '%' },
+              min: 60, max: 100
+            }
+          }
+        }
+      });
+    }
+
+    // Event listeners
+    document.getElementById('closeBtn').addEventListener('click', () => window.close());
+    addClassBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    addClassModal.addEventListener('click', (e) => { if (e.target === addClassModal) closeModal(); });
+
+    filterBtn.addEventListener('click', () => {
+      loadClasses(yearFilter.value, semesterFilter.value);
+    });
+
+    classForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('className').value.trim();
+      const year = document.getElementById('classYear').value;
+      const semester = document.getElementById('classSemester').value;
+      const type = document.getElementById('classType').value;
+      const schedule = document.getElementById('classSchedule').value.trim();
+      const image = document.getElementById('classImage').value.trim();
+
+      if (!name || !year || !semester || !type || !schedule) return;
+
+      const btn = classForm.querySelector('button[type="submit"]');
+      btn.innerHTML = '<i data-feather="loader" class="animate-spin w-4 h-4"></i> Saving...';
+      btn.disabled = true;
+
+      try {
+        await classesCollRef().add({
+          name, year, semester, type, schedule,
+          image: image || '',
+          performance: Math.floor(Math.random() * 21) + 70,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        closeModal();
+        loadClasses(yearFilter.value, semesterFilter.value);
+
+        // Update stats quickly (optional: refetch all)
+        const stats = await computeStats();
+        statClasses.textContent = stats.classesCount;
+        statStudents.textContent = stats.totalStudents;
+        statCourses.textContent = stats.totalCourses;
+        statPerformance.textContent = stats.avgPerformance + '%';
+      } catch (err) {
+        console.error('Error adding class', err);
+        alert('Failed to create class. Please try again.');
+      } finally {
+        btn.innerHTML = '<i data-feather="save"></i> Save Class';
+        btn.disabled = false;
+        feather.replace();
+      }
+    });
+
+    document.getElementById('addStudent').addEventListener('click', () => alert('Add Student flow not implemented in this demo.'));
+    document.getElementById('addCourse').addEventListener('click', () => alert('Add Course flow not implemented in this demo.'));
+
+    // Auth + Program load
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        statusEl.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="alert-circle" class="w-5 h-5 text-rose-400"></i></div>
+            <div><p class="font-semibold">Not signed in</p><p class="text-sm text-slate-400">Redirecting to login…</p></div>
+          </div>`;
+        feather.replace();
+        setTimeout(() => window.location.href = 'index.html', 800);
+        return;
+      }
+
+      deptId = localStorage.getItem('currentDeptId');
+      if (!deptId) {
+        statusEl.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center"><i data-feather="alert-triangle" class="w-5 h-5 text-amber-400"></i></div>
+            <div><p class="font-semibold">No department selected</p><p class="text-sm text-slate-400">Please open this page from the Dean portal.</p></div>
+          </div>`;
+        feather.replace();
+        return;
+      }
+
+      // Parse program id from URL
+      const params = new URLSearchParams(window.location.search);
+      programId = params.get('id');
+      if (!programId) {
+        statusEl.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="alert-circle" class="w-5 h-5 text-rose-400"></i></div>
+            <div><p class="font-semibold">Missing program id</p><p class="text-sm text-slate-400">Provide ?id=PROGRAM_ID in the URL.</p></div>
+          </div>`;
+        feather.replace();
+        return;
+      }
+
+      try {
+        const doc = await programRef().get();
+        if (!doc.exists) {
+          statusEl.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="x-circle" class="w-5 h-5 text-rose-400"></i></div>
+              <div><p class="font-semibold">Program not found</p><p class="text-sm text-slate-400">The requested program could not be located.</p></div>
+            </div>`;
+          feather.replace();
+          return;
+        }
+
+        const program = doc.data();
+        // Fill welcome panel
+        pName.textContent = program.name || 'Program';
+        pMeta.textContent = program.code ? `Code: ${program.code}` : '';
+        pDesc.textContent = program.description || '—';
+        pDurationChip.textContent = program.duration ? (program.duration === 1 ? 'Duration: 1 Year' : `Duration: ${program.duration} Years`) : 'Duration: —';
+        pCreditsChip.textContent = program.credits ? `${program.credits} Credits` : 'Credits: —';
+        pCreated.textContent = program.created ? dateToStr(program.created) : '—';
+        pDept.textContent = deptId || '—';
+        pSpecs.innerHTML = '';
+        (program.specializations || []).forEach(s => {
+          const el = document.createElement('span');
+          el.className = 'chip';
+          el.textContent = s;
+          pSpecs.appendChild(el);
+        });
+        pImage.src = program.imageUrl || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1400&auto=format&fit=crop';
+
+        // Hide status, show panel
+        statusEl.classList.add('hidden');
+        welcomePanel.classList.remove('hidden');
+
+        // Load classes
+        loadClasses();
+
+        // Compute and render stats
+        const stats = await computeStats();
+        statClasses.textContent = stats.classesCount;
+        statStudents.textContent = stats.totalStudents;
+        statCourses.textContent = stats.totalCourses;
+        statPerformance.textContent = stats.avgPerformance + '%';
+
+        // Chart
+        renderPerformanceChart();
+
+      } catch (err) {
+        console.error(err);
+        statusEl.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="x-circle" class="w-5 h-5 text-rose-400"></i></div>
+            <div><p class="font-semibold">Error loading program</p><p class="text-sm text-slate-400">${err.message || err}</p></div>
+          </div>`;
+      } finally {
+        feather.replace();
+      }
+    });
+
+    // Function to inject and open view class modal
+    async function injectAndViewClassModal(classId) {
+      // Fetch the class data
+      const classDoc = await classesCollRef().doc(classId).get();
+      if (!classDoc.exists) {
+        alert('Class not found');
+        return;
+      }
+      
+      const classData = classDoc.data();
+      
+      // Fetch students and courses count
+      const [studentsSnap, coursesSnap] = await Promise.all([
+        classDoc.ref.collection('students').get(),
+        classDoc.ref.collection('courses').get()
+      ]);
+      
+      // Inject the modal HTML into the container
+      const modalContainer = document.getElementById('viewClassModalContainer');
+      modalContainer.innerHTML = `
+        <div id="viewClassModal" class="modal-overlay show">
+          <div class="modal-content max-w-4xl">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-bold">Class Details</h3>
+              <button id="closeViewModalBtn" class="glass-card p-2 rounded-lg hover:bg-white/10">
+                <i data-feather="x"></i>
+              </button>
+            </div>
+            
+            <div class="space-y-6">
+              <div class="glass-card p-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                  <div class="flex-1">
+                    <h2 class="text-2xl font-bold mb-2">${classData.name}</h2>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                      <span class="chip">${classData.year}</span>
+                      <span class="chip">${classData.semester}</span>
+                      <span class="chip">${classData.type}</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                      <div class="flex items-center gap-3">
+                        <i data-feather="users" class="w-5 h-5 text-emerald-400"></i>
+                        <span>${studentsSnap.size} Students</span>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <i data-feather="book" class="w-5 h-5 text-amber-400"></i>
+                        <span>${coursesSnap.size} Courses</span>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <i data-feather="clock" class="w-5 h-5 text-rose-400"></i>
+                        <span>${classData.schedule || '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="md:w-48">
+                    <img src="${classData.image || defaultClassImage()}" 
+                         alt="${classData.name}" 
+                         class="w-full h-32 object-cover rounded-lg">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-6">
+                  <h3 class="font-bold mb-4">Students</h3>
+                  <div id="studentsList" class="space-y-3 max-h-60 overflow-y-auto">
+                    ${studentsSnap.empty ? 
+                      '<p class="text-slate-400 text-center py-4">No students enrolled</p>' : 
+                      '<p class="text-slate-400 text-center py-4">Loading students...</p>'
+                    }
+                  </div>
+                </div>
+                
+                <div class="glass-card p-6">
+                  <h3 class="font-bold mb-4">Courses</h3>
+                  <div id="coursesList" class="space-y-3 max-h-60 overflow-y-auto">
+                    ${coursesSnap.empty ? 
+                      '<p class="text-slate-400 text-center py-4">No courses assigned</p>' : 
+                      '<p class="text-slate-400 text-center py-4">Loading courses...</p>'
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex justify-end gap-3">
+                <button id="manageStudentsBtn" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity">
+                  Manage Students
+                </button>
+                <button id="manageCoursesBtn" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition-opacity">
+                  Manage Courses
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Replace icons
+      feather.replace();
+      
+      // Add event listeners
+      document.getElementById('closeViewModalBtn').addEventListener('click', closeViewClassModal);
+      document.getElementById('viewClassModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('viewClassModal')) closeViewClassModal();
+      });
+      
+      document.getElementById('manageStudentsBtn').addEventListener('click', () => {
+        alert('Manage Students functionality would go here');
+        closeViewClassModal();
+      });
+      
+      document.getElementById('manageCoursesBtn').addEventListener('click', () => {
+        alert('Manage Courses functionality would go here');
+        closeViewClassModal();
+      });
+      
+      // Load students and courses data
+      loadStudentsAndCourses(classDoc.ref, studentsSnap, coursesSnap);
+    }
+    
+    // Function to close view class modal
+    function closeViewClassModal() {
+      const modal = document.getElementById('viewClassModal');
+      if (modal) {
+        modal.remove();
+      }
+      document.body.style.overflow = '';
+    }
+    
+    // Function to load students and courses data
+    async function loadStudentsAndCourses(classRef, studentsSnap, coursesSnap) {
+      // Load students
+      if (!studentsSnap.empty) {
+        const studentsList = document.getElementById('studentsList');
+        studentsList.innerHTML = '';
+        
+        // In a real app, you might need to fetch additional student details
+        studentsSnap.docs.forEach(doc => {
+          const student = doc.data();
+          const studentElement = document.createElement('div');
+          studentElement.className = 'flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg';
+          studentElement.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <i data-feather="user" class="w-4 h-4 text-indigo-400"></i>
+            </div>
+            <div>
+              <p class="font-medium">${student.name || 'Unnamed Student'}</p>
+              <p class="text-xs text-slate-400">${student.email || 'No email'}</p>
+            </div>
+          `;
+          studentsList.appendChild(studentElement);
+        });
+        feather.replace();
+      }
+      
+      // Load courses
+      if (!coursesSnap.empty) {
+        const coursesList = document.getElementById('coursesList');
+        coursesList.innerHTML = '';
+        
+        // In a real app, you might need to fetch additional course details
+        coursesSnap.docs.forEach(doc => {
+          const course = doc.data();
+          const courseElement = document.createElement('div');
+          courseElement.className = 'flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg';
+          courseElement.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <i data-feather="book" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div>
+              <p class="font-medium">${course.name || 'Unnamed Course'}</p>
+              <p class="text-xs text-slate-400">${course.code || 'No code'}</p>
+            </div>
+          `;
+          coursesList.appendChild(courseElement);
+        });
+        feather.replace();
+      }
+    }
+
+    // Init
+    createBubbles();
+    feather.replace();
+  </script>
+</body>
+</html>

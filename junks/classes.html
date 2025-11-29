@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Class Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+  --glass: rgba(15, 23, 42, 0.55);
+  --glass-strong: rgba(15, 23, 42, 0.8);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+
+* { 
+  box-sizing: border-box; 
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+  background: #0f172a;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: all 0.35s ease;
+}
+
+.glass-card:hover {
+  background: var(--glass-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.gradient-border {
+  position: relative;
+  z-index: 1;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute; 
+  inset: -2px;
+  border-radius: 18px;
+  opacity: 0.55;
+  transition: opacity .35s ease;
+  z-index: -1;
+  filter: blur(0.4px);
+}
+
+.glass-card:hover .gradient-border::before { 
+  opacity: 0.9; 
+}
+
+.bubble-container {
+  position: fixed; 
+  inset: 0; 
+  z-index: -1; 
+  overflow: hidden; 
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute; 
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.12), rgba(147, 51, 234, 0.06));
+  filter: blur(1px);
+  animation: float 20s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+  33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
+  66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
+}
+
+.modal-overlay {
+  position: fixed; 
+  inset: 0; 
+  display: none; 
+  place-items: center;
+  background: rgba(0,0,0,0.65); 
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+}
+
+.modal-overlay.show { 
+  display: grid; 
+}
+
+.modal-content {
+  background: var(--glass-strong);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  width: 95%; 
+  max-width: 520px; 
+  max-height: 90vh; 
+  overflow-y: auto;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+  animation: modalEnter .28s ease-out;
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(12px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.form-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text);
+  border-radius: 10px; 
+  padding: .7rem .9rem;
+  width: 100%;
+  transition: all .25s ease;
+}
+
+.form-input:focus { 
+  outline: none; 
+  border-color: rgba(99,102,241,0.55); 
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15); 
+}
+
+.form-label { 
+  display:block; 
+  margin-bottom:.5rem; 
+  color: var(--muted); 
+  font-size:.9rem; 
+}
+
+.form-select {
+  appearance: none; 
+  width: 100%;
+  background: rgba(255,255,255,0.05) url("data:image/svg+xml;utf8,<svg stroke='white' fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right .75rem center / 1em;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text); 
+  border-radius: 10px; 
+  padding: .7rem .9rem;
+}
+
+.chip {
+  padding: .45rem .7rem; 
+  border-radius: 999px; 
+  font-size: .8rem;
+  background: rgba(255,255,255,0.06); 
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #cbd5e1;
+}
+
+.performance-bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  min-width: 20px;
+  transition: height 0.5s ease;
+}
+
+.course-capsule {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.course-capsule:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.duration-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.duration-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar { 
+  width: 10px; 
+  height: 10px; 
+}
+
+::-webkit-scrollbar-track { 
+  background: rgba(99,102,241,0.08); 
+}
+
+::-webkit-scrollbar-thumb { 
+  background: rgba(99,102,241,0.35); 
+  border-radius: 8px; 
+}
+
+::-webkit-scrollbar-thumb:hover { 
+  background: rgba(99,102,241,0.55); 
+}
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Animated background bubbles -->
+  <div class="bubble-container" id="bubbleContainer"></div>
+
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold">Class Performance Dashboard</h1>
+      <button id="backBtn" class="glass-card px-4 py-2 rounded-lg hover:bg-white/10 flex items-center gap-2">
+        <i data-feather="arrow-left"></i> Back to Program
+      </button>
+    </div>
+
+    <!-- Class Info -->
+    <div class="glass-card gradient-border p-6 mb-8">
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="flex-1">
+          <h2 id="className" class="text-2xl font-bold mb-2">Loading...</h2>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span id="classYear" class="chip">-</span>
+            <span id="classSemester" class="chip">-</span>
+            <span id="classType" class="chip">-</span>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <i data-feather="users" class="w-5 h-5 text-emerald-400"></i>
+              <span id="studentCount">0 Students</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-feather="book" class="w-5 h-5 text-amber-400"></i>
+              <span id="courseCount">0 Courses</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-feather="clock" class="w-5 h-5 text-rose-400"></i>
+              <span id="classSchedule">-</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="md:w-48">
+          <img id="classImage" src="" alt="Class Image" class="w-full h-32 object-cover rounded-lg">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Performance Graph and Course Duration -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Student Performance Graph -->
+      <div class="glass-card gradient-border p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="font-bold text-lg">Student Performance</h3>
+        </div>
+        <div id="performanceGraph" class="h-80 flex items-end justify-between gap-2 px-2">
+          <!-- Bars will be generated dynamically -->
+        </div>
+        <div class="mt-6 flex justify-center gap-4">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <span class="text-sm">Excellent (85-100%)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span class="text-sm">Good (70-84%)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+            <span class="text-sm">Needs Improvement (<70%)></70></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Course Duration Capsules -->
+      <div class="glass-card gradient-border p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="font-bold text-lg">Course Durations</h3>
+        </div>
+        <div id="courseDurations" class="space-y-4 max-h-96 overflow-y-auto">
+          <!-- Capsules will be generated dynamically -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- View Class Management Button -->
+    <div class="mt-8 flex justify-center">
+      <a id="viewManagementBtn" href="#" class="glass-card gradient-border px-6 py-3 rounded-lg hover:bg-white/10 flex items-center gap-2 font-medium">
+        <i data-feather="eye"></i> View Class Management
+      </a>
+    </div>
+  </main>
+
+  <script>
+    // Firebase config (same as in program-manager.html)
+const firebaseConfig = {
+  apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+  authDomain: "mentora-71f5c.firebaseapp.com",
+  projectId: "mentora-71f5c",
+  storageBucket: "mentora-71f5c.appspot.com",
+  messagingSenderId: "16685388211",
+  appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+  measurementId: "G-BL98PXGK2G"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// DOM Elements
+const className = document.getElementById('className');
+const classYear = document.getElementById('classYear');
+const classSemester = document.getElementById('classSemester');
+const classType = document.getElementById('classType');
+const studentCount = document.getElementById('studentCount');
+const courseCount = document.getElementById('courseCount');
+const classSchedule = document.getElementById('classSchedule');
+const classImage = document.getElementById('classImage');
+const performanceGraph = document.getElementById('performanceGraph');
+const courseDurations = document.getElementById('courseDurations');
+const backBtn = document.getElementById('backBtn');
+const viewManagementBtn = document.getElementById('viewManagementBtn');
+
+// Get class ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const classId = urlParams.get('id');
+const programId = urlParams.get('programId');
+const deptId = localStorage.getItem('currentDeptId');
+
+// Background bubbles
+function createBubbles() {
+  const container = document.getElementById('bubbleContainer');
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random() * 120 + 60;
+    b.style.width = b.style.height = size + 'px';
+    b.style.left = (Math.random() * 100) + '%';
+    b.style.top = (Math.random() * 100) + '%';
+    b.style.animationDelay = (Math.random() * 10) + 's';
+    b.style.animationDuration = (18 + Math.random() * 14) + 's';
+    container.appendChild(b);
+  }
+}
+
+// Default image helper
+function defaultClassImage() {
+  const pool = [1,2,3,4,5,6,7,8,9,10];
+  const i = pool[Math.floor(Math.random() * pool.length)];
+  return `http://static.photos/education/320x240/${i}`;
+}
+
+// Firestore paths
+const classRef = () => db.collection('departments').doc(deptId).collection('programs').doc(programId).collection('classes').doc(classId);
+
+// Load class data
+async function loadClassData() {
+  if (!classId || !programId || !deptId) {
+    window.location.href = 'program-manager.html';
+    return;
+  }
+
+  try {
+    const doc = await classRef().get();
+    if (!doc.exists) {
+      window.location.href = 'program-manager.html';
+      return;
+    }
+
+    const classData = doc.data();
+    
+    // Update UI
+    className.textContent = classData.name || 'Unnamed Class';
+    classYear.textContent = classData.year || '-';
+    classSemester.textContent = classData.semester || '-';
+    classType.textContent = classData.type || '-';
+    classSchedule.textContent = classData.schedule || '-';
+    classImage.src = classData.image || defaultClassImage();
+    classImage.alt = classData.name || 'Class Image';
+    
+    // Set management button link
+    viewManagementBtn.href = `class-management.html?id=${classId}&programId=${programId}`;
+    
+    // Load performance data and course durations
+    loadPerformanceData();
+    loadCourseDurations();
+  } catch (error) {
+    console.error('Error loading class:', error);
+    window.location.href = 'program-manager.html';
+  }
+}
+
+// Load performance data
+async function loadPerformanceData() {
+  try {
+    const snapshot = await classRef().collection('students').get();
+    studentCount.textContent = `${snapshot.size} Student${snapshot.size !== 1 ? 's' : ''}`;
+    
+    if (snapshot.empty) {
+      performanceGraph.innerHTML = '<p class="text-slate-400 text-center w-full py-16">No performance data available</p>';
+      return;
+    }
+    
+    // Generate mock performance data
+    const performanceData = [];
+    snapshot.docs.forEach(() => {
+      // Generate random performance between 50-100%
+      const performance = Math.floor(Math.random() * 51) + 50;
+      performanceData.push(performance);
+    });
+    
+    // Render performance bars
+    performanceGraph.innerHTML = '';
+    performanceData.forEach((score, index) => {
+      const bar = document.createElement('div');
+      bar.className = 'performance-bar';
+      
+      // Set height based on score (max height 280px)
+      const height = (score / 100) * 280;
+      bar.style.height = `${height}px`;
+      
+      // Color coding
+      if (score >= 85) {
+        bar.classList.add('bg-emerald-500');
+      } else if (score >= 70) {
+        bar.classList.add('bg-amber-500');
+      } else {
+        bar.classList.add('bg-rose-500');
+      }
+      
+      // Add tooltip
+      bar.title = `Student ${index + 1}: ${score}%`;
+      
+      performanceGraph.appendChild(bar);
+    });
+  } catch (error) {
+    console.error('Error loading performance data:', error);
+    performanceGraph.innerHTML = '<p class="text-rose-400 text-center w-full py-16">Failed to load performance data</p>';
+  }
+}
+
+// Load course durations
+async function loadCourseDurations() {
+  try {
+    const snapshot = await classRef().collection('courses').get();
+    courseCount.textContent = `${snapshot.size} Course${snapshot.size !== 1 ? 's' : ''}`;
+    
+    if (snapshot.empty) {
+      courseDurations.innerHTML = '<p class="text-slate-400 text-center py-8">No courses assigned</p>';
+      return;
+    }
+    
+    courseDurations.innerHTML = '';
+    snapshot.docs.forEach(doc => {
+      const course = doc.data();
+      
+      // Generate random duration between 4-16 weeks
+      const duration = Math.floor(Math.random() * 13) + 4;
+      const maxDuration = 16; // Maximum duration for scaling
+      
+      const courseElement = document.createElement('div');
+      courseElement.className = 'course-capsule';
+      courseElement.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <h4 class="font-medium">${course.name || 'Unnamed Course'}</h4>
+            <p class="text-sm text-slate-400 mt-1">${course.code || 'No code'}</p>
+          </div>
+          <span class="text-sm font-medium">${duration} weeks</span>
+        </div>
+        <div class="duration-bar">
+          <div class="duration-fill bg-blue-500" style="width: ${(duration/maxDuration)*100}%"></div>
+        </div>
+      `;
+      courseDurations.appendChild(courseElement);
+    });
+  } catch (error) {
+    console.error('Error loading course durations:', error);
+    courseDurations.innerHTML = '<p class="text-rose-400 text-center py-8">Failed to load course durations</p>';
+  }
+}
+
+// Event Listeners
+backBtn.addEventListener('click', () => {
+  window.location.href = `program-manager.html?id=${programId}`;
+});
+
+// Auth check
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = 'index.html';
+    return;
+  }
+  
+  if (!deptId) {
+    window.location.href = 'dean.html';
+    return;
+  }
+  
+  loadClassData();
+});
+
+// Init
+createBubbles();
+feather.replace();
+  </script>
+
+</body>
+</html>
