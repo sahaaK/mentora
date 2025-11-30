@@ -119,6 +119,10 @@
     <body class="min-h-screen overflow-x-hidden">
         <!-- Floating Particles -->
         <div class="particles-container"></div>
+
+        <!-- Large decorative floating bubbles (portal-style) -->
+        <div class="bubble pointer-events-none absolute -top-16 -right-8 w-72 h-72 bg-indigo-500/30 rounded-full floating" style="z-index:-2"></div>
+        <div class="bubble pointer-events-none absolute -bottom-20 -left-8 w-80 h-80 bg-purple-500/20 rounded-full floating" style="z-index:-2"></div>
     
         <!-- Header -->
         <header class="px-6 py-6">
@@ -609,8 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
         </script>
         <script>feather.replace();</script>
-        <!-- portal shared script to create particles + charts and initialize UI -->
-        <script src="/depy/components/main.js"></script>
+        <!-- portal shared script to create particles + charts and initialize UI (relative path) -->
+        <script src="../components/main.js"></script>
     
 </body>
 </html>
