@@ -3,380 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Department Dash Pro</title>
+    <title>Dean's Portal Login</title>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
-}
-
-/* Glass panel styles */
-.glass-card {
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    transition: all 0.4s ease;
-    border-radius: 16px;
-}
-
-.glass-card:hover {
-    background: rgba(15, 23, 42, 0.8);
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-}
-
-/* Animated gradient border */
-.gradient-border {
-    position: relative;
-    z-index: 1;
-}
-
-.gradient-border::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, #06b6d4, #0ea5e9, #3b82f6);
-    z-index: -1;
-    border-radius: 18px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-}
-
-.glass-card:hover .gradient-border::before {
-    opacity: 1;
-}
-
-/* Faculty image styling */
-.faculty-img {
-    position: relative;
-    overflow: hidden;
-    border-radius: 16px;
-    aspect-ratio: 1/1;
-}
-
-.faculty-img::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3));
-    z-index: 1;
-}
-
-.faculty-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.glass-card:hover .faculty-img img {
-    transform: scale(1.05);
-}
-
-/* Stats styling */
-.stat-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 12px;
-    transition: all 0.3s ease;
-}
-
-.stat-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-2px);
-}
-
-/* Bubble animation container */
-.bubble-container {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    overflow: hidden;
-}
-
-.bubble {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.05));
-    backdrop-filter: blur(1px);
-    animation: float 20s infinite ease-in-out;
-}
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0) translateX(0) scale(1);
-    }
-    33% {
-        transform: translateY(-100px) translateX(50px) scale(1.1);
-    }
-    66% {
-        transform: translateY(50px) translateX(-50px) scale(0.9);
-    }
-}
-
-/* Department image styling */
-.department-img {
-    position: relative;
-    overflow: hidden;
-    border-radius: 16px;
-}
-
-.department-img::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.1));
-    z-index: 1;
-}
-
-.department-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.glass-card:hover .department-img img {
-    transform: scale(1.05);
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(6, 182, 212, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(6, 182, 212, 0.3);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(6, 182, 212, 0.5);
-}
-
-/* Animation classes */
-.animate-slide-up {
-    animation: slideInUp 0.6s ease forwards;
-}
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Pulse animation */
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .glass-card {
-        margin: 0 10px;
-    }
-    
-    .department-img {
-        height: 200px;
-    }
-}
-
-/* Form styles */
-.form-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    width: 100%;
-    color: white;
-    transition: all 0.3s ease;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: rgba(6, 182, 212, 0.5);
-    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
-}
-
-.form-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-    color: #94a3b8;
-}
-
-.form-select {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    width: 100%;
-    color: white;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1em;
-}
-    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center overflow-hidden">
-    <!-- Animated Background -->
-    <div class="bubble-container"></div>
-    
-    <!-- Login Card -->
-    <div class="glass-card gradient-border p-8 w-full max-w-md mx-4 animate-slide-up">
-        <div class="text-center mb-8">
-            <div class="mx-auto w-16 h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center mb-4">
-                <i data-feather="lock" class="text-white w-8 h-8"></i>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
+    <!-- Login Container -->
+    <div class="w-full max-w-md">
+        <div class="glass-card rounded-2xl p-8 shadow-2xl">
+            <div class="text-center mb-8">
+                <div class="mx-auto w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center mb-4">
+                    <i data-feather="shield" class="text-white w-8 h-8"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white">Dean's Portal</h1>
+                <p class="text-gray-400 mt-2">Sign in to access your department</p>
             </div>
-            <h1 class="text-2xl font-bold text-white">Department Login</h1>
-            <p class="text-gray-400 mt-2">Access your department dashboard</p>
-        </div>
-        
-        <form id="loginForm" class="space-y-6">
-            <div>
-                <label for="username" class="form-label">Username</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-feather="user" class="text-gray-500 w-5 h-5"></i>
+
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-feather="user" class="h-5 w-5 text-gray-500"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            class="w-full pl-10 pr-3 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-gray-500" 
+                            placeholder="Enter your username" 
+                            required
+                        >
                     </div>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        class="form-input pl-10" 
-                        placeholder="Enter your username" 
-                        required
-                    >
                 </div>
-            </div>
-            
-            <div>
-                <label for="password" class="form-label">Password</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-feather="key" class="text-gray-500 w-5 h-5"></i>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-feather="lock" class="h-5 w-5 text-gray-500"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="w-full pl-10 pr-3 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-gray-500" 
+                            placeholder="Enter your password" 
+                            required
+                        >
                     </div>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        class="form-input pl-10" 
-                        placeholder="Enter your password" 
-                        required
-                    >
                 </div>
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <input 
-                        id="remember-me" 
-                        type="checkbox" 
-                        class="h-4 w-4 text-cyan-500 focus:ring-cyan-500 border-gray-600 rounded bg-gray-700"
-                    >
-                    <label for="remember-me" class="ml-2 block text-sm text-gray-300">
-                        Remember me
-                    </label>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input 
+                            id="remember-me" 
+                            name="remember-me" 
+                            type="checkbox" 
+                            class="h-4 w-4 text-cyan-500 focus:ring-cyan-500 border-slate-600 rounded bg-slate-700"
+                        >
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-300">
+                            Remember me
+                        </label>
+                    </div>
+
+                    <div class="text-sm">
+                        <a href="#" class="font-medium text-cyan-400 hover:text-cyan-300">
+                            Forgot password?
+                        </a>
+                    </div>
                 </div>
-                
-                <div class="text-sm">
+
+                <div>
+                    <button 
+                        type="submit" 
+                        id="loginButton"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-200"
+                    >
+                        Sign in
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    Don't have access? 
                     <a href="#" class="font-medium text-cyan-400 hover:text-cyan-300">
-                        Forgot password?
+                        Contact administrator
                     </a>
-                </div>
+                </p>
             </div>
-            
-            <div>
-                <button 
-                    type="submit" 
-                    class="w-full glass-card py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                >
-                    <i data-feather="log-in" class="w-5 h-5"></i>
-                    Sign In
-                </button>
-            </div>
-        </form>
-        
+        </div>
+
         <div class="mt-8 text-center">
-            <p class="text-gray-400">
-                Don't have an account? 
-                <a href="#" class="font-medium text-cyan-400 hover:text-cyan-300">
-                    Contact Administrator
-                </a>
+            <p class="text-sm text-gray-500">
+                &copy; 2023 Department Registration System. All rights reserved.
             </p>
         </div>
     </div>
 
-    <script src="/depy/script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            createBubbles();
-            feather.replace();
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+            authDomain: "mentora-71f5c.firebaseapp.com",
+            projectId: "mentora-71f5c",
+            storageBucket: "mentora-71f5c.appspot.com",
+            messagingSenderId: "16685388211",
+            appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+            measurementId: "G-BL98PXGK2G"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+
+        // Login Function
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            // Form submission
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loading state
+            loginButton.innerHTML = '<i data-feather="loader" class="animate-spin w-4 h-4 mr-2"></i> Signing in...';
+            feather.replace();
+            loginButton.disabled = true;
+            
+            try {
+                // First, find the department by username
+                const querySnapshot = await db.collection('departments')
+                    .where('username', '==', username)
+                    .get();
                 
-                // Simple validation (in a real app, this would be server-side)
-                if(username && password) {
-                    // Redirect to dashboard
-                    window.location.href = 'department.html';
-                } else {
-                    alert('Please fill in all fields');
+                if (querySnapshot.empty) {
+                    throw new Error('Invalid credentials');
                 }
-            });
+                
+                const deptDoc = querySnapshot.docs[0];
+                const deptData = deptDoc.data();
+                
+                // Authenticate using email (username@gmail.com) and password
+                const email = `${username}@gmail.com`;
+                await auth.signInWithEmailAndPassword(email, password);
+                
+                // Redirect to portal
+                localStorage.setItem('currentDeptId', deptDoc.id);
+                window.location.href = 'portal.html';
+            } catch (error) {
+                console.error("Login error: ", error);
+                alert("Login failed: " + (error.message || "Invalid username or password"));
+                
+                // Reset button
+                loginButton.textContent = 'Sign in';
+                loginButton.disabled = false;
+                feather.replace();
+            }
         });
-        
+
+        // Initialize Feather Icons
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof feather !== 'undefined') {
         feather.replace();
+    }
+});
+
+// Handle form submissions with Enter key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        const form = e.target.closest('form');
+        if (form) {
+            form.dispatchEvent(new Event('submit'));
+        }
+    }
+});
     </script>
+    <script src="script.js"></script>
+    <script>feather.replace();</script>
 </body>
 </html>

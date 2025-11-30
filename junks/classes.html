@@ -10,207 +10,112 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css">
   <style>
     :root {
-  --glass: rgba(15, 23, 42, 0.55);
-  --glass-strong: rgba(15, 23, 42, 0.8);
-  --border: rgba(255, 255, 255, 0.08);
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-}
+      --glass: rgba(15, 23, 42, 0.55);
+      --glass-strong: rgba(15, 23, 42, 0.8);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+      background: #0f172a;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: var(--glass);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.35s ease;
+    }
+    .glass-card:hover {
+      background: var(--glass-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .gradient-border {
+      position: relative;
+      z-index: 1;
+    }
+    .gradient-border::before {
+      content: '';
+      position: absolute; inset: -2px;
+      /* background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899); */
+      border-radius: 18px;
+      opacity: 0.55;
+      transition: opacity .35s ease;
+      z-index: -1;
+      filter: blur(0.4px);
+    }
+    .glass-card:hover .gradient-border::before { opacity: 0.9; }
 
-* { 
-  box-sizing: border-box; 
-}
+    .bubble-container {
+      position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    }
+    .bubble {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.12), rgba(147, 51, 234, 0.06));
+      filter: blur(1px);
+      animation: float 20s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+      33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
+      66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
+    }
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
-  background: #0f172a;
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+    .modal-overlay {
+      position: fixed; inset: 0; display: none; place-items: center;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: grid; }
+    .modal-content {
+      background: var(--glass-strong);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      width: 95%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+      animation: modalEnter .28s ease-out;
+    }
+    @keyframes modalEnter {
+      from { opacity: 0; transform: translateY(12px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
-.glass-card {
-  background: var(--glass);
-  backdrop-filter: blur(18px);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  transition: all 0.35s ease;
-}
+    .form-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      border-radius: 10px; padding: .7rem .9rem;
+      width: 100%;
+      transition: all .25s ease;
+    }
+    .form-input:focus { outline: none; border-color: rgba(99,102,241,0.55); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .form-label { display:block; margin-bottom:.5rem; color: var(--muted); font-size:.9rem; }
+    .form-select {
+      appearance: none; width: 100%;
+      background: rgba(255,255,255,0.05) url("data:image/svg+xml;utf8,<svg stroke='white' fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right .75rem center / 1em;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text); border-radius: 10px; padding: .7rem .9rem;
+    }
+    .chip {
+      padding: .45rem .7rem; border-radius: 999px; font-size: .8rem;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+      color: #cbd5e1;
+    }
 
-.glass-card:hover {
-  background: var(--glass-strong);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.gradient-border {
-  position: relative;
-  z-index: 1;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute; 
-  inset: -2px;
-  border-radius: 18px;
-  opacity: 0.55;
-  transition: opacity .35s ease;
-  z-index: -1;
-  filter: blur(0.4px);
-}
-
-.glass-card:hover .gradient-border::before { 
-  opacity: 0.9; 
-}
-
-.bubble-container {
-  position: fixed; 
-  inset: 0; 
-  z-index: -1; 
-  overflow: hidden; 
-  pointer-events: none;
-}
-
-.bubble {
-  position: absolute; 
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.12), rgba(147, 51, 234, 0.06));
-  filter: blur(1px);
-  animation: float 20s infinite ease-in-out;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
-  33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
-  66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
-}
-
-.modal-overlay {
-  position: fixed; 
-  inset: 0; 
-  display: none; 
-  place-items: center;
-  background: rgba(0,0,0,0.65); 
-  backdrop-filter: blur(6px);
-  z-index: 1000;
-}
-
-.modal-overlay.show { 
-  display: grid; 
-}
-
-.modal-content {
-  background: var(--glass-strong);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.25rem;
-  width: 95%; 
-  max-width: 520px; 
-  max-height: 90vh; 
-  overflow-y: auto;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.35);
-  animation: modalEnter .28s ease-out;
-}
-
-@keyframes modalEnter {
-  from { opacity: 0; transform: translateY(12px) scale(.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.form-input {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text);
-  border-radius: 10px; 
-  padding: .7rem .9rem;
-  width: 100%;
-  transition: all .25s ease;
-}
-
-.form-input:focus { 
-  outline: none; 
-  border-color: rgba(99,102,241,0.55); 
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.15); 
-}
-
-.form-label { 
-  display:block; 
-  margin-bottom:.5rem; 
-  color: var(--muted); 
-  font-size:.9rem; 
-}
-
-.form-select {
-  appearance: none; 
-  width: 100%;
-  background: rgba(255,255,255,0.05) url("data:image/svg+xml;utf8,<svg stroke='white' fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right .75rem center / 1em;
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text); 
-  border-radius: 10px; 
-  padding: .7rem .9rem;
-}
-
-.chip {
-  padding: .45rem .7rem; 
-  border-radius: 999px; 
-  font-size: .8rem;
-  background: rgba(255,255,255,0.06); 
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #cbd5e1;
-}
-
-.performance-bar {
-  flex: 1;
-  border-radius: 4px 4px 0 0;
-  min-width: 20px;
-  transition: height 0.5s ease;
-}
-
-.course-capsule {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1rem;
-  transition: all 0.3s ease;
-}
-
-.course-capsule:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-}
-
-.duration-bar {
-  height: 8px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  margin-top: 0.5rem;
-}
-
-.duration-fill {
-  height: 100%;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar { 
-  width: 10px; 
-  height: 10px; 
-}
-
-::-webkit-scrollbar-track { 
-  background: rgba(99,102,241,0.08); 
-}
-
-::-webkit-scrollbar-thumb { 
-  background: rgba(99,102,241,0.35); 
-  border-radius: 8px; 
-}
-
-::-webkit-scrollbar-thumb:hover { 
-  background: rgba(99,102,241,0.55); 
-}
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(99,102,241,0.08); }
+    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.55); }
   </style>
 </head>
 <body class="min-h-screen">
@@ -219,7 +124,7 @@ body {
 
   <main class="max-w-7xl mx-auto px-6 py-12">
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-3xl font-bold">Class Performance Dashboard</h1>
+      <h1 class="text-3xl font-bold">Class Details</h1>
       <button id="backBtn" class="glass-card px-4 py-2 rounded-lg hover:bg-white/10 flex items-center gap-2">
         <i data-feather="arrow-left"></i> Back to Program
       </button>
@@ -258,265 +163,443 @@ body {
       </div>
     </div>
     
-    <!-- Performance Graph and Course Duration -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Student Performance Graph -->
+    <!-- Students and Courses -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div class="glass-card gradient-border p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="font-bold text-lg">Student Performance</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-lg">Students</h3>
+          <button id="addStudentBtn" class="glass-card px-3 py-1 rounded-lg hover:bg-white/10 flex items-center gap-1">
+            <i data-feather="plus" class="w-4 h-4"></i> Add
+          </button>
         </div>
-        <div id="performanceGraph" class="h-80 flex items-end justify-between gap-2 px-2">
-          <!-- Bars will be generated dynamically -->
-        </div>
-        <div class="mt-6 flex justify-center gap-4">
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <span class="text-sm">Excellent (85-100%)</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span class="text-sm">Good (70-84%)</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-rose-500"></div>
-            <span class="text-sm">Needs Improvement (<70%)></70></span>
-          </div>
+        <div id="studentsContainer" class="space-y-3 max-h-96 overflow-y-auto">
+          <p class="text-slate-400 text-center py-8">Loading students...</p>
         </div>
       </div>
       
-      <!-- Course Duration Capsules -->
       <div class="glass-card gradient-border p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="font-bold text-lg">Course Durations</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-lg">Courses</h3>
+          <button id="addCourseBtn" class="glass-card px-3 py-1 rounded-lg hover:bg-white/10 flex items-center gap-1">
+            <i data-feather="plus" class="w-4 h-4"></i> Add
+          </button>
         </div>
-        <div id="courseDurations" class="space-y-4 max-h-96 overflow-y-auto">
-          <!-- Capsules will be generated dynamically -->
+        <div id="coursesContainer" class="space-y-3 max-h-96 overflow-y-auto">
+          <p class="text-slate-400 text-center py-8">Loading courses...</p>
         </div>
       </div>
-    </div>
-    
-    <!-- View Class Management Button -->
-    <div class="mt-8 flex justify-center">
-      <a id="viewManagementBtn" href="#" class="glass-card gradient-border px-6 py-3 rounded-lg hover:bg-white/10 flex items-center gap-2 font-medium">
-        <i data-feather="eye"></i> View Class Management
-      </a>
     </div>
   </main>
 
+  <!-- Modal Styles -->
+  <div id="modalStyle1" class="modal-overlay fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+    <div class="modal-overlay absolute inset-0 bg-black/60"></div>
+    <div class="modal-panel relative max-w-5xl w-full bg-slate-900/90 border border-white/10 rounded-3xl shadow-glass scale-[.96] opacity-0 overflow-hidden">
+      <button class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition" data-close>
+        <i data-feather="x" class="w-5 h-5"></i>
+      </button>
+      <div class="grid grid-cols-1 lg:grid-cols-3">
+        <div class="relative lg:col-span-1 h-64 lg:h-auto overflow-hidden">
+          <img id="m1-image" alt="Program Image" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/10"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-6">
+            <h3 id="m1-name" class="text-xl font-bold tracking-tight"></h3>
+            <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+              <span class="inline-flex items-center gap-1">
+                <i data-feather="clock" class="w-4 h-4"></i>
+                <span id="m1-duration"></span>
+              </span>
+              <span>•</span>
+              <span id="m1-credits"></span>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-2 p-6 md:p-8 space-y-6">
+          <div>
+            <h4 class="text-lg font-semibold mb-2">Description</h4>
+            <p id="m1-desc" class="text-slate-300"></p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Duration</div>
+              <div id="m1-full-duration" class="mt-1 font-semibold"></div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Credits</div>
+              <div id="m1-full-credits" class="mt-1 font-semibold"></div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Created</div>
+              <div id="m1-created" class="mt-1 font-semibold"></div>
+            </div>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-slate-300">Completion Rate</div>
+              <div class="text-xs text-slate-400"><span id="m1-completion"></span>%</div>
+            </div>
+            <div class="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div id="m1-completion-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style="width:var(--w,0%)"></div>
+            </div>
+            <div class="mt-4 flex items-center justify-end gap-3">
+              <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                Close
+              </button>
+              <button class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm flex items-center gap-2 transition">
+                <i data-feather="edit-2" class="w-4 h-4"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalStyle2" class="modal-overlay fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+    <div class="modal-overlay absolute inset-0 bg-black/60"></div>
+    <div class="modal-panel relative max-w-4xl w-full bg-slate-900/90 border border-white/10 rounded-3xl shadow-glass scale-[.96] opacity-0 overflow-hidden">
+      <button class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition" data-close>
+        <i data-feather="x" class="w-5 h-5"></i>
+      </button>
+      <div class="grid grid-cols-1 md:grid-cols-2">
+        <div class="relative h-64 md:h-auto overflow-hidden">
+          <img id="m2-image" alt="Program Image" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/10"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-6">
+            <h3 id="m2-name" class="text-xl font-bold tracking-tight"></h3>
+            <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+              <span class="inline-flex items-center gap-1">
+                <i data-feather="clock" class="w-4 h-4"></i>
+                <span id="m2-duration"></span>
+              </span>
+              <span>•</span>
+              <span id="m2-credits"></span>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 md:p-8 space-y-6">
+          <div>
+            <h4 class="text-lg font-semibold mb-2">Description</h4>
+            <p id="m2-desc" class="text-slate-300"></p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Duration</div>
+              <div id="m2-full-duration" class="mt-1 font-semibold"></div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Credits</div>
+              <div id="m2-full-credits" class="mt-1 font-semibold"></div>
+            </div>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-slate-300">Health Score</div>
+              <div id="m2-score" class="text-lg font-bold"></div>
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="relative w-32 h-32">
+                <svg class="w-full h-full" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" stroke-width="10"></circle>
+                  <circle id="m2-gauge" cx="60" cy="60" r="50" fill="none" stroke="url(#gradient)" stroke-width="10" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="0 314.159" stroke-dashoffset="0"></circle>
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#3b82f6" />
+                      <stop offset="100%" stop-color="#8b5cf6" />
+                    </linearGradient>
+                  </defs>
+                  <text id="m2-gauge-text" x="60" y="65" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="bold">0%</text>
+                </svg>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center justify-end gap-3">
+              <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                Close
+              </button>
+              <button class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm flex items-center gap-2 transition">
+                <i data-feather="edit-2" class="w-4 h-4"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalStyle3" class="modal-overlay fixed inset-0 z-50 opacity-0 pointer-events-none flex items-center justify-center p-4">
+    <div class="modal-overlay absolute inset-0 bg-black/60"></div>
+    <div class="modal-panel relative max-w-5xl w-full bg-slate-900/90 border border-white/10 rounded-3xl shadow-glass scale-[.96] opacity-0 overflow-hidden">
+      <button class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition" data-close>
+        <i data-feather="x" class="w-5 h-5"></i>
+      </button>
+      <div class="grid grid-cols-1 lg:grid-cols-5">
+        <div class="relative lg:col-span-2 h-72 lg:h-auto overflow-hidden">
+          <img id="m3-image" alt="Program Image" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/10"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-6">
+            <h3 id="m3-name" class="text-2xl font-bold tracking-tight"></h3>
+            <div class="mt-1 flex items-center gap-3 text-sm text-slate-300">
+              <span class="inline-flex items-center gap-1">
+                <i data-feather="clock" class="w-4 h-4"></i>
+                <span id="m3-duration"></span>
+              </span>
+              <span>•</span>
+              <span id="m3-credits"></span>
+            </div>
+            <div class="mt-3">
+              <span id="m3-code" class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 ring-1 ring-inset ring-blue-400/30"></span>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-3 p-6 md:p-8 space-y-6">
+          <div>
+            <h4 class="text-lg font-semibold mb-2">Description</h4>
+            <p id="m3-desc" class="text-slate-300"></p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Duration</div>
+              <div id="m3-full-duration" class="mt-1 font-semibold"></div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Credits</div>
+              <div id="m3-full-credits" class="mt-1 font-semibold"></div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="text-xs text-slate-400">Created</div>
+              <div id="m3-created" class="mt-1 font-semibold"></div>
+            </div>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-slate-300">Interest by category</div>
+              <div class="text-xs text-slate-400">Total <span id="m3-total"></span></div>
+            </div>
+            <div id="m3-bars" class="mt-4 h-40 flex items-end gap-4">
+              <!-- Bars injected by JS with animation -->
+            </div>
+            <div class="mt-4 flex items-center justify-end gap-3">
+              <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-sm transition" data-close>
+                Close
+              </button>
+              <button class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm flex items-center gap-2 transition">
+                <i data-feather="edit-2" class="w-4 h-4"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
   <script>
     // Firebase config (same as in program-manager.html)
-const firebaseConfig = {
-  apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
-  authDomain: "mentora-71f5c.firebaseapp.com",
-  projectId: "mentora-71f5c",
-  storageBucket: "mentora-71f5c.appspot.com",
-  messagingSenderId: "16685388211",
-  appId: "1:16685388211:web:7eed812660439dec7b3bc6",
-  measurementId: "G-BL98PXGK2G"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+      authDomain: "mentora-71f5c.firebaseapp.com",
+      projectId: "mentora-71f5c",
+      storageBucket: "mentora-71f5c.appspot.com",
+      messagingSenderId: "16685388211",
+      appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+      measurementId: "G-BL98PXGK2G"
+    };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-// DOM Elements
-const className = document.getElementById('className');
-const classYear = document.getElementById('classYear');
-const classSemester = document.getElementById('classSemester');
-const classType = document.getElementById('classType');
-const studentCount = document.getElementById('studentCount');
-const courseCount = document.getElementById('courseCount');
-const classSchedule = document.getElementById('classSchedule');
-const classImage = document.getElementById('classImage');
-const performanceGraph = document.getElementById('performanceGraph');
-const courseDurations = document.getElementById('courseDurations');
-const backBtn = document.getElementById('backBtn');
-const viewManagementBtn = document.getElementById('viewManagementBtn');
+    // DOM Elements
+    const className = document.getElementById('className');
+    const classYear = document.getElementById('classYear');
+    const classSemester = document.getElementById('classSemester');
+    const classType = document.getElementById('classType');
+    const studentCount = document.getElementById('studentCount');
+    const courseCount = document.getElementById('courseCount');
+    const classSchedule = document.getElementById('classSchedule');
+    const classImage = document.getElementById('classImage');
+    const studentsContainer = document.getElementById('studentsContainer');
+    const coursesContainer = document.getElementById('coursesContainer');
+    const backBtn = document.getElementById('backBtn');
 
-// Get class ID from URL
-const urlParams = new URLSearchParams(window.location.search);
-const classId = urlParams.get('id');
-const programId = urlParams.get('programId');
-const deptId = localStorage.getItem('currentDeptId');
+    // Get class ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const classId = urlParams.get('id');
+    const programId = urlParams.get('programId');
+    const deptId = localStorage.getItem('currentDeptId');
 
-// Background bubbles
-function createBubbles() {
-  const container = document.getElementById('bubbleContainer');
-  const count = 18;
-  for (let i = 0; i < count; i++) {
-    const b = document.createElement('div');
-    b.className = 'bubble';
-    const size = Math.random() * 120 + 60;
-    b.style.width = b.style.height = size + 'px';
-    b.style.left = (Math.random() * 100) + '%';
-    b.style.top = (Math.random() * 100) + '%';
-    b.style.animationDelay = (Math.random() * 10) + 's';
-    b.style.animationDuration = (18 + Math.random() * 14) + 's';
-    container.appendChild(b);
-  }
-}
-
-// Default image helper
-function defaultClassImage() {
-  const pool = [1,2,3,4,5,6,7,8,9,10];
-  const i = pool[Math.floor(Math.random() * pool.length)];
-  return `http://static.photos/education/320x240/${i}`;
-}
-
-// Firestore paths
-const classRef = () => db.collection('departments').doc(deptId).collection('programs').doc(programId).collection('classes').doc(classId);
-
-// Load class data
-async function loadClassData() {
-  if (!classId || !programId || !deptId) {
-    window.location.href = 'program-manager.html';
-    return;
-  }
-
-  try {
-    const doc = await classRef().get();
-    if (!doc.exists) {
-      window.location.href = 'program-manager.html';
-      return;
+    // Background bubbles
+    function createBubbles() {
+      const container = document.getElementById('bubbleContainer');
+      const count = 18;
+      for (let i = 0; i < count; i++) {
+        const b = document.createElement('div');
+        b.className = 'bubble';
+        const size = Math.random() * 120 + 60;
+        b.style.width = b.style.height = size + 'px';
+        b.style.left = (Math.random() * 100) + '%';
+        b.style.top = (Math.random() * 100) + '%';
+        b.style.animationDelay = (Math.random() * 10) + 's';
+        b.style.animationDuration = (18 + Math.random() * 14) + 's';
+        container.appendChild(b);
+      }
     }
 
-    const classData = doc.data();
-    
-    // Update UI
-    className.textContent = classData.name || 'Unnamed Class';
-    classYear.textContent = classData.year || '-';
-    classSemester.textContent = classData.semester || '-';
-    classType.textContent = classData.type || '-';
-    classSchedule.textContent = classData.schedule || '-';
-    classImage.src = classData.image || defaultClassImage();
-    classImage.alt = classData.name || 'Class Image';
-    
-    // Set management button link
-    viewManagementBtn.href = `class-management.html?id=${classId}&programId=${programId}`;
-    
-    // Load performance data and course durations
-    loadPerformanceData();
-    loadCourseDurations();
-  } catch (error) {
-    console.error('Error loading class:', error);
-    window.location.href = 'program-manager.html';
-  }
-}
-
-// Load performance data
-async function loadPerformanceData() {
-  try {
-    const snapshot = await classRef().collection('students').get();
-    studentCount.textContent = `${snapshot.size} Student${snapshot.size !== 1 ? 's' : ''}`;
-    
-    if (snapshot.empty) {
-      performanceGraph.innerHTML = '<p class="text-slate-400 text-center w-full py-16">No performance data available</p>';
-      return;
+    // Default image helper
+    function defaultClassImage() {
+      const pool = [1,2,3,4,5,6,7,8,9,10];
+      const i = pool[Math.floor(Math.random() * pool.length)];
+      return `http://static.photos/medical/320x240/${i}`;
     }
-    
-    // Generate mock performance data
-    const performanceData = [];
-    snapshot.docs.forEach(() => {
-      // Generate random performance between 50-100%
-      const performance = Math.floor(Math.random() * 51) + 50;
-      performanceData.push(performance);
+
+    // Firestore paths
+    const classRef = () => db.collection('departments').doc(deptId).collection('programs').doc(programId).collection('classes').doc(classId);
+
+    // Load class data
+    async function loadClassData() {
+      if (!classId || !programId || !deptId) {
+        window.location.href = 'program-manager.html';
+        return;
+      }
+
+      try {
+        const doc = await classRef().get();
+        if (!doc.exists) {
+          window.location.href = 'program-manager.html';
+          return;
+        }
+
+        const classData = doc.data();
+        
+        // Update UI
+        className.textContent = classData.name || 'Unnamed Class';
+        classYear.textContent = classData.year || '-';
+        classSemester.textContent = classData.semester || '-';
+        classType.textContent = classData.type || '-';
+        classSchedule.textContent = classData.schedule || '-';
+        classImage.src = classData.image || defaultClassImage();
+        classImage.alt = classData.name || 'Class Image';
+        
+        // Load students and courses
+        loadStudents();
+        loadCourses();
+      } catch (error) {
+        console.error('Error loading class:', error);
+        window.location.href = 'program-manager.html';
+      }
+    }
+
+    // Load students
+    async function loadStudents() {
+      try {
+        const snapshot = await classRef().collection('students').get();
+        studentCount.textContent = `${snapshot.size} Student${snapshot.size !== 1 ? 's' : ''}`;
+        
+        if (snapshot.empty) {
+          studentsContainer.innerHTML = '<p class="text-slate-400 text-center py-8">No students enrolled</p>';
+          return;
+        }
+        
+        studentsContainer.innerHTML = '';
+        snapshot.docs.forEach(doc => {
+          const student = doc.data();
+          const studentElement = document.createElement('div');
+          studentElement.className = 'flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer';
+          studentElement.innerHTML = `
+            <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <i data-feather="user" class="w-5 h-5 text-indigo-400"></i>
+            </div>
+            <div>
+              <p class="font-medium">${student.name || 'Unnamed Student'}</p>
+              <p class="text-sm text-slate-400">${student.email || 'No email provided'}</p>
+            </div>
+            <button class="ml-auto glass-card p-2 rounded-lg hover:bg-white/10">
+              <i data-feather="more-vertical" class="w-4 h-4"></i>
+            </button>
+          `;
+          studentElement.addEventListener('click', () => openModalById('CS101'));
+          studentsContainer.appendChild(studentElement);
+        });
+        feather.replace();
+      } catch (error) {
+        console.error('Error loading students:', error);
+        studentsContainer.innerHTML = '<p class="text-rose-400 text-center py-8">Failed to load students</p>';
+      }
+    }
+
+    // Load courses
+    async function loadCourses() {
+      try {
+        const snapshot = await classRef().collection('courses').get();
+        courseCount.textContent = `${snapshot.size} Course${snapshot.size !== 1 ? 's' : ''}`;
+        
+        if (snapshot.empty) {
+          coursesContainer.innerHTML = '<p class="text-slate-400 text-center py-8">No courses assigned</p>';
+          return;
+        }
+        
+        coursesContainer.innerHTML = '';
+        snapshot.docs.forEach(doc => {
+          const course = doc.data();
+          const courseElement = document.createElement('div');
+          courseElement.className = 'flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer';
+          courseElement.innerHTML = `
+            <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <i data-feather="book" class="w-5 h-5 text-amber-400"></i>
+            </div>
+            <div>
+              <p class="font-medium">${course.name || 'Unnamed Course'}</p>
+              <p class="text-sm text-slate-400">${course.code || 'No code'}</p>
+            </div>
+            <button class="ml-auto glass-card p-2 rounded-lg hover:bg-white/10">
+              <i data-feather="more-vertical" class="w-4 h-4"></i>
+            </button>
+          `;
+          courseElement.addEventListener('click', () => openModalById('WEB301'));
+          coursesContainer.appendChild(courseElement);
+        });
+        feather.replace();
+      } catch (error) {
+        console.error('Error loading courses:', error);
+        coursesContainer.innerHTML = '<p class="text-rose-400 text-center py-8">Failed to load courses</p>';
+      }
+    }
+
+    // Event Listeners
+    backBtn.addEventListener('click', () => {
+      window.location.href = `program-manager.html?id=${programId}`;
     });
-    
-    // Render performance bars
-    performanceGraph.innerHTML = '';
-    performanceData.forEach((score, index) => {
-      const bar = document.createElement('div');
-      bar.className = 'performance-bar';
-      
-      // Set height based on score (max height 280px)
-      const height = (score / 100) * 280;
-      bar.style.height = `${height}px`;
-      
-      // Color coding
-      if (score >= 85) {
-        bar.classList.add('bg-emerald-500');
-      } else if (score >= 70) {
-        bar.classList.add('bg-amber-500');
-      } else {
-        bar.classList.add('bg-rose-500');
+
+    document.getElementById('addStudentBtn').addEventListener('click', () => {
+      alert('Add student functionality would go here');
+    });
+
+    document.getElementById('addCourseBtn').addEventListener('click', () => {
+      alert('Add course functionality would go here');
+    });
+
+    // Auth check
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
       }
       
-      // Add tooltip
-      bar.title = `Student ${index + 1}: ${score}%`;
+      if (!deptId) {
+        window.location.href = 'dean.html';
+        return;
+      }
       
-      performanceGraph.appendChild(bar);
+      loadClassData();
     });
-  } catch (error) {
-    console.error('Error loading performance data:', error);
-    performanceGraph.innerHTML = '<p class="text-rose-400 text-center w-full py-16">Failed to load performance data</p>';
-  }
-}
 
-// Load course durations
-async function loadCourseDurations() {
-  try {
-    const snapshot = await classRef().collection('courses').get();
-    courseCount.textContent = `${snapshot.size} Course${snapshot.size !== 1 ? 's' : ''}`;
-    
-    if (snapshot.empty) {
-      courseDurations.innerHTML = '<p class="text-slate-400 text-center py-8">No courses assigned</p>';
-      return;
-    }
-    
-    courseDurations.innerHTML = '';
-    snapshot.docs.forEach(doc => {
-      const course = doc.data();
-      
-      // Generate random duration between 4-16 weeks
-      const duration = Math.floor(Math.random() * 13) + 4;
-      const maxDuration = 16; // Maximum duration for scaling
-      
-      const courseElement = document.createElement('div');
-      courseElement.className = 'course-capsule';
-      courseElement.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div>
-            <h4 class="font-medium">${course.name || 'Unnamed Course'}</h4>
-            <p class="text-sm text-slate-400 mt-1">${course.code || 'No code'}</p>
-          </div>
-          <span class="text-sm font-medium">${duration} weeks</span>
-        </div>
-        <div class="duration-bar">
-          <div class="duration-fill bg-blue-500" style="width: ${(duration/maxDuration)*100}%"></div>
-        </div>
-      `;
-      courseDurations.appendChild(courseElement);
-    });
-  } catch (error) {
-    console.error('Error loading course durations:', error);
-    courseDurations.innerHTML = '<p class="text-rose-400 text-center py-8">Failed to load course durations</p>';
-  }
-}
-
-// Event Listeners
-backBtn.addEventListener('click', () => {
-  window.location.href = `program-manager.html?id=${programId}`;
-});
-
-// Auth check
-auth.onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = 'index.html';
-    return;
-  }
-  
-  if (!deptId) {
-    window.location.href = 'dean.html';
-    return;
-  }
-  
-  loadClassData();
-});
-
-// Init
-createBubbles();
-feather.replace();
+    // Init
+    createBubbles();
+    feather.replace();
   </script>
-
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
 </body>
 </html>
