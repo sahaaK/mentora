@@ -16,13 +16,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Sidebar (kept from your original) -->
     <link rel="stylesheet" href="components/sidebar.css">
-    <!-- match portal theme + background animation styles -->
-    <link rel="stylesheet" href="main.css">
-    
+    <script src="sidebar.js"></script>
+
     <style>
         /* Page-specific tweaks for the Classes page. Theme, particle background and global UI styles
-           are provided by main.css (shared portal theme). Keep only class/program specific rules here. */
+           are provided by style.css (shared portal theme). Keep only class/program specific rules here. */
 
         /* Program filter cards (page-specific) */
         .program-filter {
@@ -47,10 +49,252 @@
         .image-upload-area:hover { border-color: rgba(139,92,246,0.5); background: rgba(139,92,246,0.03); }
         .image-upload-area.has-image { border-style: solid; border-color: rgba(139,92,246,0.5); }
 
-        /* Small helper for subtle skeleton on this page (main.css has a general skeleton already) */
+        /* Small helper for subtle skeleton on this page (style.css has a general skeleton already) */
         .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 20%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 80%); background-size: 200% 100%; animation: shimmer 1.6s infinite; }
 
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Glass panel styles */
+.glass-card {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.glass-card:hover {
+    background: rgba(15, 23, 42, 0.8);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(99, 102, 241, 0.1);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.5);
+}
+
+/* Floating particles */
+.particles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.2), rgba(147, 51, 234, 0.1));
+    backdrop-filter: blur(1px);
+    animation: float 15s infinite ease-in-out;
+    opacity: 0.7;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) translateX(0) scale(1);
+    }
+    33% {
+        transform: translateY(-80px) translateX(40px) scale(1.1);
+    }
+    66% {
+        transform: translateY(40px) translateX(-40px) scale(0.9);
+    }
+}
+
+/* Button styles */
+.btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    opacity: 0.9;
+}
+
+/* Notification badge */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    background: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Program card styles - Image Zoom with Overlay Panel */
+.program-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    transition: all 0.5s ease;
+}
+.program-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 40px rgba(89, 111, 245, 0.25);
+}
+.program-image {
+    transition: transform 0.7s ease;
+}
+.program-card:hover .program-image {
+    transform: scale(1.1);
+}
+.overlay-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.06) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.8s ease;
+    pointer-events: none;
+}
+.program-card:hover .overlay-shine {
+    transform: translateX(120%);
+}
+
+/* Bubble background */
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(89, 111, 245, 0.12), rgba(167, 139, 250, 0.06));
+    backdrop-filter: blur(1px);
+    animation: float 18s infinite ease-in-out;
+    pointer-events: none;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+.modal-content {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: modalEnter 0.3s ease-out;
+}
+@keyframes modalEnter {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Loading skeleton */
+.skeleton {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+.skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Form inputs */
+.form-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    transition: all 0.3s ease;
+}
+.form-input:focus {
+    outline: none;
+    border-color: rgba(89, 111, 245, 0.5);
+    box-shadow: 0 0 0 2px rgba(89, 111, 245, 0.2);
+}
+.form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glass-card {
+        margin: 0 10px;
+    }
+}
     </style>
 </head>
 
@@ -98,7 +342,6 @@
 
     <!-- Sidebar -->
     <div id="sidebar-root"></div>
-    <script src="components/sidebar.js"></script>
 
     <!-- Main Content Container -->
     <div class="ml-0 md:ml-74 transition-all duration-300">
@@ -108,7 +351,7 @@
                 <div class="flex justify-between items-center">
                     <div>
                         <h1 class="text-3xl md:text-4xl font-bold text-white">
-                            <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                            <span class="bg-gradient-to-r from-undefined-400 to-purple-400 bg-clip-text text-transparent">
                                 Class Management
                             </span>
                         </h1>
@@ -127,18 +370,76 @@
 
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto px-6 pb-12">
-            <!-- Program Filters Section -->
+            <!-- Layout: Programs column + Analytics (charts) -->
             <section class="mb-8 animate__animated animate__fadeInUp">
-                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <i data-feather="filter" class="text-undefined-400"></i>
-                    Select Program
-                </h2>
-                <div id="programsFilter" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Loading skeletons -->
-                    <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
-                    <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
-                    <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
-                    <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <!-- Programs Column -->
+                    <div class="xl:col-span-4">
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i data-feather="filter" class="text-undefined-400"></i>
+                            Select Program
+                        </h2>
+                        <div id="programsFilter" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
+                            <!-- Loading skeletons -->
+                            <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
+                            <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
+                            <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
+                            <div class="glass-card rounded-xl p-4 skeleton h-32"></div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics / Charts Column -->
+                    <div class="xl:col-span-8">
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i data-feather="bar-chart-2" class="text-undefined-400"></i>
+                            Analytics
+                        </h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Classes by Year Chart -->
+                            <div class="glass-card rounded-2xl p-6 border border-white/10">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-white">Classes by Year</h3>
+                                        <p class="text-sm text-gray-400">Distribution across academic years</p>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-lg bg-undefined-500/20 flex items-center justify-center">
+                                        <i data-feather="calendar" class="w-5 h-5 text-undefined-400"></i>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <canvas id="classesByYearChart" height="180"></canvas>
+                                    <div id="classesByYearEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <i data-feather="calendar" class="w-12 h-12 text-gray-500 mx-auto mb-2"></i>
+                                            <p class="text-gray-400 text-sm">No data available</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Program Distribution Chart -->
+                            <div class="glass-card rounded-2xl p-6 border border-white/10">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-white">Program Distribution</h3>
+                                        <p class="text-sm text-gray-400">Classes per program</p>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-lg bg-undefined-500/20 flex items-center justify-center">
+                                        <i data-feather="pie-chart" class="w-5 h-5 text-undefined-400"></i>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <canvas id="programDistributionChart" height="180"></canvas>
+                                    <div id="programDistributionEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <i data-feather="pie-chart" class="w-12 h-12 text-gray-500 mx-auto mb-2"></i>
+                                            <p class="text-gray-400 text-sm">No data available</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -308,7 +609,7 @@
     </div>
 
     <script>
-        // Initialize Firebase
+// Initialize Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
     authDomain: "mentora-71f5c.firebaseapp.com",
@@ -329,6 +630,10 @@ let classes = [];
 let selectedProgramId = null;
 let selectedProgramName = 'All Classes';
 let currentImageUrl = '';
+
+// Charts
+let classesByYearChart;
+let programDistributionChart;
 
 // Create floating particles
 function createParticles() {
@@ -372,8 +677,77 @@ async function fetchPrograms() {
 
         renderProgramFilters();
         populateProgramSelect();
+        updateCharts();
     } catch (error) {
         console.error('Error fetching programs:', error);
+    }
+}
+
+// Fetch classes
+async function fetchClasses() {
+    const deptId = localStorage.getItem('currentDeptId');
+    if (!deptId) return;
+
+    const container = document.getElementById('classesContainer');
+    const searchTerm = document.getElementById('classSearch').value.toLowerCase();
+    const yearFilter = document.getElementById('yearFilter').value;
+
+    // Show loading state
+    container.innerHTML = Array(3).fill(0).map(() => `
+        <div class="glass-card rounded-2xl overflow-hidden animate-pulse">
+            <div class="h-48 skeleton"></div>
+            <div class="p-6 space-y-3">
+                <div class="h-6 skeleton rounded w-3/4"></div>
+                <div class="h-4 skeleton rounded w-full"></div>
+                <div class="flex gap-2">
+                    <div class="h-6 skeleton rounded-full w-16"></div>
+                    <div class="h-6 skeleton rounded-full w-20"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    try {
+        let query = db.collection('departments').doc(deptId).collection('classes');
+        
+        if (selectedProgramId) {
+            query = query.where('programId', '==', selectedProgramId);
+        }
+        
+        const snapshot = await query.get();
+        classes = [];
+        
+        snapshot.forEach((doc) => {
+            classes.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        // Apply filters
+        let filteredClasses = classes;
+        if (searchTerm) {
+            filteredClasses = filteredClasses.filter(c => 
+                c.name?.toLowerCase().includes(searchTerm) ||
+                c.description?.toLowerCase().includes(searchTerm)
+            );
+        }
+        if (yearFilter) {
+            filteredClasses = filteredClasses.filter(c => c.year == yearFilter);
+        }
+
+        renderClasses(filteredClasses);
+        updateCharts();
+    } catch (error) {
+        console.error('Error fetching classes:', error);
+        container.innerHTML = `
+            <div class="glass-card rounded-2xl p-8 text-center col-span-full">
+                <i data-feather="alert-circle" class="w-16 h-16 text-red-400 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">Error Loading Classes</h3>
+                <p class="text-gray-400">${error.message}</p>
+            </div>
+        `;
+        feather.replace();
     }
 }
 
@@ -431,7 +805,7 @@ function populateProgramSelect() {
 // Select program
 function selectProgram(programId, programName) {
     selectedProgramId = programId;
-    selectedProgramName = programName || 'All Programs';
+    selectedProgramName = programName || 'All Classes';
     
     document.getElementById('selectedProgramName').textContent = selectedProgramName;
     
@@ -445,73 +819,6 @@ function selectProgram(programId, programName) {
     }
     
     fetchClasses();
-}
-
-// Fetch classes
-async function fetchClasses() {
-    const deptId = localStorage.getItem('currentDeptId');
-    if (!deptId) return;
-
-    const container = document.getElementById('classesContainer');
-    const searchTerm = document.getElementById('classSearch').value.toLowerCase();
-    const yearFilter = document.getElementById('yearFilter').value;
-
-    // Show loading state
-    container.innerHTML = Array(3).fill(0).map(() => `
-        <div class="glass-card rounded-2xl overflow-hidden animate-pulse">
-            <div class="h-48 skeleton"></div>
-            <div class="p-6 space-y-3">
-                <div class="h-6 skeleton rounded w-3/4"></div>
-                <div class="h-4 skeleton rounded w-full"></div>
-                <div class="flex gap-2">
-                    <div class="h-6 skeleton rounded-full w-16"></div>
-                    <div class="h-6 skeleton rounded-full w-20"></div>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    try {
-        let query = db.collection('departments').doc(deptId).collection('classes');
-        
-        if (selectedProgramId) {
-            query = query.where('programId', '==', selectedProgramId);
-        }
-        
-        const snapshot = await query.get();
-        classes = [];
-        
-        snapshot.forEach((doc) => {
-            classes.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
-
-        // Apply filters
-        let filteredClasses = classes;
-        if (searchTerm) {
-            filteredClasses = filteredClasses.filter(c => 
-                c.name?.toLowerCase().includes(searchTerm) ||
-                c.description?.toLowerCase().includes(searchTerm)
-            );
-        }
-        if (yearFilter) {
-            filteredClasses = filteredClasses.filter(c => c.year == yearFilter);
-        }
-
-        renderClasses(filteredClasses);
-    } catch (error) {
-        console.error('Error fetching classes:', error);
-        container.innerHTML = `
-            <div class="glass-card rounded-2xl p-8 text-center col-span-full">
-                <i data-feather="alert-circle" class="w-16 h-16 text-red-400 mx-auto mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-300 mb-2">Error Loading Classes</h3>
-                <p class="text-gray-400">${error.message}</p>
-            </div>
-        `;
-        feather.replace();
-    }
 }
 
 // Render classes
@@ -596,12 +903,137 @@ function renderClasses(classesToRender) {
     });
 }
 
-// Generate random image URL
-function generateRandomImageUrl() {
-    const categories = ['education', 'technology', 'science', 'workspace'];
-    const category = categories[Math.floor(Math.random() * categories.length)];
-    const seed = Math.floor(Math.random() * 1000);
-    return `http://static.photos/${category}/640x360/${seed}`;
+// Chart.js setup
+function initCharts() {
+    const ctxBar = document.getElementById('classesByYearChart').getContext('2d');
+    classesByYearChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
+            datasets: [{
+                label: 'Classes',
+                data: [0, 0, 0, 0, 0],
+                backgroundColor: 'rgba(84, 119, 255, 0.6)',
+                borderColor: 'rgba(84, 119, 255, 1)',
+                borderWidth: 1,
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#cbd5e1' }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#cbd5e1', stepSize: 1 }
+                }
+            }
+        }
+    });
+
+    const ctxDoughnut = document.getElementById('programDistributionChart').getContext('2d');
+    programDistributionChart = new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Classes',
+                data: [],
+                backgroundColor: [
+                    'rgba(84,119,255,0.8)',
+                    'rgba(139,92,246,0.8)',
+                    'rgba(59,130,246,0.8)',
+                    'rgba(99,102,241,0.8)',
+                    'rgba(168,85,247,0.8)',
+                    'rgba(236,72,153,0.8)',
+                    'rgba(14,165,233,0.8)',
+                    'rgba(34,197,94,0.8)'
+                ],
+                borderColor: 'rgba(15, 23, 42, 0.6)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#cbd5e1',
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total ? Math.round((value / total) * 100) : 0;
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+function updateCharts() {
+    // Bar: Classes by Year
+    const byYear = [0,0,0,0,0];
+    classes.forEach(c => {
+        const y = parseInt(c.year, 10);
+        if (y >=1 && y <=5) byYear[y-1]++;
+    });
+
+    if (classesByYearChart) {
+        classesByYearChart.data.datasets[0].data = byYear;
+        classesByYearChart.update('none');
+    }
+
+    const hasData = byYear.some(v => v > 0);
+    document.getElementById('classesByYearEmpty').classList.toggle('hidden', hasData);
+
+    // Doughnut: Program distribution
+    const programLabels = programs.map(p => p.name);
+    const programData = programs.map(p => classes.filter(c => c.programId === p.id).length);
+
+    if (programDistributionChart) {
+        programDistributionChart.data.labels = programLabels;
+        programDistributionChart.data.datasets[0].data = programData;
+        programDistributionChart.update('none');
+    }
+
+    const hasProgramData = programData.some(v => v > 0);
+    document.getElementById('programDistributionEmpty').classList.toggle('hidden', hasProgramData);
 }
 
 // Modal functions
@@ -645,6 +1077,14 @@ function clearImage() {
     document.getElementById('imageInput').value = '';
 }
 
+// Generate random image URL
+function generateRandomImageUrl() {
+    const categories = ['education', 'technology', 'science', 'workspace'];
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    const seed = Math.floor(Math.random() * 1000);
+    return `https://picsum.photos/seed/${encodeURIComponent(category + '-' + seed)}/640/360`;
+}
+
 // Create class
 async function createClass(e) {
     e.preventDefault();
@@ -679,8 +1119,6 @@ async function createClass(e) {
 
 // View class details
 function viewClassDetails(classId) {
-    // For now, we'll just show a simple alert
-    // In the future, this could open a detailed view modal
     console.log('Viewing class:', classId);
 }
 
@@ -698,6 +1136,9 @@ function showSuccessToast() {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize particles
     createParticles();
+
+    // Initialize charts
+    initCharts();
     
     // Check authentication
     auth.onAuthStateChanged((user) => {

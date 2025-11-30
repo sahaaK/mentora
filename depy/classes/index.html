@@ -14,8 +14,6 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="style.css">
-    <!-- use portal theme and particle background -->
-    <link rel="stylesheet" href="../main.css">
     <style>
         /* Modal overlay and panel transitions (consistent open/close) */
         .modal-overlay {
@@ -116,13 +114,9 @@
             }
         }
     </script>
-    <body class="min-h-screen overflow-x-hidden">
+    <body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
         <!-- Floating Particles -->
         <div class="particles-container"></div>
-
-        <!-- Large decorative floating bubbles (portal-style) -->
-        <div class="bubble pointer-events-none absolute -top-16 -right-8 w-72 h-72 bg-indigo-500/30 rounded-full floating" style="z-index:-2"></div>
-        <div class="bubble pointer-events-none absolute -bottom-20 -left-8 w-80 h-80 bg-purple-500/20 rounded-full floating" style="z-index:-2"></div>
     
         <!-- Header -->
         <header class="px-6 py-6">
@@ -612,9 +606,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
         </script>
+
+        <!-- Initialize floating bubbles for this page (keeps same visuals as portal/main.css) -->
+        <script>
+            (function initIndexParticles() {
+                const container = document.querySelector('.particles-container');
+                if (!container) return;
+
+                // Clear any existing particles to avoid duplicates
+                container.innerHTML = '';
+
+                const particleCount = 16;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+
+                    const size = Math.random() * 80 + 30; // px
+                    const left = Math.random() * 120 - 10; // -10% .. 110%
+                    const top = Math.random() * 120 - 10;  // -10% .. 110%
+                    const delay = Math.random() * 10;
+                    const duration = Math.random() * 12 + 12;
+
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${left}%`;
+                    particle.style.top = `${top}%`;
+                    particle.style.animationDelay = `${delay}s`;
+                    particle.style.animationDuration = `${duration}s`;
+
+                    container.appendChild(particle);
+                }
+            })();
+        </script>
+
         <script>feather.replace();</script>
-        <!-- portal shared script to create particles + charts and initialize UI (relative path) -->
-        <script src="../components/main.js"></script>
     
 </body>
 </html>

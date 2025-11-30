@@ -11,11 +11,11 @@
             <i data-feather="home" class="w-6 h-6 text-white"></i>
         </div>
         
-        <a href="fetched.html" class="sidebar-item" data-section="registration" title="Registration">
+        <a href="portal.html" class="sidebar-item" data-section="registration" title="Registration">
             <i data-feather="book" class="w-5 h-5"></i>
             <span class="tooltip">Student Registration</span>
         </a>
-        <a href="students.html" class="sidebar-item" data-section="list" title="Students List">
+        <a href="home.html" class="sidebar-item" data-section="list" title="Students List">
             <i data-feather="list" class="w-5 h-5"></i>
             <span class="tooltip">Students List</span>
         </a>

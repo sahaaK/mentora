@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Class Management</title>
+
+    <!-- Favicon (optional) -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+
+    <!-- TailwindCSS + Theme Config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-50':  '#f3f6ff',
+                        'primary-100': '#e6edff',
+                        'primary-200': '#d0dcff',
+                        'primary-300': '#a9bfff',
+                        'primary-400': '#7d9cff',
+                        'primary-500': '#5477ff',
+                        'primary-600': '#3b5ef0',
+                        'primary-700': '#2d48bf',
+                        'primary-800': '#243a97',
+                        'primary-900': '#1e317a',
+                        'primary-950': '#171f4d',
+                        'secondary-500': '#8b5cf6',
+                        'secondary-600': '#7c3aed'
+                    },
+                    boxShadow: {
+                        'glass': '0 10px 40px rgba(0,0,0,0.25)',
+                    },
+                    keyframes: {
+                        'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        'slide-up': { '0%': { transform: 'translateY(8px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+                        'scale-in': { '0%': { transform: 'scale(.96)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                        'shimmer': {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in .25s ease-out',
+                        'slide-up': 'slide-up .25s ease-out',
+                        'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+                        'shimmer': 'shimmer 1.5s infinite linear'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Icons + Animation libs -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"/>
+
+    <style>
+        :root {
+            --primary: #5477ff;
+            --secondary: #8b5cf6;
+        }
+        html, body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+            background: radial-gradient(1200px 800px at 10% 10%, rgba(84,119,255,.15), transparent 60%),
+                        radial-gradient(1000px 700px at 90% 20%, rgba(139,92,246,.12), transparent 60%),
+                        linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Glass card base */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            transition: all .3s ease;
+        }
+        .glass-card:hover {
+            background: rgba(15, 23, 42, 0.75);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+        }
+
+        /* Gradient border */
+        .gradient-border {
+            position: relative;
+            z-index: 1;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            /* background: linear-gradient(90deg, var(--primary), var(--secondary)); */
+            border-radius: 18px;
+            z-index: -1;
+            opacity: .65;
+            filter: blur(6px);
+            transition: opacity .3s ease;
+        }
+        .glass-card:hover .gradient-border::before { opacity: .9; }
+
+        /* Tab navigation pill */
+        .tab-pill {
+            position: relative;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 6px;
+            display: inline-flex;
+            gap: 6px;
+        }
+        .tab-btn {
+            position: relative;
+            z-index: 2;
+            padding: 10px 16px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            transition: all .25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .tab-btn.active {
+            background: linear-gradient(90deg, rgba(84,119,255,.2), rgba(139,92,246,.2));
+            color: white;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 4px 16px rgba(84,119,255,.25);
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+         @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            33% {
+                transform: translateY(-80px) translateX(40px) scale(1.1);
+            }
+            66% {
+                transform: translateY(40px) translateX(-40px) scale(0.9);
+            }
+        }
+ @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+ /* Floating animation for background blobs */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+            33% { transform: translateY(-20px) translateX(40px) scale(1.03); }
+            66% { transform: translateY(10px) translateX(-20px) scale(0.97); }
+        }
+
+        .floating {
+            animation: float 10s ease-in-out infinite;
+        }
+
+        /* Bubble background */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(89, 111, 245, 0.12), rgba(167, 139, 250, 0.06));
+            backdrop-filter: blur(1px);
+            animation: float 18s infinite ease-in-out;
+            pointer-events: none;
+        }
+        /* Cards */
+        .student-card {
+            overflow: hidden;
+        }
+        .student-avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, rgba(84,119,255,.2), rgba(139,92,246,.2));
+            display: grid; place-items: center;
+            color: white; font-weight: 700;
+        }
+        .status-badge {
+            padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+        }
+        .status-excellent { background: rgba(16,185,129,.2); color: #34d399; }
+        .status-good { background: rgba(59,130,246,.2); color: #60a5fa; }
+        .status-risk { background: rgba(239,68,68,.2); color: #f87171; }
+
+        .progress {
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress > i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: var(--w, 50%);
+            transition: width .8s cubic-bezier(.2,.9,.3,1);
+        }
+
+        /* Table for attendance */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .table th, .table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .table th {
+            text-align: left; color: #94a3b8; font-weight: 600;
+        }
+        .table tr:hover td {
+            background: rgba(255,255,255,0.04);
+        }
+
+        /* Skeletons */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.12), rgba(255,255,255,.06));
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        /* Search + filter inputs */
+        .input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #e2e8f0;
+            padding: 10px 12px;
+            outline: none;
+            transition: all .2s ease;
+        }
+        .input:focus {
+            border-color: rgba(84,119,255,.5);
+            box-shadow: 0 0 0 3px rgba(84,119,255,.15);
+        }
+
+        /* Floating Add button */
+        .fab {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 40;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .tab-btn { padding: 8px 10px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background bubbles -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-primary-500/10 blur-3xl animate-pulse"></div>
+        <div class="absolute -bottom-24 -right-24 w-[28rem] h-[28rem] rounded-full bg-secondary-500/10 blur-3xl animate-pulse delay-1000"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="px-4 sm:px-6 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-white">
+                        <span class="bg-gradient-to-r from-primary-400 to-secondary-500 bg-clip-text text-transparent">
+                            Class Management
+                        </span>
+                    </h1>
+                    <p class="text-slate-400 text-sm">Manage students, courses, teachers and attendance</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="glass-card px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-white/5 transition">
+                        <i data-feather="bell"></i>
+                        <span class="hidden sm:inline">Notifications</span>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="glass-card p-2 rounded-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-400 to-secondary-500 flex items-center justify-center text-white font-bold shadow-lg">
+                            CM
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
+        <div class="tab-pill" role="tablist" aria-label="Class management sections">
+            <button class="tab-btn active" data-tab="students" role="tab" aria-selected="true" aria-controls="panel-students">
+                <i data-feather="users"></i> Students
+            </button>
+            <button class="tab-btn" data-tab="courses" role="tab" aria-selected="false" aria-controls="panel-courses">
+                <i data-feather="book-open"></i> Courses
+            </button>
+            <button class="tab-btn" data-tab="teachers" role="tab" aria-selected="false" aria-controls="panel-teachers">
+                <i data-feather="user-check"></i> Teachers
+            </button>
+            <button class="tab-btn" data-tab="attendance" role="tab" aria-selected="false" aria-controls="panel-attendance">
+                <i data-feather="calendar"></i> Attendance
+            </button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
+        <!-- Students Panel -->
+        <section id="panel-students" role="tabpanel" aria-labelledby="tab-students" class="space-y-6">
+            <!-- Controls -->
+            <div class="glass-card gradient-border p-4">
+                <div class="flex flex-col lg:flex-row gap-3">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <i data-feather="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
+                            <input id="studentSearch" type="text" class="input pl-10 w-full" placeholder="Search students by name, ID or major..."/>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="studentYear" class="input">
+                            <option value="">All Years</option>
+                            <option value="1">Year 1</option>
+                            <option value="2">Year 2</option>
+                            <option value="3">Year 3</option>
+                            <option value="4">Year 4</option>
+                        </select>
+                        <select id="studentStatus" class="input">
+                            <option value="">All Status</option>
+                            <option value="excellent">Excellent</option>
+                            <option value="good">Good</option>
+                            <option value="risk">At Risk</option>
+                        </select>
+                        <button id="resetStudentFilters" class="glass-card px-4 py-2 rounded-lg hover:bg-white/5 transition">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-card gradient-border p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-lg bg-primary-500/20">
+                            <i data-feather="users" class="text-primary-400 w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold" id="totalStudents">0</div>
+                            <div class="text-sm text-slate-400">Total Students</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card gradient-border p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-lg bg-emerald-500/20">
+                            <i data-feather="trending-up" class="text-emerald-400 w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold" id="avgGPA">0.0</div>
+                            <div class="text-sm text-slate-400">Average GPA</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card gradient-border p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-lg bg-amber-500/20">
+                            <i data-feather="award" class="text-amber-400 w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold" id="honorsCount">0</div>
+                            <div class="text-sm text-slate-400">Honors</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card gradient-border p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-lg bg-rose-500/20">
+                            <i data-feather="alert-triangle" class="text-rose-400 w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold" id="atRiskCount">0</div>
+                            <div class="text-sm text-slate-400">At Risk</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Grid -->
+            <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Loading skeletons -->
+                <div class="glass-card gradient-border p-5 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar skeleton"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-40 skeleton"></div>
+                            <div class="h-3 w-28 skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 w-24 skeleton"></div>
+                        <div class="progress"><i style="--w:40%"></i></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 w-32 skeleton"></div>
+                        <div class="progress"><i style="--w:70%"></i></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="h-6 w-16 skeleton rounded-full"></div>
+                        <div class="h-6 w-16 skeleton rounded-full"></div>
+                    </div>
+                </div>
+                <div class="glass-card gradient-border p-5 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar skeleton"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-40 skeleton"></div>
+                            <div class="h-3 w-28 skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 w-24 skeleton"></div>
+                        <div class="progress"><i style="--w:40%"></i></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 w-32 skeleton"></div>
+                        <div class="progress"><i style="--w:70%"></i></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="h-6 w-16 skeleton rounded-full"></div>
+                        <div class="h-6 w-16 skeleton rounded-full"></div>
+                    </div>
+                </div>
+                <div class="glass-card gradient-border p-5 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar skeleton"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-40 skeleton"></div>
+                            <div class="h-3 w-28 skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 w-24 skeleton"></div>
+                        <div class="progress"><i style="--w:40%"></i></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 w-32 skeleton"></div>
+                        <div class="progress"><i style="--w:70%"></i></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="h-6 w-16 skeleton rounded-full"></div>
+                        <div class="h-6 w-16 skeleton rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Courses Panel -->
+        <section id="panel-courses" role="tabpanel" aria-labelledby="tab-courses" class="space-y-6 hidden">
+            <div class="glass-card gradient-border p-4">
+                <div class="flex flex-col lg:flex-row gap-3">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <i data-feather="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
+                            <input id="courseSearch" type="text" class="input pl-10 w-full" placeholder="Search courses by title or code..."/>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="courseLevel" class="input">
+                            <option value="">All Levels</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="300">300</option>
+                            <option value="400">400</option>
+                        </select>
+                        <button id="addCourse" class="glass-card px-4 py-2 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+                            <i data-feather="plus"></i> Add Course
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="courseGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- course cards -->
+                <div class="glass-card gradient-border student-card p-5 space-y-4">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold">CS101 - Intro to Programming</h3>
+                            <p class="text-sm text-slate-400">Computer Science • 120 enrolled</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs bg-primary-500/20 text-primary-300">Level 100</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Completion</span><span>74%</span>
+                        </div>
+                        <div class="progress"><i style="--w:74%"></i></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-slate-300">
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="user" class="w-4 h-4"></i> Dr. A. Smith
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="book" class="w-4 h-4"></i> 12 Modules
+                        </span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                        <button class="px-3 py-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                    </div>
+                </div>
+
+                <div class="glass-card gradient-border student-card p-5 space-y-4">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold">MATH221 - Calculus II</h3>
+                            <p class="text-sm text-slate-400">Mathematics • 98 enrolled</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs bg-primary-500/20 text-primary-300">Level 200</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Completion</span><span>61%</span>
+                        </div>
+                        <div class="progress"><i style="--w:61%"></i></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-slate-300">
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="user" class="w-4 h-4"></i> Dr. B. Lee
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="book" class="w-4 h-4"></i> 10 Modules
+                        </span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                        <button class="px-3 py-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                    </div>
+                </div>
+
+                <div class="glass-card gradient-border student-card p-5 space-y-4">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold">PHY310 - Quantum Basics</h3>
+                            <p class="text-sm text-slate-400">Physics • 56 enrolled</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs bg-primary-500/20 text-primary-300">Level 300</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Completion</span><span>45%</span>
+                        </div>
+                        <div class="progress"><i style="--w:45%"></i></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-slate-300">
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="user" class="w-4 h-4"></i> Dr. C. Patel
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <i data-feather="book" class="w-4 h-4"></i> 14 Modules
+                        </span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                        <button class="px-3 py-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Teachers Panel -->
+        <section id="panel-teachers" role="tabpanel" aria-labelledby="tab-teachers" class="space-y-6 hidden">
+            <div class="glass-card gradient-border p-4">
+                <div class="flex flex-col lg:flex-row gap-3">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <i data-feather="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
+                            <input id="teacherSearch" type="text" class="input pl-10 w-full" placeholder="Search teachers by name or department..."/>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="teacherDept" class="input">
+                            <option value="">All Departments</option>
+                            <option value="CS">CS</option>
+                            <option value="MATH">MATH</option>
+                            <option value="PHY">PHY</option>
+                        </select>
+                        <button id="addTeacher" class="glass-card px-4 py-2 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+                            <i data-feather="plus"></i> Add Teacher
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="teacherGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- teacher cards -->
+                <div class="glass-card gradient-border student-card p-5 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar w-14 h-14 text-lg">AS</div>
+                        <div>
+                            <h3 class="text-lg font-bold">Dr. Alice Smith</h3>
+                            <p class="text-sm text-slate-400">Computer Science • 7 years</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">3</div>
+                            <div class="text-xs text-slate-400">Courses</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">92%</div>
+                            <div class="text-xs text-slate-400">Feedback</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">240</div>
+                            <div class="text-xs text-slate-400">Students</div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm text-slate-400">Course Load</div>
+                        <div class="progress"><i style="--w:65%"></i></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                        <button class="px-3 py-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                    </div>
+                </div>
+
+                <div class="glass-card gradient-border student-card p-5 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar w-14 h-14 text-lg">BL</div>
+                        <div>
+                            <h3 class="text-lg font-bold">Dr. Brian Lee</h3>
+                            <p class="text-sm text-slate-400">Mathematics • 11 years</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">4</div>
+                            <div class="text-xs text-slate-400">Courses</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">88%</div>
+                            <div class="text-xs text-slate-400">Feedback</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">210</div>
+                            <div class="text-xs text-slate-400">Students</div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm text-slate-400">Course Load</div>
+                        <div class="progress"><i style="--w:80%"></i></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                        <button class="px-3 py-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                    </div>
+                </div>
+
+                <div class="glass-card gradient-border student-card p-5 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar w-14 h-14 text-lg">CP</div>
+                        <div>
+                            <h3 class="text-lg font-bold">Dr. Carla Patel</h3>
+                            <p class="text-sm text-slate-400">Physics • 5 years</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">2</div>
+                            <div class="text-xs text-slate-400">Courses</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">95%</div>
+                            <div class="text-xs text-slate-400">Feedback</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-lg font-bold">120</div>
+                            <div class="text-xs text-slate-400">Students</div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm text-slate-400">Course Load</div>
+                        <div class="progress"><i style="--w:45%"></i></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                        <button class="px-3 py-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Attendance Panel -->
+        <section id="panel-attendance" role="tabpanel" aria-labelledby="tab-attendance" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Summary Cards -->
+                <div class="glass-card gradient-border p-5 space-y-4">
+                    <h3 class="text-lg font-bold">Today</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 rounded-lg bg-white/5 text-center">
+                            <div class="text-2xl font-bold">86%</div>
+                            <div class="text-xs text-slate-400">Attendance</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5 text-center">
+                            <div class="text-2xl font-bold">312</div>
+                            <div class="text-xs text-slate-400">Present</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5 text-center">
+                            <div class="text-2xl font-bold">18</div>
+                            <div class="text-xs text-slate-400">Absent</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5 text-center">
+                            <div class="text-2xl font-bold">6</div>
+                            <div class="text-xs text-slate-400">Late</div>
+                        </div>
+                    </div>
+                    <canvas id="attendanceDonut" height="160"></canvas>
+                </div>
+
+                <div class="glass-card gradient-border p-5 lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold">Weekly Trend</h3>
+                        <div class="text-sm text-slate-400">Avg: 87%</div>
+                    </div>
+                    <canvas id="attendanceLine" height="120"></canvas>
+                </div>
+            </div>
+
+            <!-- Attendance Table -->
+            <div class="glass-card gradient-border p-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-bold">Class Attendance</h3>
+                    <div class="flex gap-2">
+                        <select id="attClass" class="input">
+                            <option value="">All Classes</option>
+                            <option value="CS101">CS101</option>
+                            <option value="MATH221">MATH221</option>
+                            <option value="PHY310">PHY310</option>
+                        </select>
+                        <input id="attDate" type="date" class="input">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>ID</th>
+                                <th>Class</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceBody">
+                            <tr>
+                                <td class="flex items-center gap-3">
+                                    <div class="student-avatar w-8 h-8 text-sm">AL</div>
+                                    <div>
+                                        <div class="font-medium">Amy Lee</div>
+                                        <div class="text-xs text-slate-400">Computer Science</div>
+                                    </div>
+                                </td>
+                                <td>S-10234</td>
+                                <td>CS101</td>
+                                <td><span class="status-badge status-good">Present</span></td>
+                                <td>08:15 AM</td>
+                                <td>94%</td>
+                            </tr>
+                            <tr>
+                                <td class="flex items-center gap-3">
+                                    <div class="student-avatar w-8 h-8 text-sm">JM</div>
+                                    <div>
+                                        <div class="font-medium">John Miller</div>
+                                        <div class="text-xs text-slate-400">Mathematics</div>
+                                    </div>
+                                </td>
+                                <td>S-10445</td>
+                                <td>MATH221</td>
+                                <td><span class="status-badge status-risk">Absent</span></td>
+                                <td>-</td>
+                                <td>67%</td>
+                            </tr>
+                            <tr>
+                                <td class="flex items-center gap-3">
+                                    <div class="student-avatar w-8 h-8 text-sm">SP</div>
+                                    <div>
+                                        <div class="font-medium">Sara Park</div>
+                                        <div class="text-xs text-slate-400">Physics</div>
+                                    </div>
+                                </td>
+                                <td>S-10187</td>
+                                <td>PHY310</td>
+                                <td><span class="status-badge status-good">Late</span></td>
+                                <td>08:27 AM</td>
+                                <td>89%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Add Button -->
+    <div class="fab">
+        <button id="fabAdd" class="glass-card w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 transition shadow-glass">
+            <i data-feather="plus" class="w-6 h-6 text-white"></i>
+        </button>
+    </div>
+
+    <!-- Add Modal -->
+    <div id="addModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all">
+        <div class="modal-overlay absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="modal-panel relative w-full max-w-xl glass-card gradient-border p-6 scale-95">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">Add New</h2>
+                <button id="closeModal" class="glass-card p-2 rounded-lg hover:bg-white/10">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-sm text-slate-300">Choose what you want to add:</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="addStudentBtn" class="glass-card p-4 rounded-xl hover:bg-white/5 text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="p-3 rounded-lg bg-primary-500/20">
+                                <i data-feather="user-plus" class="text-primary-400 w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Student</div>
+                                <div class="text-xs text-slate-400">Add a student</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button id="addCourseBtn" class="glass-card p-4 rounded-xl hover:bg-white/5 text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="p-3 rounded-lg bg-primary-500/20">
+                                <i data-feather="book" class="text-primary-400 w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Course</div>
+                                <div class="text-xs text-slate-400">Create a course</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button id="addTeacherBtn" class="glass-card p-4 rounded-xl hover:bg-white/5 text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="p-3 rounded-lg bg-primary-500/20">
+                                <i data-feather="users" class="text-primary-400 w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Teacher</div>
+                                <div class="text-xs text-slate-400">Add faculty</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button id="addAttendanceBtn" class="glass-card p-4 rounded-xl hover:bg-white/5 text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="p-3 rounded-lg bg-primary-500/20">
+                                <i data-feather="calendar" class="text-primary-400 w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Attendance</div>
+                                <div class="text-xs text-slate-400">Record session</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 right-4 z-50 glass-card px-4 py-3 rounded-lg border border-white/10 opacity-0 pointer-events-none transition-all">
+        <div class="flex items-center gap-2 text-sm">
+            <i data-feather="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            <span id="toastMsg">Action completed</span>
+        </div>
+    </div>
+
+    <script>
+        // Init icons and AOS
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.feather) feather.replace();
+            if (window.AOS) AOS.init({ duration: 300, once: true });
+        });
+
+        // Sample data
+        const sampleStudents = [
+            { id: 'S-10001', name: 'Alice Johnson', major: 'Computer Science', year: 2, gpa: 3.85, attendance: 96, status: 'excellent' },
+            { id: 'S-10012', name: 'Brian Lee', major: 'Mathematics', year: 3, gpa: 3.62, attendance: 91, status: 'good' },
+            { id: 'S-10023', name: 'Carlos Gomez', major: 'Physics', year: 1, gpa: 3.12, attendance: 72, status: 'risk' },
+            { id: 'S-10034', name: 'Diana Patel', major: 'Computer Science', year: 4, gpa: 3.94, attendance: 98, status: 'excellent' },
+            { id: 'S-10045', name: 'Ethan Walker', major: 'Mathematics', year: 2, gpa: 3.21, attendance: 83, status: 'good' },
+            { id: 'S-10056', name: 'Fiona Chen', major: 'Physics', year: 3, gpa: 3.77, attendance: 89, status: 'good' },
+            { id: 'S-10067', name: 'George Kim', major: 'Computer Science', year: 1, gpa: 2.91, attendance: 65, status: 'risk' },
+            { id: 'S-10078', name: 'Hannah Davis', major: 'Mathematics', year: 4, gpa: 3.88, attendance: 94, status: 'excellent' },
+            { id: 'S-10089', name: 'Ivan Petrov', major: 'Physics', year: 2, gpa: 3.05, attendance: 70, status: 'risk' },
+            { id: 'S-10090', name: 'Julia Roberts', major: 'Computer Science', year: 3, gpa: 3.55, attendance: 86, status: 'good' },
+            { id: 'S-10101', name: 'Kevin Hart', major: 'Mathematics', year: 1, gpa: 2.88, attendance: 60, status: 'risk' },
+            { id: 'S-10112', name: 'Lily Collins', major: 'Physics', year: 4, gpa: 3.91, attendance: 97, status: 'excellent' },
+        ];
+
+        // Render Students
+        const studentGrid = document.getElementById('studentGrid');
+        const studentSearch = document.getElementById('studentSearch');
+        const studentYear = document.getElementById('studentYear');
+        const studentStatus = document.getElementById('studentStatus');
+        const resetStudentFilters = document.getElementById('resetStudentFilters');
+
+        function studentCardHTML(s) {
+            const statusClass = s.status === 'excellent' ? 'status-excellent' : s.status === 'good' ? 'status-good' : 'status-risk';
+            const statusText = s.status === 'excellent' ? "Dean's List" : s.status === 'good' ? 'Good Standing' : 'At Risk';
+            const initials = s.name.split(' ').map(n => n[0]).slice(0,2).join('');
+            return `
+                <div class="glass-card gradient-border student-card p-5 space-y-4 animate-slide-up">
+                    <div class="flex items-center gap-4">
+                        <div class="student-avatar">${initials}</div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold">${s.name}</h3>
+                            <p class="text-sm text-slate-400">${s.major} • Year ${s.year}</p>
+                        </div>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-xs text-slate-400">GPA</div>
+                            <div class="text-lg font-bold">${s.gpa.toFixed(2)}</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-white/5">
+                            <div class="text-xs text-slate-400">Attendance</div>
+                            <div class="text-lg font-bold">${s.attendance}%</div>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Course Progress</span><span>${Math.min(100, Math.round((s.gpa/4)*100))}%</span>
+                        </div>
+                        <div class="progress"><i style="--w:${Math.min(100, Math.round((s.gpa/4)*100))}%"></i></div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Attendance Progress</span><span>${s.attendance}%</span>
+                        </div>
+                        <div class="progress"><i style="--w:${s.attendance}%"></i></div>
+                    </div>
+                    <div class="flex items-center justify-between pt-2">
+                        <div class="text-xs text-slate-500">ID: ${s.id}</div>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm">View</button>
+                            <button class="px-3 py-1.5 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-sm text-primary-300">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStudents(list) {
+            if (!list || !list.length) {
+                studentGrid.innerHTML = '<div class="glass-card gradient-border p-6 text-center text-slate-400">No students found.</div>';
+                return;
+            }
+            studentGrid.innerHTML = list.map(studentCardHTML).join('');
+            if (window.feather) feather.replace();
+            // Animate progress bars
+            setTimeout(() => {
+                studentGrid.querySelectorAll('.progress > i').forEach(el => {
+                    const w = el.style.getPropertyValue('--w');
+                    el.style.setProperty('--w', '0%');
+                    requestAnimationFrame(() => el.style.setProperty('--w', w));
+                });
+            }, 60);
+        }
+
+        function applyStudentFilters() {
+            const q = studentSearch.value.toLowerCase();
+            const y = studentYear.value;
+            const st = studentStatus.value;
+            const filtered = sampleStudents.filter(s => {
+                const matchesQ = !q || [s.name, s.id, s.major].some(v => v.toLowerCase().includes(q));
+                const matchesY = !y || String(s.year) === String(y);
+                const matchesSt = !st || s.status === st;
+                return matchesQ && matchesY && matchesSt;
+            });
+            renderStudents(filtered);
+            updateStudentStats(filtered);
+        }
+
+        function updateStudentStats(list) {
+            document.getElementById('totalStudents').textContent = list.length;
+            const avgGPA = list.reduce((a,b) => a + b.gpa, 0) / (list.length || 1);
+            document.getElementById('avgGPA').textContent = avgGPA.toFixed(2);
+            document.getElementById('honorsCount').textContent = list.filter(s => s.status === 'excellent').length;
+            document.getElementById('atRiskCount').textContent = list.filter(s => s.status === 'risk').length;
+        }
+
+        studentSearch.addEventListener('input', applyStudentFilters);
+        studentYear.addEventListener('change', applyStudentFilters);
+        studentStatus.addEventListener('change', applyStudentFilters);
+        resetStudentFilters.addEventListener('click', () => {
+            studentSearch.value = '';
+            studentYear.value = '';
+            studentStatus.value = '';
+            applyStudentFilters();
+        });
+
+        // Initial render
+        setTimeout(() => {
+            renderStudents(sampleStudents);
+            updateStudentStats(sampleStudents);
+        }, 600);
+
+        // Tabs
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panels = {
+            students: document.getElementById('panel-students'),
+            courses: document.getElementById('panel-courses'),
+            teachers: document.getElementById('panel-teachers'),
+            attendance: document.getElementById('panel-attendance'),
+        };
+
+        function activateTab(target) {
+            tabs.forEach(t => {
+                const isActive = t.dataset.tab === target;
+                t.classList.toggle('active', isActive);
+                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+            Object.entries(panels).forEach(([k, el]) => {
+                el.classList.toggle('hidden', k !== target);
+            });
+            // Focus panel for accessibility
+            panels[target].focus?.();
+            // Animate on show
+            if (target === 'attendance') initAttendanceCharts();
+        }
+
+        tabs.forEach(t => t.addEventListener('click', () => activateTab(t.dataset.tab)));
+
+        // Modal
+        const addModal = document.getElementById('addModal');
+        const fabAdd = document.getElementById('fabAdd');
+        const closeModal = document.getElementById('closeModal');
+        const addStudentBtn = document.getElementById('addStudentBtn');
+        const addCourseBtn = document.getElementById('addCourseBtn');
+        const addTeacherBtn = document.getElementById('addTeacherBtn');
+        const addAttendanceBtn = document.getElementById('addAttendanceBtn');
+
+        function openAddModal() {
+            addModal.classList.remove('opacity-0', 'pointer-events-none');
+            addModal.querySelector('.modal-panel').classList.remove('scale-95');
+            gsap.fromTo(addModal.querySelector('.modal-panel'), { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: .25, ease: 'power2.out' });
+        }
+         function createParticles() {
+            const container = document.querySelector('.particles-container');
+            const particleCount = 20;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 100 + 50;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const delay = Math.random() * 10;
+                const duration = Math.random() * 10 + 10;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${left}%`;
+                particle.style.top = `${top}%`;
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        function closeAddModal() {
+            addModal.classList.add('opacity-0', 'pointer-events-none');
+            addModal.querySelector('.modal-panel').classList.add('scale-95');
+        }
+        fabAdd.addEventListener('click', openAddModal);
+        addModal.querySelector('.modal-overlay').addEventListener('click', closeAddModal);
+        closeModal.addEventListener('click', closeAddModal);
+
+        // Toast
+        const toast = document.getElementById('toast');
+        function showToast(msg='Action completed') {
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            gsap.fromTo(toast, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: .2, ease: 'power2.out' });
+            setTimeout(() => {
+                gsap.to(toast, { y: -10, opacity: 0, duration: .25, onComplete: () => toast.classList.add('opacity-0', 'pointer-events-none') });
+            }, 1600);
+        }
+
+        addStudentBtn.addEventListener('click', () => { closeAddModal(); showToast('Open student form (demo)'); });
+        addCourseBtn.addEventListener('click', () => { closeAddModal(); showToast('Open course form (demo)'); });
+        addTeacherBtn.addEventListener('click', () => { closeAddModal(); showToast('Open teacher form (demo)'); });
+        addAttendanceBtn.addEventListener('click', () => { closeAddModal(); showToast('Open attendance form (demo)'); });
+
+        // Charts for Attendance
+        let attendanceDonut, attendanceLine;
+        function initAttendanceCharts() {
+            if (attendanceDonut && attendanceLine) return;
+            const donutCtx = document.getElementById('attendanceDonut');
+            const lineCtx = document.getElementById('attendanceLine');
+
+            attendanceDonut = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Present', 'Late', 'Absent'],
+                    datasets: [{
+                        data: [86, 6, 8],
+                        backgroundColor: ['#34d399', '#60a5fa', '#f87171'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    cutout: '65%'
+                }
+            });
+
+            attendanceLine = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [84, 87, 83, 89, 86, 91, 88],
+                        borderColor: '#5477ff',
+                        backgroundColor: 'rgba(84,119,255,.15)',
+                        tension: .35,
+                        fill: true,
+                        pointBackgroundColor: '#5477ff',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.06)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.06)' }, min: 60, max: 100 }
+                    },
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } }
+                }
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAddModal();
+        });
+
+        // Focus ring polyfill (accessibility)
+        document.body.addEventListener('keyup', (e) => {
+            if (e.key === 'Tab') document.body.classList.add('using-keyboard');
+        });
+        document.body.addEventListener('mousedown', () => document.body.classList.remove('using-keyboard'));
+    </script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>
