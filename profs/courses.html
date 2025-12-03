@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Courses • Teacher Portal</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
+  <!-- Tailwind + Icons + Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50:  '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+              950: '#2e1065'
+            },
+            secondary: {
+              50:  '#fdf4ff',
+              100: '#fae8ff',
+              200: '#f5d0fe',
+              300: '#f0abfc',
+              400: '#e879f9',
+              500: '#d946ef',
+              600: '#c026d3',
+              700: '#a21caf',
+              800: '#86198f',
+              900: '#701a75',
+              950: '#4a044e'
+            },
+            surface: {
+              50:  '#0b1020',
+              100: '#0f172a',
+              200: '#111827',
+              300: '#1f2937',
+              400: '#374151'
+            }
+          },
+          boxShadow: {
+            glass: '0 10px 40px rgba(0,0,0,0.35)'
+          },
+          keyframes: {
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+            pulseGlow: { '0%, 100%': { boxShadow: '0 0 0 0 rgba(139,92,246,.5)' }, '50%': { boxShadow: '0 0 0 10px rgba(139,92,246,0)' } },
+            modalIn: { '0%': { opacity: 0, transform: 'translateY(12px) scale(.98)' }, '100%': { opacity: 1, transform: 'translateY(0) scale(1)' } },
+            slideUp: { '0%': { opacity: 0, transform: 'translateY(12px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+            shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+          },
+          animation: {
+            float: 'float 8s ease-in-out infinite',
+            pulseGlow: 'pulseGlow 2.5s ease-in-out infinite',
+            modalIn: 'modalIn .25s ease-out',
+            slideUp: 'slideUp .35s ease-out',
+            shimmer: 'shimmer 2.2s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Global base */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  background: #0b1020;
+  color: #e2e8f0;
+}
+
+/* Glass components */
+.glass-card {
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  transition: all .35s cubic-bezier(.2,.9,.3,1);
+  border-radius: 18px;
+}
+.glass-card:hover {
+  background: rgba(17, 24, 39, 0.75);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 50px rgba(0,0,0,0.45);
+}
+
+/* Gradient border effect (purple theme) */
+.gradient-border {
+  position: relative;
+  z-index: 1;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: calc(18px + 2px);
+  background: linear-gradient(135deg, rgba(139,92,246,.55), rgba(217,70,239,.45), rgba(99,102,241,.4));
+  filter: blur(8px);
+  opacity: .6;
+  transition: opacity .35s ease;
+  z-index: -1;
+}
+.glass-card:hover .gradient-border::before {
+  opacity: .95;
+}
+
+/* Faculty/department image styling */
+.faculty-img, .department-img, .course-img {
+  position: relative;
+  overflow: hidden;
+}
+.faculty-img::after, .department-img::after, .course-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 20% 0%, rgba(139,92,246,0.2), rgba(217,70,239,0.12) 40%, transparent 70%);
+  pointer-events: none;
+}
+.faculty-img img, .department-img img, .course-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .4s ease;
+}
+.glass-card:hover .faculty-img img,
+.glass-card:hover .department-img img,
+.glass-card:hover .course-img img {
+  transform: scale(1.05);
+}
+
+/* Stats */
+.stat-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px;
+  transition: all .3s ease;
+}
+.stat-item:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-2px);
+}
+
+/* Bubble background generator */
+#bubbles {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+.bubble {
+  position: absolute;
+  bottom: -10vh;
+  background: radial-gradient(circle at 30% 30%, rgba(139,92,246,.18), rgba(217,70,239,.10));
+  backdrop-filter: blur(1px);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 50%;
+  animation: floatUp var(--t, 22s) linear infinite;
+  opacity: .5;
+  filter: blur(0.2px);
+}
+@keyframes floatUp {
+  from { transform: translateY(0) translateX(0) scale(1); opacity: .5; }
+  to   { transform: translateY(-120vh) translateX(var(--dx, 40px)) scale(1.05); opacity: 0; }
+}
+
+/* Form inputs */
+.form-input, .form-select, .form-textarea {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  width: 100%;
+  color: white;
+  transition: all .25s ease;
+}
+.form-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.form-input::placeholder, .form-textarea::placeholder, .form-select:invalid {
+  color: rgba(255,255,255,0.55);
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: rgba(139,92,246,.55);
+  box-shadow: 0 0 0 3px rgba(139,92,246,.18);
+}
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-opacity='.6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 1em;
+}
+
+/* Shimmer for buttons */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.22) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Toast */
+#toast.glass-card {
+  animation: slideInRight .35s ease-out, fadeOut .35s ease-out 2.6s forwards;
+}
+@keyframes slideInRight {
+  from { transform: translateX(12px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+  to { transform: translateX(12px); opacity: 0; }
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all .25s ease;
+  z-index: 40;
+}
+.modal-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 50;
+}
+.modal .panel {
+  width: min(980px, 92vw);
+  max-height: 86vh;
+  overflow: auto;
+  transform: translateY(16px) scale(.98);
+  opacity: 0;
+  transition: all .25s ease;
+  pointer-events: none;
+}
+.modal.show .panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal .panel::-webkit-scrollbar { width: 10px; height: 10px; }
+.modal .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.modal .panel::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,0.35);
+  border-radius: 8px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.55); }
+
+/* Utility */
+.hidden { display: none !important; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .glass-card { margin: 0 6px; }
+}
+
+/* Tag */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.35);
+  color: #dcd2ff;
+  font-size: .75rem;
+}
+
+/* Card grid */
+.course-card {
+  position: relative;
+  overflow: hidden;
+}
+.course-card .badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+  </style>
+</head>
+<body class="bg-surface-50 text-white min-h-screen antialiased relative overflow-x-hidden">
+  <!-- Ambient animated blobs -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute -top-24 -left-24 w-[36rem] h-[36rem] bg-primary-600/20 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute top-1/2 -right-24 w-[32rem] h-[32rem] bg-secondary-600/20 rounded-full blur-3xl animate-float" style="animation-delay: -2.5s"></div>
+    <div class="absolute -bottom-24 left-1/3 w-[30rem] h-[30rem] bg-primary-400/10 rounded-full blur-3xl animate-float" style="animation-delay: -5s"></div>
+  </div>
+
+  <!-- Bubble backdrop -->
+  <div id="bubbles" class="pointer-events-none fixed inset-0 -z-10 overflow-hidden"></div>
+
+  <!-- Header -->
+  <header class="px-6 pt-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+          <i data-feather="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold">
+            <span class="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">Courses</span>
+            <span id="classLabel" class="text-white/80">—</span>
+          </h1>
+          <p id="classMeta" class="text-white/60 text-sm">—</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-400 to-secondary-400 flex items-center justify-center text-white font-bold shadow-lg">
+          <span id="avatarInitial">T</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Controls -->
+  <section class="max-w-7xl mx-auto px-6 mt-6">
+    <div class="glass-card p-4 rounded-2xl border border-white/10 shadow-glass">
+      <div class="flex flex-col md:flex-row md:items-center gap-3 justify-between">
+        <div class="flex-1 flex items-center gap-3">
+          <!-- Class selector: lets teacher choose which class to manage courses for -->
+          <div class="hidden md:block">
+            <label for="classSelector" class="text-xs text-white/60 mr-2">Class:</label>
+            <select id="classSelector" class="form-select max-w-[240px] inline-block">
+              <option value="">Select class…</option>
+            </select>
+          </div>
+          <div class="relative w-full max-w-md">
+            <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50"></i>
+            <input id="searchInput" type="text" placeholder="Search courses, objectives, years..." class="form-input pl-10"/>
+          </div>
+          <select id="yearFilter" class="form-select w-full max-w-[180px]">
+            <option value="">All years</option>
+            <option>Year 1</option>
+            <option>Year 2</option>
+            <option>Year 3</option>
+            <option>Year 4</option>
+          </select>
+        </div>
+        <button id="createCourseBtn" class="relative overflow-hidden group">
+          <span class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></span>
+          <span class="relative flex items-center gap-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 transition-all text-white font-semibold py-2.5 px-4 rounded-xl">
+            <i data-feather="plus-circle"></i> New Course
+          </span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Course list -->
+  <main class="max-w-7xl mx-auto px-6 pb-16 mt-6">
+    <div id="coursesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <!-- Skeletons -->
+      <div class="glass-card p-0 overflow-hidden animate-pulse">
+        <div class="course-img h-40 bg-white/5"></div>
+        <div class="p-4 space-y-3">
+          <div class="h-5 w-2/3 bg-white/5 rounded"></div>
+          <div class="h-4 w-full bg-white/5 rounded"></div>
+          <div class="h-4 w-2/3 bg-white/5 rounded"></div>
+          <div class="flex gap-2 pt-2">
+            <div class="h-6 w-16 bg-white/5 rounded-full"></div>
+            <div class="h-6 w-16 bg-white/5 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card p-0 overflow-hidden animate-pulse hidden md:block">
+        <div class="course-img h-40 bg-white/5"></div>
+        <div class="p-4 space-y-3">
+          <div class="h-5 w-2/3 bg-white/5 rounded"></div>
+          <div class="h-4 w-full bg-white/5 rounded"></div>
+          <div class="h-4 w-2/3 bg-white/5 rounded"></div>
+          <div class="flex gap-2 pt-2">
+            <div class="h-6 w-16 bg-white/5 rounded-full"></div>
+            <div class="h-6 w-16 bg-white/5 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card p-0 overflow-hidden animate-pulse hidden xl:block">
+        <div class="course-img h-40 bg-white/5"></div>
+        <div class="p-4 space-y-3">
+          <div class="h-5 w-2/3 bg-white/5 rounded"></div>
+          <div class="h-4 w-full bg-white/5 rounded"></div>
+          <div class="h-4 w-2/3 bg-white/5 rounded"></div>
+          <div class="flex gap-2 pt-2">
+            <div class="h-6 w-16 bg-white/5 rounded-full"></div>
+            <div class="h-6 w-16 bg-white/5 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create/Edit Course Modal -->
+  <div id="courseModalBackdrop" class="modal-backdrop"></div>
+  <div id="courseModal" class="modal">
+    <div class="panel glass-card p-6 rounded-3xl border border-white/10 shadow-glass">
+      <div class="flex items-center justify-between gap-3 mb-6">
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-xl bg-primary-500/20 text-primary-300">
+            <i data-feather="book-open"></i>
+          </div>
+          <div>
+            <h2 id="modalTitle" class="text-xl font-bold">Create Course</h2>
+            <p id="modalClassContext" class="text-sm text-white/60">Add a new course to your class</p>
+          </div>
+        </div>
+        <button id="closeModalBtn" class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+          <i data-feather="x"></i>
+        </button>
+      </div>
+
+      <form id="courseForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Image upload -->
+        <div class="md:col-span-2">
+          <label class="block text-sm text-white/70 mb-2">Course Image</label>
+          <div class="flex items-center gap-4">
+            <div class="course-img w-28 h-28 rounded-2xl overflow-hidden border border-white/10">
+              <img id="courseImagePreview" src="https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=800&auto=format&fit=crop" alt="Course image" class="w-full h-full object-cover"/>
+            </div>
+            <div>
+              <input id="courseImageInput" type="file" accept="image/*" class="hidden"/>
+              <button type="button" id="uploadCourseImageBtn" class="px-4 py-2 rounded-lg glass hover:bg-white/10 transition-all flex items-center gap-2">
+                <i data-feather="upload-cloud"></i>
+                Upload Image
+              </button>
+              <p class="text-xs text-white/50 mt-1">Recommended: 800x450 (16:9). Max 2MB.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Name -->
+        <div class="md:col-span-2">
+          <label class="form-label">Course Name</label>
+          <input id="courseName" type="text" class="form-input" placeholder="e.g., Advanced Algorithms" required/>
+        </div>
+
+        <!-- Duration, Time, Hours -->
+        <div>
+          <label class="form-label">Duration</label>
+          <input type="text" class="form-input" value="4 months (16 weeks)" disabled />
+        </div>
+        <div>
+          <label class="form-label">Time</label>
+          <input id="courseTime" type="text" class="form-input" placeholder="e.g., 2hrs" value="2hrs" required/>
+        </div>
+        <div>
+          <label class="form-label">Hours (per week)</label>
+          <select id="courseHours" class="form-select" required>
+            <option value="">Select hours</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+
+        <!-- Objectives -->
+        <div class="md:col-span-2">
+          <label class="form-label">Objectives</label>
+          <textarea id="courseObjectives" class="form-textarea" placeholder="Write objectives, one per line..." required></textarea>
+        </div>
+
+        <!-- Related courses -->
+        <div class="md:col-span-2">
+          <label class="form-label">Related Courses</label>
+          <input id="courseRelated" type="text" class="form-input" placeholder="Comma-separated e.g., Data Structures, Discrete Math"/>
+        </div>
+
+        <!-- Recommended Year -->
+        <div>
+          <label class="form-label">Recommended Year</label>
+          <select id="courseRecommendedYear" class="form-select" required>
+            <option value="">Select year</option>
+            <option>Year 1</option>
+            <option>Year 2</option>
+            <option>Year 3</option>
+            <option>Year 4</option>
+          </select>
+        </div>
+
+        <!-- Required Classes -->
+        <div>
+          <label class="form-label">Required Classes</label>
+          <input id="courseRequired" type="text" class="form-input" placeholder="Comma-separated prerequisites"/>
+        </div>
+
+        <!-- Actions -->
+        <div class="md:col-span-2 flex justify-end gap-3 mt-2">
+          <button type="button" id="cancelCourseBtn" class="px-4 py-2 rounded-lg glass hover:bg-white/10 transition-all">Cancel</button>
+          <button type="submit" class="relative overflow-hidden group">
+            <span class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></span>
+            <span class="relative flex items-center gap-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 transition-all text-white font-semibold py-2.5 px-4 rounded-xl">
+              <i data-feather="save"></i> Save Course
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+    <div class="glass-card px-4 py-3 rounded-xl border border-white/10 flex items-center gap-3">
+      <i id="toastIcon" data-feather="check-circle" class="w-5 h-5 text-emerald-400"></i>
+      <span id="toastMsg" class="text-sm">Saved</span>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config (same as your admin app)
+const firebaseConfig = {
+  apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+  authDomain: "mentora-71f5c.firebaseapp.com",
+  projectId: "mentora-71f5c",
+  storageBucket: "mentora-71f5c.appspot.com",
+  messagingSenderId: "16685388211",
+  appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+  measurementId: "G-BL98PXGK2G"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// State
+let currentUser = null;
+let teacherData = null;
+let classId = null;
+let classMeta = null;
+let availableClasses = []; // list of classes teacher belongs to [{deptId,classId,name,teacherId}]
+let coursesCache = [];
+let editingCourseId = null;
+let courseImageFileRef = null;
+
+// UI refs
+const classLabel = document.getElementById('classLabel');
+const classMetaEl = document.getElementById('classMeta');
+const avatarInitial = document.getElementById('avatarInitial');
+const searchInput = document.getElementById('searchInput');
+const classSelector = document.getElementById('classSelector');
+const yearFilter = document.getElementById('yearFilter');
+const createCourseBtn = document.getElementById('createCourseBtn');
+const coursesContainer = document.getElementById('coursesContainer');
+const toastEl = document.getElementById('toast');
+const toastMsg = document.getElementById('toastMsg');
+const toastIcon = document.getElementById('toastIcon');
+const bubbles = document.getElementById('bubbles');
+
+// Modal refs
+const modalBackdrop = document.getElementById('courseModalBackdrop');
+const modal = document.getElementById('courseModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const courseForm = document.getElementById('courseForm');
+const cancelCourseBtn = document.getElementById('cancelCourseBtn');
+const modalTitle = document.getElementById('modalTitle');
+
+const courseImageInput = document.getElementById('courseImageInput');
+const courseImagePreview = document.getElementById('courseImagePreview');
+const uploadCourseImageBtn = document.getElementById('uploadCourseImageBtn');
+
+const courseName = document.getElementById('courseName');
+const courseTime = document.getElementById('courseTime');
+const courseHours = document.getElementById('courseHours');
+const courseObjectives = document.getElementById('courseObjectives');
+const courseRelated = document.getElementById('courseRelated');
+const courseRecommendedYear = document.getElementById('courseRecommendedYear');
+const courseRequired = document.getElementById('courseRequired');
+
+// Helpers
+function showToast(message, type = 'success') {
+  toastMsg.textContent = message;
+  toastIcon.setAttribute('data-feather', type === 'success' ? 'check-circle' : 'alert-circle');
+  toastEl.classList.remove('hidden');
+  feather.replace();
+  setTimeout(() => toastEl.classList.add('hidden'), 3000);
+}
+
+function openModal() {
+  modalBackdrop.classList.add('show');
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  modalBackdrop.classList.remove('show');
+  modal.classList.remove('show');
+  courseForm.reset();
+  courseImageFileRef = null;
+  courseImagePreview.src = 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=800&auto=format&fit=crop';
+  editingCourseId = null;
+  modalTitle.textContent = 'Create Course';
+}
+
+function setLoading(button, loading) {
+  if (!button) return;
+  if (loading) {
+    button.dataset.original = button.innerHTML;
+    button.innerHTML = '<span class="inline-flex items-center gap-2"><span class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>Saving...</span>';
+    button.disabled = true;
+  } else if (button.dataset.original) {
+    button.innerHTML = button.dataset.original;
+    button.disabled = false;
+  }
+}
+
+function parseCSV(str) {
+  if (!str) return [];
+  return str.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function toCSV(arr) {
+  if (!arr || !arr.length) return '';
+  return arr.join(', ');
+}
+
+function getClassIdFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('classId') || localStorage.getItem('currentClassId') || '';
+}
+
+function saveClassIdLocal(cid) {
+  if (cid) localStorage.setItem('currentClassId', cid);
+}
+
+async function ensureAuth() {
+  return new Promise((resolve) => {
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+      if (user) resolve(true);
+      else resolve(false);
+    });
+  });
+}
+
+async function findTeacherContext() {
+  if (!currentUser || !classId) return null;
+  try {
+    const deptSnap = await db.collection('departments').get();
+    for (const deptDoc of deptSnap.docs) {
+      // Try authUid match
+      const tSnap = await db.collection('departments').doc(deptDoc.id)
+        .collection('classes').doc(classId)
+        .collection('teachers').where('authUid', '==', currentUser.uid).limit(1).get();
+      if (!tSnap.empty) {
+        const d = tSnap.docs[0];
+        return { deptId: deptDoc.id, classId, id: d.id, ...d.data() };
+      }
+      // Fallback email match
+      const tSnap2 = await db.collection('departments').doc(deptDoc.id)
+        .collection('classes').doc(classId)
+        .collection('teachers').get();
+      for (const d of tSnap2.docs) {
+        const data = d.data();
+        if (data?.email && data.email.toLowerCase() === currentUser.email.toLowerCase()) {
+          return { deptId: deptDoc.id, classId, id: d.id, ...data };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('findTeacherContext error', e);
+  }
+  return null;
+}
+
+// Find all classes the current teacher belongs to across departments
+async function fetchTeacherClasses() {
+  if (!currentUser) return [];
+  const out = [];
+  try {
+    const deptSnap = await db.collection('departments').get();
+    for (const deptDoc of deptSnap.docs) {
+      const classesSnap = await db.collection('departments').doc(deptDoc.id).collection('classes').get();
+      for (const cls of classesSnap.docs) {
+        const clsId = cls.id;
+        const teachersRef = db.collection('departments').doc(deptDoc.id)
+          .collection('classes').doc(clsId).collection('teachers');
+
+        // try auth uid match
+        const tSnap = await teachersRef.where('authUid', '==', currentUser.uid).limit(1).get();
+        if (!tSnap.empty) {
+          out.push({ deptId: deptDoc.id, classId: clsId, name: cls.data().name || clsId, teacherId: tSnap.docs[0].id });
+          continue;
+        }
+
+        // fallback: scan by email
+        const tSnap2 = await teachersRef.get();
+        for (const d of tSnap2.docs) {
+          const data = d.data();
+          if (data?.email && data.email.toLowerCase() === currentUser.email.toLowerCase()) {
+            out.push({ deptId: deptDoc.id, classId: clsId, name: cls.data().name || clsId, teacherId: d.id });
+            break;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('fetchTeacherClasses error', e);
+  }
+  return out;
+}
+
+async function loadClassMeta() {
+  if (!classId) return null;
+  // try scanning departments
+  try {
+    const deptSnap = await db.collection('departments').get();
+    for (const dept of deptSnap.docs) {
+      const clsRef = db.collection('departments').doc(dept.id).collection('classes').doc(classId);
+      const cls = await clsRef.get();
+      if (cls.exists) {
+        classMeta = { deptId: dept.id, id: cls.id, ...cls.data() };
+        classLabel.textContent = `• ${cls.data().name || classId}`;
+        classMetaEl.textContent = `${dept.data().name || dept.id} • Class`;
+        return classMeta;
+      }
+    }
+  } catch (e) {}
+  classLabel.textContent = `• ${classId}`;
+  classMetaEl.textContent = `—`;
+  return null;
+}
+
+// Update UI class selector (populate options)
+function populateClassSelector(items = []) {
+  availableClasses = items || [];
+  classSelector.innerHTML = '<option value="">Select class…</option>';
+  for (const it of availableClasses) {
+    const opt = document.createElement('option');
+    opt.value = `${it.deptId}||${it.classId}`; // encode dept + class
+    opt.textContent = it.name || it.classId;
+    classSelector.appendChild(opt);
+  }
+  // if we already have a classId, try to select matching option
+  if (classId) {
+    // find matching option
+    for (const opt of Array.from(classSelector.options)) {
+      if (!opt.value) continue;
+      const [d, c] = opt.value.split('||');
+      if (c === classId) { opt.selected = true; break; }
+    }
+  }
+}
+
+function renderCourses(courses) {
+  coursesContainer.innerHTML = '';
+  if (!courses.length) {
+    const empty = document.createElement('div');
+    empty.className = 'glass-card p-8 rounded-2xl text-center col-span-full';
+    empty.innerHTML = `
+      <div class="mx-auto w-14 h-14 rounded-full bg-primary-500/20 text-primary-300 flex items-center justify-center mb-4">
+        <i data-feather="inbox"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-1">No courses yet</h3>
+      <p class="text-white/60 mb-4">Create your first course to get started.</p>
+      <button id="emptyCreateBtn" class="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 font-semibold">Create Course</button>
+    `;
+    coursesContainer.appendChild(empty);
+    feather.replace();
+    document.getElementById('emptyCreateBtn').addEventListener('click', () => {
+      if (!classId) { showToast('Select a class first (top selector)', 'error'); return; }
+      if (!classMeta) { showToast('Class metadata still loading.', 'error'); return; }
+      const modalClass = document.getElementById('modalClassContext');
+      if (modalClass) modalClass.textContent = `For: ${classMeta?.name || classId}`;
+      openModal();
+    });
+    return;
+  }
+
+  for (const c of courses) {
+    const card = document.createElement('div');
+    card.className = 'course-card glass-card p-0 overflow-hidden rounded-3xl border border-white/10 shadow-glass animate-slideUp';
+    const badge = c.recommendedYear ? `<span class="badge tag">${c.recommendedYear}</span>` : '';
+    const image = c.imageUrl || 'https://images.unsplash.com/photo-1555949963-aa79dcee981d?q=80&w=1200&auto=format&fit=crop';
+
+    const related = Array.isArray(c.relatedCourses) ? c.relatedCourses : [];
+    const req = Array.isArray(c.requiredClasses) ? c.requiredClasses : [];
+
+    card.innerHTML = `
+      <div class="course-img h-40">
+        <img src="${image}" alt="Course image" class="w-full h-full object-cover"/>
+      </div>
+      ${badge}
+      <div class="p-4">
+        <h3 class="text-lg font-semibold mb-1 line-clamp-1">${escapeHtml(c.name || 'Untitled')}</h3>
+        <p class="text-white/60 text-sm line-clamp-2 mb-3">${escapeHtml((c.objectives || []).join(' • '))}</p>
+
+        <div class="flex flex-wrap gap-2 mb-3">
+          <span class="tag"><i data-feather="clock" class="w-3.5 h-3.5"></i> ${c.duration || '4 months'} • ${c.time || '2hrs'} • ${c.hours || '?'}h/wk</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            ${related.slice(0,2).map(r => `<span class="tag">${escapeHtml(r)}</span>`).join('')}
+            ${related.length > 2 ? `<span class="tag">+${related.length - 2}</span>` : ''}
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="glass p-2 rounded-lg hover:bg-white/10 transition-all edit-btn" data-id="${c.id}">
+              <i data-feather="edit-3" class="w-4 h-4"></i>
+            </button>
+            <button class="glass p-2 rounded-lg hover:bg-white/10 transition-all delete-btn" data-id="${c.id}">
+              <i data-feather="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    coursesContainer.appendChild(card);
+  }
+  feather.replace();
+
+  // bind edit/delete
+  coursesContainer.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openEdit(btn.dataset.id));
+  });
+  coursesContainer.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteCourse(btn.dataset.id));
+  });
+}
+
+function escapeHtml(str) {
+  if (Array.isArray(str)) str = str.join(', ');
+  if (!str) return '';
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function filterCourses() {
+  const q = searchInput.value.trim().toLowerCase();
+  const y = yearFilter.value;
+  let out = coursesCache.slice();
+
+  if (q) {
+    out = out.filter(c => {
+      const blob = [
+        c.name || '',
+        (c.objectives || []).join(' '),
+        (c.relatedCourses || []).join(' '),
+        (c.requiredClasses || []).join(' '),
+        c.recommendedYear || ''
+      ].join(' ').toLowerCase();
+      return blob.includes(q);
+    });
+  }
+  if (y) {
+    out = out.filter(c => (c.recommendedYear || '') === y);
+  }
+  renderCourses(out);
+}
+
+async function loadCourses() {
+  if (!classId || !classMeta) {
+    // nothing selected - render empty state
+    coursesCache = [];
+    renderCourses([]);
+    return;
+  }
+  const coursesRef = db.collection('departments').doc(classMeta.deptId)
+    .collection('classes').doc(classId).collection('courses');
+  const snap = await coursesRef.orderBy('createdAt', 'desc').get();
+  coursesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  filterCourses();
+}
+
+async function uploadCourseImageIfNeeded() {
+  if (!courseImageFileRef) return null;
+  // For demo, we store as data URL to keep it simple.
+  const reader = new FileReader();
+  const dataUrl = await new Promise((resolve) => {
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(courseImageFileRef);
+  });
+  return dataUrl;
+}
+
+async function createOrUpdateCourse(e) {
+  e.preventDefault();
+
+  if (!classMeta) {
+    showToast('Missing class context.', 'error');
+    return;
+  }
+
+  const name = courseName.value.trim();
+  const time = courseTime.value.trim() || '2hrs';
+  const hours = courseHours.value.trim();
+  const objectives = (courseObjectives.value || '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+  const related = parseCSV(courseRelated.value);
+  const recommendedYear = courseRecommendedYear.value.trim();
+  const required = parseCSV(courseRequired.value);
+
+  if (!name || !hours || !objectives.length || !recommendedYear) {
+    showToast('Please complete required fields.', 'error');
+    return;
+  }
+
+  const submitBtn = courseForm.querySelector('button[type="submit"]');
+  setLoading(submitBtn, true);
+
+  try {
+    let imageUrl = null;
+    if (courseImageFileRef) {
+      imageUrl = await uploadCourseImageIfNeeded();
+    }
+
+    const payload = {
+      name, time, hours: Number(hours),
+      duration: '4 months (16 weeks)',
+      objectives, relatedCourses: related, requiredClasses: required,
+      recommendedYear, imageUrl,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    const coursesRef = db.collection('departments').doc(classMeta.deptId)
+      .collection('classes').doc(classId).collection('courses');
+
+    if (editingCourseId) {
+      await coursesRef.doc(editingCourseId).update(payload);
+      showToast('Course updated!');
+    } else {
+      await coursesRef.add({
+        ...payload,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast('Course created!');
+    }
+    closeModal();
+    await loadCourses();
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to save course.', 'error');
+  } finally {
+    setLoading(submitBtn, false);
+  }
+}
+
+async function openEdit(courseId) {
+  const c = coursesCache.find(x => x.id === courseId);
+  if (!c) return;
+
+  editingCourseId = courseId;
+  modalTitle.textContent = 'Edit Course';
+
+  courseName.value = c.name || '';
+  courseTime.value = c.time || '2hrs';
+  courseHours.value = c.hours || '';
+  courseObjectives.value = (c.objectives || []).join('\n');
+  courseRelated.value = toCSV(c.relatedCourses || []);
+  courseRecommendedYear.value = c.recommendedYear || '';
+  courseRequired.value = toCSV(c.requiredClasses || []);
+  courseImagePreview.src = c.imageUrl || courseImagePreview.src;
+  const modalClass = document.getElementById('modalClassContext');
+  if (modalClass) modalClass.textContent = `For: ${classMeta?.name || classId}`;
+
+  openModal();
+}
+
+async function deleteCourse(courseId) {
+  if (!confirm('Delete this course? This action cannot be undone.')) return;
+  try {
+    await db.collection('departments').doc(classMeta.deptId)
+      .collection('classes').doc(classId)
+      .collection('courses').doc(courseId).delete();
+    showToast('Course deleted.');
+    await loadCourses();
+  } catch (e) {
+    console.error(e);
+    showToast('Failed to delete course.', 'error');
+  }
+}
+
+// Events
+createCourseBtn.addEventListener('click', () => {
+  // require a class to be selected before creating a course
+  if (!classId) { showToast('Select a class first (use the Class selector)', 'error'); return; }
+  if (!classMeta) { showToast('Class context is still loading. Try again in a moment.', 'error'); return; }
+  courseForm.reset();
+  courseHours.value = '';
+  courseRecommendedYear.value = '';
+  editingCourseId = null;
+  modalTitle.textContent = 'Create Course';
+  // show which class this will be created for
+  const modalClass = document.getElementById('modalClassContext');
+  if (modalClass) modalClass.textContent = `For: ${classMeta?.name || classId}`;
+  openModal();
+});
+closeModalBtn.addEventListener('click', closeModal);
+cancelCourseBtn.addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', closeModal);
+courseForm.addEventListener('submit', createOrUpdateCourse);
+
+searchInput.addEventListener('input', filterCourses);
+yearFilter.addEventListener('change', filterCourses);
+
+uploadCourseImageBtn.addEventListener('click', () => courseImageInput.click());
+courseImageInput.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select an image file.', 'error');
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('Image must be less than 2MB.', 'error');
+    return;
+  }
+  courseImageFileRef = file;
+  const reader = new FileReader();
+  reader.onload = () => {
+    courseImagePreview.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Startup
+(async function init() {
+  feather.replace();
+  generateBubbles();
+
+  const ok = await ensureAuth();
+  if (!ok) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  // fetch classes teacher belongs to and populate selector
+  classId = getClassIdFromURL();
+  const classes = await fetchTeacherClasses();
+  populateClassSelector(classes);
+
+  // If there is a classId in URL/localStorage set it - otherwise auto-select first available class
+  if (!classId && classes.length) {
+    classId = classes[0].classId;
+    // set the selector to the first class
+    for (const opt of Array.from(classSelector.options)) {
+      if (!opt.value) continue; const [d, c] = opt.value.split('||');
+      if (c === classId) { opt.selected = true; break; }
+    }
+    saveClassIdLocal(classId);
+  }
+  if (!classId) {
+    alert('Missing classId. Append ?classId=... to the URL');
+    return;
+  }
+  saveClassIdLocal(classId);
+
+  teacherData = await findTeacherContext();
+  if (!teacherData) {
+    alert('No teacher profile found for this class. Ask admin to register you.');
+    return;
+  }
+  const name = (teacherData.name || currentUser.displayName || currentUser.email || 'Teacher').split(' ')[0] || 'Teacher';
+  avatarInitial.textContent = name.charAt(0).toUpperCase();
+
+  classMeta = await loadClassMeta();
+  await loadCourses();
+})();
+
+// respond to user changing class selection
+classSelector?.addEventListener('change', async (e) => {
+  const val = e.target.value;
+  if (!val) return;
+  const [deptId, cId] = val.split('||');
+  if (!cId) return;
+  classId = cId;
+  saveClassIdLocal(classId);
+  // try to set teacherData for the selected class
+  teacherData = await findTeacherContext(); // keep fallback
+  classMeta = await loadClassMeta();
+  await loadCourses();
+});
+
+// Bubbles background
+function generateBubbles() {
+  const count = 24;
+  bubbles.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement('span');
+    b.className = 'bubble';
+    const size = Math.random() * 70 + 30;
+    const left = Math.random() * 100;
+    const duration = 18 + Math.random() * 14;
+    const dx = (Math.random() * 120 - 60) + 'px';
+    b.style.width = size + 'px';
+    b.style.height = size + 'px';
+    b.style.left = left + 'vw';
+    b.style.setProperty('--t', duration + 's');
+    b.style.setProperty('--dx', dx);
+    bubbles.appendChild(b);
+  }
+}
+  </script>
+</body>
+</html>

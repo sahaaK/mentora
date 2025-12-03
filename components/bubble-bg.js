@@ -66,3 +66,51 @@ class BubbleBackground extends HTMLElement {
 }
 
 customElements.define('bubble-background', BubbleBackground);
+// Also provide a simple global initializer for projects that prefer
+// injecting a plain `.bubble-container` div (matches final.html style).
+window.initBubbleBackground = function initBubbleBackground(opts = {}) {
+    const count = Number(opts.count) || 15;
+    const containerClass = opts.containerClass || 'bubble-container';
+    const elementClass = opts.elementClass || 'bubble';
+
+    // find existing container or create one
+    let container = document.querySelector(`.${containerClass}`);
+    if (!container) {
+        container = document.createElement('div');
+        container.className = containerClass;
+        container.style.position = 'fixed';
+        container.style.inset = '0';
+        container.style.zIndex = opts.zIndex != null ? String(opts.zIndex) : '-1';
+        container.style.pointerEvents = 'none';
+        document.body.appendChild(container);
+    }
+
+    // avoid recreating if it already has bubbles created by this initializer
+    if (container.dataset.bubbleInit === '1') return container;
+
+    const colors = opts.colors || [
+        'radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.05))',
+        'radial-gradient(circle at 30% 30%, rgba(84, 119, 255, 0.08), rgba(168, 85, 247, 0.04))'
+    ];
+
+    for (let i = 0; i < count; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = elementClass;
+        const size = Math.random() * 100 + 50;
+        bubble.style.width = `${size}px`;
+        bubble.style.height = `${size}px`;
+        bubble.style.left = `${Math.random() * 120 - 10}%`;
+        bubble.style.top = `${Math.random() * 120 - 10}%`;
+        bubble.style.animationDelay = `${Math.random() * 10}s`;
+        bubble.style.animationDuration = `${Math.random() * 12 + 12}s`;
+        bubble.style.background = colors[Math.floor(Math.random() * colors.length)];
+        bubble.style.borderRadius = '50%';
+        bubble.style.position = 'absolute';
+        bubble.style.pointerEvents = 'none';
+        container.appendChild(bubble);
+    }
+
+    // mark as initialized by this helper to avoid duplicates
+    container.dataset.bubbleInit = '1';
+    return container;
+};

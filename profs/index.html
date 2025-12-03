@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Portal</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
+  <!-- Tailwind + Icons + Libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#8b5cf6',
+              50:'#f5f3ff',100:'#ede9fe',200:'#ddd6fe',300:'#c4b5fd',400:'#a78bfa',500:'#8b5cf6',600:'#7c3aed',700:'#6d28d9',800:'#5b21b6',900:'#4c1d95',950:'#2e1065'
+            },
+            secondary: {
+              DEFAULT:'#06b6d4',
+              50:'#ecfeff',100:'#cffafe',200:'#a5f3fc',300:'#67e8f9',400:'#22d3ee',500:'#06b6d4',600:'#0891b2',700:'#0e7490',800:'#155e75',900:'#164e63',950:'#083344'
+            },
+            dark: {
+              50:'#f9fafb',100:'#f3f4f6',200:'#e5e7eb',300:'#d1d5db',400:'#9ca3af',500:'#6b7280',600:'#4b5563',700:'#374151',800:'#1f2937',850:'#18202c',900:'#111827',950:'#0b0a13'
+            }
+          },
+          boxShadow: {
+            glass: '0 10px 40px rgba(0,0,0,0.25)'
+          },
+          keyframes: {
+            'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            'scale-in': { '0%': { opacity: 0, transform: 'scale(.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+            'pop': { '0%': { transform: 'scale(.9)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+            'slide-up': { '0%': { transform: 'translateY(12px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+            'shimmer': { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+            'float': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+            'wave': { '0%': { transform: 'translateX(0%)' }, '50%': { transform: 'translateX(-25%)' }, '100%': { transform: 'translateX(0%)' } },
+            'bar-fill': { '0%': { width: '0%' }, '100%': { width: 'var(--w)' } }
+          },
+          animation: {
+            'fade-in': 'fade-in .2s ease-out',
+            'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+            'pop': 'pop .18s ease-out',
+            'slide-up': 'slide-up .28s ease-out',
+            'shimmer': 'shimmer 2s linear infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'wave': 'wave 8s linear infinite',
+            'bar-fill': 'bar-fill .9s ease-out var(--delay, 0s) forwards'
+          },
+          backdropBlur: {
+            xs: '2px'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <!-- AOS + Animate.css -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Local CSS -->
+  <style>
+    /* Glassmorphism + UI enhancements */
+
+:root {
+  --ring-bg: rgba(255,255,255,0.12);
+}
+
+/* Glass base */
+.card--glass, .glass-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+}
+
+.card--glass:hover, .glass-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Sheen effect for cards */
+.sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 45%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 900ms ease;
+  pointer-events: none;
+}
+.sheen:hover::before {
+  transform: translateX(100%);
+}
+
+/* Completion ring progress */
+.progress-ring {
+  stroke-dasharray: 125.664;
+  transition: stroke-dashoffset 700ms ease;
+}
+  /* Small helpers for new card style */
+  .progress-fill { width: 0; transition: width 900ms cubic-bezier(.2,.9,.3,1); }
+  .counter { font-weight: 700; }
+
+/* Subtle scrollbar */
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Utilities */
+.clip-diagonal {
+  clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 100%);
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Faculty image styles */
+.faculty-img {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+}
+.faculty-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 80% 0%, rgba(84,119,255,0.1), rgba(168,85,247,0.05) 40%, transparent 70%);
+  pointer-events: none;
+}
+.faculty-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.card--glass:hover .faculty-img img, .glass-card:hover .faculty-img img {
+  transform: scale(1.04);
+}
+
+/* Metric card */
+.metric {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  transition: all 0.3s ease;
+}
+.metric:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-2px);
+}
+.metric-value { font-weight: 700; font-size: 1.1rem; }
+.metric-label { color: #94a3b8; font-size: 0.75rem; }
+
+/* Glass helper */
+.glass {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* Month pentagon container */
+.month-pentagon {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  isolation: isolate;
+  transition: transform 220ms ease, filter 220ms ease;
+}
+.month-pentagon:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.02);
+}
+.month-pentagon svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.month-pentagon .glow {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(60% 60% at 50% 30%, rgba(139,92,246,0.15), transparent 60%);
+  z-index: -1;
+  filter: blur(20px);
+}
+.month-pentagon .content {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Weeks check grid inside pentagon */
+.weeks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 78%;
+  margin-top: 0.25rem;
+}
+.week-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #e2e8f0;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.week-chip input {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.04);
+  display: inline-block;
+  position: relative;
+}
+.week-chip input:checked {
+  background: linear-gradient(180deg, #22d3ee, #8b5cf6);
+  border-color: rgba(255,255,255,0.5);
+}
+.week-chip input:checked::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 2px;
+  mix-blend-mode: overlay;
+}
+
+/* Responsiveness */
+@media (max-width: 640px) {
+  .weeks-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 text-white">
+  <!-- Background Ornaments -->
+  <div class="fixed inset-0 pointer-events-none">
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute top-1/3 -right-24 w-80 h-80 bg-secondary-500/10 rounded-full blur-3xl animate-float" style="animation-delay: -2s"></div>
+    <div class="absolute -bottom-24 left-1/3 w-80 h-80 bg-primary-400/10 rounded-full blur-3xl animate-float" style="animation-delay: -4s"></div>
+  </div>
+
+  <!-- App View -->
+  <section id="appView" class="min-h-screen">
+    <!-- Header -->
+    <header class="px-6 pt-6">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white animate__animated animate__fadeIn">
+              <span class="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">Teacher Dashboard</span>
+            </h1>
+            <p id="headerSubtitle" class="text-gray-400 text-sm">Loading your profile...</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="refreshBtn" class="glass px-3 py-2 rounded-lg hover:bg-white/10 transition-all flex items-center gap-2">
+              <i data-feather="refresh-cw" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Refresh</span>
+            </button>
+            <div class="glass p-1.5 rounded-full">
+              <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-400 to-secondary-400 flex items-center justify-center text-white font-bold shadow-lg">
+                T
+              </div>
+            </div>
+            <button id="logoutBtn" class="glass px-3 py-2 rounded-lg hover:bg-rose-500/20 text-rose-200 transition-all">
+              <i data-feather="log-out" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+      <!-- Class Selector -->
+      <section class="mt-6 mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold">Your Classes</h2>
+          <div class="text-sm text-gray-400">
+            <span id="classesCount">0</span> assigned
+          </div>
+        </div>
+        <div id="classesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- Course Toolbar -->
+      <div class="flex flex-col lg:flex-row gap-4 mb-6 items-stretch lg:items-center justify-between">
+        <div class="flex flex-wrap gap-3">
+          <button id="addCourseBtn" class="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all shadow-lg overflow-hidden">
+            <span class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></span>
+            <i data-feather="book"></i>
+            <span>Add Course</span>
+          </button>
+          <button id="exportBtn" class="flex items-center gap-2 px-4 py-2.5 glass rounded-xl hover:bg-white/10 transition-all">
+            <i data-feather="download"></i>
+            Export
+          </button>
+        </div>
+
+        <div class="flex-1 max-w-md">
+          <div class="relative">
+            <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+            <input id="courseSearchInput" type="text" placeholder="Search courses..." class="w-full pl-10 pr-4 py-2.5 glass rounded-xl bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Class Summary -->
+      <section id="selectedClassSummary" class="hidden glass-card p-5 mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 id="selectedClassName" class="text-xl font-bold"></h3>
+            <p id="selectedClassMeta" class="text-gray-400 text-sm"></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="profile.html" class="flex items-center gap-2 px-3 py-2 glass rounded-lg hover:bg-white/10 transition-all">
+              <i data-feather="user"></i>
+              Edit Profile
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Courses Grid -->
+      <section>
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold">Courses</h2>
+          <div class="text-sm text-gray-400">
+            <span id="coursesTotal">0</span> total
+          </div>
+        </div>
+
+        <div id="coursesGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+          <!-- Courses will be populated here -->
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <!-- Add/Edit Course Modal -->
+  <div id="courseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div class="relative w-full max-w-4xl glass-card p-0 overflow-hidden animate-scale-in">
+      <button id="closeCourseModal" class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition">
+        <i data-feather="x" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-white/10 flex items-center gap-3">
+        <div class="p-2 rounded-lg bg-gradient-to-br from-primary-500/20 to-secondary-500/20 text-primary-300">
+          <i data-feather="book-open"></i>
+        </div>
+        <div>
+          <h2 id="courseModalTitle" class="text-xl font-bold">Add Course</h2>
+          <p class="text-sm text-gray-400">Create a 16‑week plan for your class</p>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="courseForm" class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Image + Upload -->
+        <div class="lg:col-span-1">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Course Cover</label>
+          <div class="relative group">
+            <input type="file" id="courseImageInput" accept="image/*" class="hidden">
+            <div id="courseImagePreview" class="faculty-img w-full aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer border border-white/10 hover:border-primary-500/40 transition-all">
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                <i data-feather="upload-cloud" class="w-8 h-8 mb-2"></i>
+                <p class="text-sm">Click to upload</p>
+                <p class="text-xs">PNG, JPG up to 2MB</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fields -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Course Name</label>
+              <input type="text" id="courseName" required placeholder="e.g., Data Science & ML"
+                     class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Subject Tag</label>
+              <select id="courseSubject" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+                <option value="Data Science">Data Science</option>
+                <option value="Programming">Programming</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Design">Design</option>
+                <option value="Business">Business</option>
+                <option value="AI/ML">AI/ML</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Short Description</label>
+            <textarea id="courseDescription" rows="3" placeholder="Brief overview of the course goals and outcomes..."
+                      class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Learning Objectives (comma separated)</label>
+            <input type="text" id="courseObjectives" placeholder="e.g., Python, Pandas, scikit-learn"
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Prerequisites (comma separated)</label>
+            <input type="text" id="coursePrerequisites" placeholder="e.g., Basic programming, Statistics"
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Target Audience</label>
+            <input type="text" id="courseAudience" placeholder="e.g., Intermediate developers, Analysts"
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Duration (hours)</label>
+              <input type="number" id="courseDuration" min="0" step="0.5" placeholder="e.g., 10"
+                     class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Level</label>
+              <select id="courseLevel" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Language</label>
+              <input type="text" id="courseLanguage" placeholder="e.g., English"
+                     class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-5 border-t border-white/10 flex justify-end gap-3">
+        <button id="cancelCourseBtn" type="button" class="px-4 py-2.5 glass rounded-lg hover:bg-white/10 transition-all">Cancel</button>
+        <button id="saveCourseBtn" type="button" class="relative overflow-hidden px-5 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all">
+          <span class="absolute inset-0 opacity-0 hover:opacity-100 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></span>
+          <span class="relative flex items-center gap-2">
+            <i data-feather="plus-circle"></i>
+            Save Course
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Detail Modal -->
+  <div id="courseDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div class="relative w-full max-w-4xl glass-card p-0 overflow-hidden animate-scale-in">
+      <button id="closeCourseDetailModal" class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition">
+        <i data-feather="x" class="w-5 h-5"></i>
+      </button>
+      
+      <div class="p-6">
+        <div class="flex flex-col md:flex-row items-start gap-6 mb-8">
+          <div class="faculty-img w-full md:w-48 h-48 rounded-2xl overflow-hidden border border-white/10 flex-shrink-0">
+            <img id="detailCourseImage" src="" alt="Course" class="w-full h-full object-cover">
+          </div>
+          
+          <div class="flex-1">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <span id="detailCourseSubject" class="px-3 py-1 rounded-full text-xs bg-black/40 backdrop-blur-sm ring-1 ring-white/10 flex items-center gap-1">
+                <i data-feather="database" class="w-3.5 h-3.5 text-violet-400"></i>
+                <span>Subject</span>
+              </span>
+              <span id="detailCourseLevel" class="px-3 py-1 rounded-full bg-secondary-400/20 text-secondary-300 text-xs ring-1 ring-secondary-300/40">Intermediate</span>
+              <span id="detailCourseLanguage" class="px-3 py-1 rounded-full bg-primary-400/20 text-primary-300 text-xs ring-1 ring-primary-300/40">English</span>
+            </div>
+            
+            <h2 id="detailCourseName" class="text-3xl font-bold mb-3"></h2>
+            <p id="detailCourseDescription" class="text-gray-300 mb-6"></p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div class="metric">
+                <div class="metric-label">Duration</div>
+                <div id="detailCourseDuration" class="metric-value">—</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Objectives</div>
+                <div id="detailCourseObjectives" class="metric-value line-clamp-2">—</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Prerequisites</div>
+                <div id="detailCoursePrerequisites" class="metric-value line-clamp-2">—</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Audience</div>
+                <div id="detailCourseAudience" class="metric-value line-clamp-2">—</div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="relative h-16 w-16">
+                <svg class="absolute inset-0 h-16 w-16 -rotate-90">
+                  <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.15)" stroke-width="8" fill="none"/>
+                  <circle id="detailProgressRing" class="progress-ring" cx="32" cy="32" r="28" stroke="url(#gradDetail)" stroke-width="8" fill="none" stroke-linecap="round" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span id="detailProgressText" class="text-sm font-bold text-white">0%</span>
+                </div>
+                <defs>
+                  <linearGradient id="gradDetail" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#8b5cf6"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+              </div>
+              <div>
+                <p class="text-sm text-slate-200 font-medium">Overall Progress</p>
+                <p class="text-xs text-slate-300/70"><span id="detailCompletedWeeks">0</span> of 16 weeks completed</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-xl font-semibold mb-4">Monthly Progress Overview</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="glass-card p-4 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium">Month 1</h4>
+                <span id="month1Progress" class="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">0%</span>
+              </div>
+              <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden mb-2">
+                <div id="month1Bar" class="h-full w-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-700"></div>
+              </div>
+              <p class="text-xs text-gray-400">Weeks 1-4</p>
+            </div>
+            
+            <div class="glass-card p-4 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium">Month 2</h4>
+                <span id="month2Progress" class="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">0%</span>
+              </div>
+              <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden mb-2">
+                <div id="month2Bar" class="h-full w-0 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full transition-all duration-700"></div>
+              </div>
+              <p class="text-xs text-gray-400">Weeks 5-8</p>
+            </div>
+            
+            <div class="glass-card p-4 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium">Month 3</h4>
+                <span id="month3Progress" class="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full">0%</span>
+              </div>
+              <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden mb-2">
+                <div id="month3Bar" class="h-full w-0 bg-gradient-to-r from-purple-400 to-fuchsia-500 rounded-full transition-all duration-700"></div>
+              </div>
+              <p class="text-xs text-gray-400">Weeks 9-12</p>
+            </div>
+            
+            <div class="glass-card p-4 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium">Month 4</h4>
+                <span id="month4Progress" class="text-xs bg-amber-500/20 text-amber-300 px-2 py-1 rounded-full">0%</span>
+              </div>
+              <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden mb-2">
+                <div id="month4Bar" class="h-full w-0 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-700"></div>
+              </div>
+              <p class="text-xs text-gray-400">Weeks 13-16</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-xl font-semibold mb-4">Weekly Progress</h3>
+          <div id="weeksVisualization" class="grid grid-cols-4 md:grid-cols-8 gap-3 mb-6">
+            <!-- Weeks visualization will be generated here -->
+          </div>
+        </div>
+        
+        <div class="flex justify-end">
+          <button id="closeCourseDetailBtn" class="px-4 py-2.5 glass rounded-lg hover:bg-white/10 transition-all">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function initFirebase() {
+  const existingApp = firebase.apps && firebase.apps[0];
+  if (existingApp) return;
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+    authDomain: "mentora-71f5c.firebaseapp.com",
+    projectId: "mentora-71f5c",
+    storageBucket: "mentora-71f5c.appspot.com",
+    messagingSenderId: "16685388211",
+    appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+    measurementId: "G-BL98PXGK2G"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+})();
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// State
+let currentUser = null;
+let currentTeacherDoc = null;
+let selectedClassId = null;
+let classes = [];
+let courses = [];
+
+// UI refs
+const appView = document.getElementById('appView');
+const headerSubtitle = document.getElementById('headerSubtitle');
+const userAvatar = document.getElementById('userAvatar');
+const logoutBtn = document.getElementById('logoutBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+
+const classesContainer = document.getElementById('classesContainer');
+const classesCount = document.getElementById('classesCount');
+const addCourseBtn = document.getElementById('addCourseBtn');
+const exportBtn = document.getElementById('exportBtn');
+const courseSearchInput = document.getElementById('courseSearchInput');
+
+const selectedClassSummary = document.getElementById('selectedClassSummary');
+const selectedClassName = document.getElementById('selectedClassName');
+const selectedClassMeta = document.getElementById('selectedClassMeta');
+const coursesGrid = document.getElementById('coursesGrid');
+const coursesTotal = document.getElementById('coursesTotal');
+
+// Course modal refs
+const courseModal = document.getElementById('courseModal');
+const closeCourseModal = document.getElementById('closeCourseModal');
+const cancelCourseBtn = document.getElementById('cancelCourseBtn');
+const saveCourseBtn = document.getElementById('saveCourseBtn');
+const courseModalTitle = document.getElementById('courseModalTitle');
+const courseForm = document.getElementById('courseForm');
+const courseImageInput = document.getElementById('courseImageInput');
+const courseImagePreview = document.getElementById('courseImagePreview');
+let courseSelectedImageDataUrl = null;
+let editingCourseId = null;
+
+// Course detail modal
+const courseDetailModal = document.getElementById('courseDetailModal');
+const closeCourseDetailModal = document.getElementById('closeCourseDetailModal');
+const closeCourseDetailBtn = document.getElementById('closeCourseDetailBtn');
+const detailCourseImage = document.getElementById('detailCourseImage');
+const detailCourseName = document.getElementById('detailCourseName');
+const detailCourseSubject = document.getElementById('detailCourseSubject');
+const detailCourseLevel = document.getElementById('detailCourseLevel');
+const detailCourseDescription = document.getElementById('detailCourseDescription');
+const detailCourseDuration = document.getElementById('detailCourseDuration');
+const detailCourseLanguage = document.getElementById('detailCourseLanguage');
+const detailCourseObjectives = document.getElementById('detailCourseObjectives');
+const detailCoursePrerequisites = document.getElementById('detailCoursePrerequisites');
+const detailCourseAudience = document.getElementById('detailCourseAudience');
+const detailProgressRing = document.getElementById('detailProgressRing');
+const detailProgressText = document.getElementById('detailProgressText');
+const detailCompletedWeeks = document.getElementById('detailCompletedWeeks');
+const weeksVisualization = document.getElementById('weeksVisualization');
+
+// Month progress elements
+const month1Progress = document.getElementById('month1Progress');
+const month1Bar = document.getElementById('month1Bar');
+const month2Progress = document.getElementById('month2Progress');
+const month2Bar = document.getElementById('month2Bar');
+const month3Progress = document.getElementById('month3Progress');
+const month3Bar = document.getElementById('month3Bar');
+const month4Progress = document.getElementById('month4Progress');
+const month4Bar = document.getElementById('month4Bar');
+
+// Helpers
+function show(el) { el.classList.remove('hidden'); }
+function hide(el) { el.classList.add('hidden'); }
+function openModal(modal) {
+  modal.classList.remove('opacity-0', 'pointer-events-none');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(modal) {
+  modal.classList.add('opacity-0', 'pointer-events-none');
+  document.body.style.overflow = '';
+}
+function uid() { return Math.random().toString(36).slice(2); }
+
+// Build completion waves SVG
+function createWavesSVG() {
+  const svg = `
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#7dd3fc"></path>
+    </svg>
+  `;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'completion__waves';
+  wrapper.innerHTML = svg + svg;
+  return wrapper;
+}
+function initCompletionCapsule(capsule, percent) {
+  const track = capsule.querySelector('.completion__track') || capsule.querySelector('.completion__track--wide');
+  if (!track) return;
+  track.innerHTML = '';
+  const liquid = document.createElement('div');
+  liquid.className = 'completion__liquid';
+  const waves = createWavesSVG();
+  const gloss = document.createElement('div');
+  gloss.className = 'completion__gloss';
+  track.appendChild(liquid);
+  track.appendChild(waves);
+  track.appendChild(gloss);
+
+  const label = capsule.querySelector('.completion__label');
+  requestAnimationFrame(() => {
+    liquid.style.height = `${percent}%`;
+    if (label) label.querySelector('span').textContent = `${Math.round(percent)}%`;
+  });
+}
+
+async function loadTeacherData() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const deptSnap = await db.collection('departments').get();
+  let found = null;
+  for (const deptDoc of deptSnap.docs) {
+    const classSnap = await db.collection('departments').doc(deptDoc.id).collection('classes').get();
+    for (const classDoc of classSnap.docs) {
+      const tSnap = await db.collection('departments').doc(deptDoc.id).collection('classes').doc(classDoc.id).collection('teachers').where('authUid', '==', user.uid).limit(1).get();
+      if (!tSnap.empty) {
+        found = { teacher: tSnap.docs[0], class: classDoc, department: deptDoc };
+        break;
+      }
+    }
+    if (found) break;
+  }
+
+  if (!found) {
+    headerSubtitle.textContent = 'No class assignment found.';
+    return;
+  }
+
+  currentTeacherDoc = found.teacher;
+  const tData = found.teacher.data();
+
+  const name = tData.name || 'Teacher';
+  const initial = name.trim().charAt(0).toUpperCase() || 'T';
+  userAvatar.textContent = initial;
+
+  headerSubtitle.textContent = `${name} • ${tData.specialty || '—'}`;
+
+  classes = [{ id: found.class.id, name: found.class.data().name || 'Class', departmentId: found.department.id }];
+
+  classesCount.textContent = classes.length;
+  renderClasses();
+
+  if (classes.length) {
+    selectClass(classes[0].id);
+  }
+}
+
+function renderClasses() {
+  if (!classes.length) {
+    classesContainer.innerHTML = `
+      <div class="glass-card p-6 text-center">
+        <i data-feather="inbox" class="w-10 h-10 text-gray-500 mx-auto mb-3"></i>
+        <h3 class="text-lg font-semibold text-gray-300 mb-1">No Classes Assigned</h3>
+        <p class="text-gray-400 text-sm">Contact your administrator to get access to classes.</p>
+      </div>
+    `;
+    feather.replace();
+    return;
+  }
+  classesContainer.innerHTML = classes.map(c => `
+    <div class="glass-card p-5 cursor-pointer class-card" data-class-id="${c.id}">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500/20 to-secondary-500/20 flex items-center justify-center text-primary-300">
+          <i data-feather="book"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="font-bold truncate">${c.name}</h3>
+          <p class="text-sm text-gray-400">Class ID: ${c.id.slice(0,8)}</p>
+        </div>
+        <button class="px-3 py-2 glass rounded-lg hover:bg-white/10 transition-all">
+          <i data-feather="arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+  feather.replace();
+  document.querySelectorAll('.class-card').forEach(card => {
+    card.addEventListener('click', () => {
+      selectClass(card.dataset.classId);
+    });
+  });
+}
+
+async function selectClass(classId) {
+  selectedClassId = classId;
+  const cls = classes.find(c => c.id === classId);
+  selectedClassName.textContent = cls ? cls.name : 'Class';
+  selectedClassMeta.textContent = `ID: ${classId}`;
+  selectedClassSummary.classList.remove('hidden');
+  await loadCourses();
+}
+
+async function loadCourses() {
+  if (!selectedClassId) return;
+  const deptId = classes.find(c => c.id === selectedClassId)?.departmentId;
+  if (!deptId) return;
+
+  const snap = await db.collection('departments').doc(deptId).collection('classes').doc(selectedClassId).collection('courses').orderBy('createdAt', 'desc').get();
+  courses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderCourses();
+}
+
+function computeCoursePercent(course) {
+  const weeks = course.weeks || {};
+  const total = 16;
+  let completed = 0;
+  for (let i = 1; i <= total; i++) if (weeks[i]?.completed) completed++;
+  return (completed / total) * 100;
+}
+
+function renderCourses() {
+  const q = (courseSearchInput.value || '').toLowerCase().trim();
+  const filtered = courses.filter(c =>
+    !q || [c.name, c.description, c.subject, (c.objectives||[]).join(' ')].filter(Boolean).some(v => v.toLowerCase().includes(q))
+  );
+  coursesTotal.textContent = filtered.length;
+
+  if (!filtered.length) {
+    coursesGrid.innerHTML = `
+      <div class="glass-card p-8 text-center col-span-full">
+        <i data-feather="book" class="w-12 h-12 text-gray-500 mx-auto mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-300 mb-2">No Courses Yet</h3>
+        <p class="text-gray-400">Click "Add Course" to create your first 16‑week plan</p>
+      </div>
+    `;
+    feather.replace();
+    return;
+  }
+
+  coursesGrid.innerHTML = filtered.map(course => {
+    const percent = computeCoursePercent(course);
+    const initials = (course.name || 'C').slice(0,2).toUpperCase();
+    const duration = course.duration ? `${course.duration}h` : '—';
+    const subject = course.subject || 'General';
+    const level = course.level || 'Intermediate';
+    const img = course.imageUrl || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop';
+    return `
+      <article class="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.45)] transition-all duration-500">
+        <div class="absolute inset-0 pointer-events-none">
+          <div class="absolute -top-16 -left-20 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl"></div>
+          <div class="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl"></div>
+        </div>
+        <div class="relative p-5 flex flex-col gap-4">
+          <div class="relative h-44 w-full rounded-xl overflow-hidden border border-white/10 shadow-inner">
+            <img src="${img}" alt="${course.name}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+            <div class="absolute top-2 left-2">
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 backdrop-blur">${subject}</span>
+            </div>
+            <div class="absolute bottom-2 left-2 flex items-center gap-2 text-yellow-300">
+              <i data-feather="star" class="w-4 h-4 fill-yellow-400 text-yellow-400"></i>
+              <i data-feather="star" class="w-4 h-4 fill-yellow-400 text-yellow-400"></i>
+              <i data-feather="star" class="w-4 h-4 fill-yellow-400 text-yellow-400"></i>
+              <i data-feather="star" class="w-4 h-4 fill-yellow-400 text-yellow-400"></i>
+              <i data-feather="star" class="w-4 h-4 text-yellow-400"></i>
+              <span class="text-xs text-slate-200/80">${(course.rating||4.6).toFixed(1)}</span>
+            </div>
+            <div class="absolute bottom-2 right-2">
+              <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-white/10 border border-white/15 backdrop-blur text-slate-200">
+                <i data-feather="play-circle" class="w-4 h-4"></i>
+                ${duration}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold leading-snug text-white">${course.name}</h3>
+            <p class="text-slate-400 text-sm mt-1">${course.description ? course.description.substring(0,80) : 'No description provided.'}</p>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs text-slate-400">
+              <i data-feather="user" class="w-4 h-4"></i>
+              <span>by ${currentTeacherDoc?.data()?.name || 'Teacher'}</span>
+            </div>
+            <div class="flex -space-x-1">
+              <img class="w-6 h-6 rounded-full ring-2 ring-black/50" src="https://i.pravatar.cc/24?img=2" alt="">
+              <img class="w-6 h-6 rounded-full ring-2 ring-black/50" src="https://i.pravatar.cc/24?img=4" alt="">
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-slate-300">Completion</span>
+              <span class="text-slate-200 font-medium"><span class="counter" data-target="${Math.round(percent)}">0</span>%</span>
+            </div>
+            <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden border border-white/10">
+              <div class="h-full w-0 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 progress-fill" data-progress="${Math.round(percent)}"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button class="view-course-btn flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 transition" data-id="${course.id}">
+              <i data-feather="eye"></i> View
+            </button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition edit-course-btn" data-id="${course.id}">
+              <i data-feather="edit-2"></i>
+            </button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-500/20 text-rose-200 border border-rose-400/30 hover:bg-rose-500/30 transition delete-course-btn" data-id="${course.id}">
+              <i data-feather="trash-2"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+  
+  // animate progress fills and counters for new cards
+  function animateCards() {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('.progress-fill').forEach(bar => {
+      const target = parseInt(bar.getAttribute('data-progress'), 10) || 0;
+      if (prefersReduced) { bar.style.width = target + '%'; return; }
+      let start = 0;
+      const duration = 1200;
+      const t0 = performance.now();
+      const step = (now) => {
+        const elapsed = now - t0;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        bar.style.width = Math.round(eased * target) + '%';
+        if (progress < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+
+    document.querySelectorAll('.counter').forEach(el => {
+      const target = parseInt(el.getAttribute('data-target'), 10) || 0;
+      if (prefersReduced) { el.textContent = target; return; }
+      const duration = 1000;
+      const t0 = performance.now();
+      const step = (now) => {
+        const elapsed = now - t0;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  // start animations after next paint so elements exist
+  requestAnimationFrame(() => requestAnimationFrame(animateCards));
+
+  feather.replace();
+  if (window.AOS && typeof AOS.refreshHard === 'function') {
+    AOS.refreshHard();
+  } else if (window.AOS && typeof AOS.init === 'function') {
+    AOS.init({ once: true, duration: 400 });
+  }
+
+  document.querySelectorAll('.view-course-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const course = courses.find(c => c.id === btn.dataset.id);
+      if (course) openCourseDetail(course);
+    });
+  });
+  document.querySelectorAll('.edit-course-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const course = courses.find(c => c.id === btn.dataset.id);
+      if (course) openCourseModal(course);
+    });
+  });
+  document.querySelectorAll('.delete-course-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this course? This action cannot be undone.')) return;
+      await deleteCourse(btn.dataset.id);
+    });
+  });
+
+  document.querySelectorAll('.completion--wide').forEach(cap => {
+    const pct = parseFloat(cap.getAttribute('data-percent') || '0');
+    initCompletionCapsule(cap, pct);
+  });
+}
+
+function openCourseModal(course = null) {
+  editingCourseId = course ? course.id : null;
+  courseModalTitle.textContent = course ? 'Edit Course' : 'Add Course';
+  if (course) {
+    document.getElementById('courseName').value = course.name || '';
+    document.getElementById('courseSubject').value = course.subject || 'Other';
+    document.getElementById('courseDescription').value = course.description || '';
+    document.getElementById('courseObjectives').value = (course.objectives || []).join(', ');
+    document.getElementById('coursePrerequisites').value = (course.prerequisites || []).join(', ');
+    document.getElementById('courseAudience').value = course.audience || '';
+    document.getElementById('courseDuration').value = course.duration || '';
+    document.getElementById('courseLevel').value = course.level || 'Intermediate';
+    document.getElementById('courseLanguage').value = course.language || 'English';
+    courseSelectedImageDataUrl = course.imageUrl || '';
+    if (courseSelectedImageDataUrl) {
+      courseImagePreview.innerHTML = `<img src="${courseSelectedImageDataUrl}" alt="Course" class="w-full h-full object-cover">`;
+    } else {
+      courseImagePreview.innerHTML = `
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+          <i data-feather="upload-cloud" class="w-8 h-8 mb-2"></i>
+          <p class="text-sm">Click to upload</p>
+          <p class="text-xs">PNG, JPG up to 2MB</p>
+        </div>`;
+      feather.replace();
+    }
+  } else {
+    resetCourseForm();
+  }
+  openModal(courseModal);
+}
+
+function resetCourseForm() {
+  courseForm.reset();
+  courseSelectedImageDataUrl = null;
+  courseImagePreview.innerHTML = `
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+      <i data-feather="upload-cloud" class="w-8 h-8 mb-2"></i>
+      <p class="text-sm">Click to upload</p>
+      <p class="text-xs">PNG, JPG up to 2MB</p>
+    </div>`;
+  feather.replace();
+  editingCourseId = null;
+}
+
+async function saveCourse() {
+  if (!selectedClassId) return alert('Select a class first.');
+  const deptId = classes.find(c => c.id === selectedClassId)?.departmentId;
+  if (!deptId) return;
+
+  const name = document.getElementById('courseName').value.trim();
+  const subject = document.getElementById('courseSubject').value;
+  const description = document.getElementById('courseDescription').value.trim();
+  const objectives = document.getElementById('courseObjectives').value.split(',').map(s => s.trim()).filter(Boolean);
+  const prerequisites = document.getElementById('coursePrerequisites').value.split(',').map(s => s.trim()).filter(Boolean);
+  const audience = document.getElementById('courseAudience').value.trim();
+  const duration = parseFloat(document.getElementById('courseDuration').value) || 0;
+  const level = document.getElementById('courseLevel').value;
+  const language = document.getElementById('courseLanguage').value.trim() || 'English';
+
+  if (!name) return alert('Course name is required.');
+
+  const payload = {
+    name, subject, description,
+    objectives, prerequisites, audience,
+    duration, level, language,
+    imageUrl: courseSelectedImageDataUrl || '',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (!editingCourseId) {
+    const weeks = {};
+    for (let i = 1; i <= 16; i++) weeks[i] = { completed: false, title: `Week ${i}`, notes: '' };
+    payload.weeks = weeks;
+    payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+    await db.collection('departments').doc(deptId).collection('classes').doc(selectedClassId).collection('courses').add(payload);
+  } else {
+    await db.collection('departments').doc(deptId).collection('classes').doc(selectedClassId).collection('courses').doc(editingCourseId).update(payload);
+  }
+
+  closeModal(courseModal);
+  resetCourseForm();
+  await loadCourses();
+}
+
+async function deleteCourse(courseId) {
+  const deptId = classes.find(c => c.id === selectedClassId)?.departmentId;
+  await db.collection('departments').doc(deptId).collection('classes').doc(selectedClassId).collection('courses').doc(courseId).delete();
+  await loadCourses();
+}
+
+function calculateMonthlyProgress(weeks) {
+  const months = [
+    { start: 1, end: 4, completed: 0, total: 4 },
+    { start: 5, end: 8, completed: 0, total: 4 },
+    { start: 9, end: 12, completed: 0, total: 4 },
+    { start: 13, end: 16, completed: 0, total: 4 }
+  ];
+  
+  months.forEach(month => {
+    for (let i = month.start; i <= month.end; i++) {
+      if (weeks[i]?.completed) {
+        month.completed++;
+      }
+    }
+  });
+  
+  return months.map(month => ({
+    progress: Math.round((month.completed / month.total) * 100),
+    completed: month.completed
+  }));
+}
+function openCourseDetail(course) {
+  detailCourseName.textContent = course.name || '—';
+  detailCourseSubject.querySelector('span').textContent = course.subject || 'General';
+  detailCourseLevel.textContent = course.level || 'Intermediate';
+  detailCourseDescription.textContent = course.description || 'No description provided.';
+  detailCourseDuration.textContent = course.duration ? `${course.duration}h` : '—';
+  detailCourseLanguage.textContent = course.language || '—';
+  detailCourseObjectives.textContent = (course.objectives || []).join(', ') || '—';
+  detailCoursePrerequisites.textContent = (course.prerequisites || []).join(', ') || '—';
+  detailCourseAudience.textContent = course.audience || '—';
+  detailCourseImage.src = course.imageUrl || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop';
+
+  // Calculate overall progress
+  const weeks = course.weeks || {};
+  let completedWeeks = 0;
+  for (let i = 1; i <= 16; i++) {
+    if (weeks[i]?.completed) completedWeeks++;
+  }
+  
+  const overallProgress = Math.round((completedWeeks / 16) * 100);
+  detailCompletedWeeks.textContent = completedWeeks;
+  detailProgressText.textContent = `${overallProgress}%`;
+  detailProgressRing.style.strokeDashoffset = 175.929 - (175.929 * overallProgress / 100);
+
+  // Calculate monthly progress
+  const monthlyProgress = calculateMonthlyProgress(weeks);
+  
+  // Update month progress displays
+  month1Progress.textContent = `${monthlyProgress[0].progress}%`;
+  month1Bar.style.width = `${monthlyProgress[0].progress}%`;
+  month1Progress.className = `text-xs px-2 py-1 rounded-full ${
+    monthlyProgress[0].progress === 100 ? 'bg-green-500/20 text-green-300' : 
+    monthlyProgress[0].progress >= 50 ? 'bg-green-500/10 text-green-300' : 
+    'bg-gray-500/20 text-gray-300'
+  }`;
+  
+  month2Progress.textContent = `${monthlyProgress[1].progress}%`;
+  month2Bar.style.width = `${monthlyProgress[1].progress}%`;
+  month2Progress.className = `text-xs px-2 py-1 rounded-full ${
+    monthlyProgress[1].progress === 100 ? 'bg-blue-500/20 text-blue-300' : 
+    monthlyProgress[1].progress >= 50 ? 'bg-blue-500/10 text-blue-300' : 
+    'bg-gray-500/20 text-gray-300'
+  }`;
+  
+  month3Progress.textContent = `${monthlyProgress[2].progress}%`;
+  month3Bar.style.width = `${monthlyProgress[2].progress}%`;
+  month3Progress.className = `text-xs px-2 py-1 rounded-full ${
+    monthlyProgress[2].progress === 100 ? 'bg-purple-500/20 text-purple-300' : 
+    monthlyProgress[2].progress >= 50 ? 'bg-purple-500/10 text-purple-300' : 
+    'bg-gray-500/20 text-gray-300'
+  }`;
+  
+  month4Progress.textContent = `${monthlyProgress[3].progress}%`;
+  month4Bar.style.width = `${monthlyProgress[3].progress}%`;
+  month4Progress.className = `text-xs px-2 py-1 rounded-full ${
+    monthlyProgress[3].progress === 100 ? 'bg-amber-500/20 text-amber-300' : 
+    monthlyProgress[3].progress >= 50 ? 'bg-amber-500/10 text-amber-300' : 
+    'bg-gray-500/20 text-gray-300'
+  }`;
+
+  // Generate weekly visualization
+  weeksVisualization.innerHTML = '';
+  for (let i = 1; i <= 16; i++) {
+    const week = weeks[i] || { completed: false, title: `Week ${i}` };
+    const weekItem = document.createElement('div');
+    weekItem.className = `week-item ${week.completed ? 'completed' : ''}`;
+    weekItem.innerHTML = `
+      <div class="week-number">${i}</div>
+      <div class="week-status">
+        ${week.completed ? '<i data-feather="check" class="w-3 h-3 text-green-400"></i>' : ''}
+      </div>
+      <div class="week-label">${week.title.substring(0, 8)}</div>
+    `;
+    
+    weekItem.addEventListener('click', async () => {
+      // Toggle completion status
+      const newStatus = !week.completed;
+      await updateWeekCompletion(course.id, i, newStatus);
+      
+      // Update local state
+      if (!course.weeks) course.weeks = {};
+      course.weeks[i] = { ...(course.weeks[i]||{}), completed: newStatus };
+      
+      // Re-render the detail view
+      openCourseDetail(course);
+      
+      // Update course grid
+      renderCourses();
+    });
+    
+    weeksVisualization.appendChild(weekItem);
+  }
+  
+  feather.replace();
+  openModal(courseDetailModal);
+}
+
+async function updateWeekCompletion(courseId, weekNum, completed) {
+  const deptId = classes.find(c => c.id === selectedClassId)?.departmentId;
+  const ref = db.collection('departments').doc(deptId).collection('classes').doc(selectedClassId).collection('courses').doc(courseId);
+  await ref.update({
+    [`weeks.${weekNum}.completed`]: completed
+  });
+}
+
+function exportCourses() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(courses, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `courses_${selectedClassId || 'class'}.json`);
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+}
+
+courseImageInput.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return alert('Please select an image file.');
+  if (file.size > 2 * 1024 * 1024) return alert('Image must be less than 2MB.');
+  const reader = new FileReader();
+  reader.onload = () => {
+    courseSelectedImageDataUrl = reader.result;
+    courseImagePreview.innerHTML = `<img src="${courseSelectedImageDataUrl}" alt="Preview" class="w-full h-full object-cover">`;
+  };
+  reader.readAsDataURL(file);
+});
+courseImagePreview.addEventListener('click', () => courseImageInput.click());
+
+addCourseBtn.addEventListener('click', () => openCourseModal());
+closeCourseModal.addEventListener('click', () => closeModal(courseModal));
+cancelCourseBtn.addEventListener('click', () => closeModal(courseModal));
+courseModal.querySelector('.absolute.inset-0.bg-black\\/70')?.addEventListener('click', () => closeModal(courseModal));
+saveCourseBtn.addEventListener('click', saveCourse);
+
+closeCourseDetailModal.addEventListener('click', () => closeModal(courseDetailModal));
+closeCourseDetailBtn.addEventListener('click', () => closeModal(courseDetailModal));
+courseDetailModal.querySelector('.absolute.inset-0.bg-black\\/70')?.addEventListener('click', () => closeModal(courseDetailModal));
+
+exportBtn.addEventListener('click', exportCourses);
+courseSearchInput.addEventListener('input', renderCourses);
+refreshBtn.addEventListener('click', () => {
+  if (selectedClassId) loadCourses();
+});
+logoutBtn.addEventListener('click', async () => {
+  await auth.signOut();
+});
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUser = user;
+    show(appView);
+    await loadTeacherData();
+  } else {
+    window.location.href = 'login.html';
+  }
+});
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      feather.replace();
+      AOS.init({ once: true, duration: 400 });
+    });
+  </script>
+</body>
+</html>

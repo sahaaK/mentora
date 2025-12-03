@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glassmorphism Course Cards</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        /* Glassmorphism Course Cards - Extra Styles */
+
+/* Base */
+:root {
+  --ring-bg: rgba(255,255,255,0.12);
+}
+
+/* Card hover motion */
+.hover-lift {
+  transition: transform 280ms ease, box-shadow 280ms ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 60px rgba(139,92,246,0.15);
+}
+
+/* Subtle sheen */
+.sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 45%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 900ms ease;
+  pointer-events: none;
+}
+.sheen:hover::before {
+  transform: translateX(100%);
+}
+
+/* Progress rings (circumference = 2πr) */
+/* r = 20 => 125.664; r = 28 => 175.929 */
+.progress-ring {
+  stroke-dasharray: 125.664;
+  stroke-dashoffset: 125.664;
+  transition: stroke-dashoffset 700ms ease;
+}
+.progress-ring[data-progress="62"] { stroke-dashoffset: 47.75; }
+.progress-ring[data-progress="44"] { stroke-dashoffset: 70.37; }
+.progress-ring[data-progress="68"] { stroke-dashoffset: 56.30; }
+.progress-ring[data-progress="75"] { stroke-dashoffset: 31.42; }
+.progress-ring[data-progress="83"] { stroke-dashoffset: 21.36; }
+.progress-ring[data-progress="78"] { stroke-dashoffset: 27.65; }
+
+/* Optional scrollbar aesthetics */
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Utility focus states */
+button:focus-visible {
+  outline: 2px solid rgba(147,51,234,0.7);
+  outline-offset: 2px;
+}
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-slate-200 selection:bg-purple-400/30">
+    <main class="mx-auto max-w-7xl px-6 py-10">
+        <header class="mb-8 flex items-end justify-between gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-semibold tracking-tight text-white">Featured Courses</h1>
+                <p class="text-sm text-slate-300/80">Dark purple glassy cards with progress, icons, and varied layouts</p>
+            </div>
+            <div class="hidden md:flex items-center gap-2 text-xs text-slate-300/70">
+                <span class="px-2 py-1 rounded-full bg-white/5 backdrop-blur border border-white/10">Tailwind</span>
+                <span class="px-2 py-1 rounded-full bg-white/5 backdrop-blur border border-white/10">Feather Icons</span>
+                <span class="px-2 py-1 rounded-full bg-white/5 backdrop-blur border border-white/10">Glassmorphism</span>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Card 1: Wide horizontal with poster strip -->
+            <article class="relative col-span-12 xl:col-span-7 rounded-3xl overflow-hidden bg-gradient-to-r from-purple-600/20 to-indigo-600/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(60%_60%_at_100%_0%,rgba(147,51,234,0.25),transparent_60%)]"></div>
+
+                <div class="p-6 md:p-8 flex flex-col md:flex-row gap-6">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-[10px] uppercase tracking-wider text-purple-300/80 px-2 py-1 rounded-full bg-purple-400/10 border border-white/10">UI/UX</span>
+                            <span class="text-[10px] uppercase tracking-wider text-indigo-300/80 px-2 py-1 rounded-full bg-indigo-400/10 border border-white/10">Beginner</span>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-semibold text-white mb-2">Design Systems with Tailwind</h3>
+                        <p class="text-slate-300/85 mb-5 max-w-prose">Create scalable, reusable UI libraries using tokens, variants, and automation. Learn to build consistent interfaces for teams.</p>
+
+                        <div class="flex items-center gap-4">
+                            <div class="relative h-12 w-12">
+                                <div class="absolute inset-0 rounded-full bg-white/10 blur-sm"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xs font-semibold text-white">62%</span>
+                                </div>
+                                <svg class="absolute inset-0 h-12 w-12 -rotate-90">
+                                    <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="6" fill="none"/>
+                                    <circle class="progress-ring" cx="24" cy="24" r="20" stroke="url(#grad1a)" stroke-width="6" fill="none" stroke-linecap="round" />
+                                </svg>
+                                <defs>
+                                    <linearGradient id="grad1a" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stop-color="#8b5cf6"/>
+                                        <stop offset="100%" stop-color="#22d3ee"/>
+                                    </linearGradient>
+                                </defs>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-200 font-medium">Progress</p>
+                                <p class="text-xs text-slate-300/70">6 of 10 modules completed</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:w-80 xl:w-96 shrink-0">
+                        <div class="relative h-48 md:h-full min-h-[220px] rounded-2xl overflow-hidden border border-white/10">
+                            <img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop" alt="Course poster">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+                            <button class="absolute bottom-4 right-4 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 flex items-center justify-center transition">
+                                <i data-feather="play" class="text-white"></i>
+                            </button>
+                            <span class="absolute top-3 left-3 text-xs px-2 py-1 rounded-full bg-white/10 backdrop-blur border border-white/10">Updated Sep 2025</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6 flex items-center gap-3">
+                    <div class="flex -space-x-2">
+                        <img class="h-7 w-7 rounded-full ring-2 ring-white/10 object-cover" src="https://i.pravatar.cc/100?img=3" alt="avatar">
+                        <img class="h-7 w-7 rounded-full ring-2 ring-white/10 object-cover" src="https://i.pravatar.cc/100?img=5" alt="avatar">
+                        <img class="h-7 w-7 rounded-full ring-2 ring-white/10 object-cover" src="https://i.pravatar.cc/100?img=8" alt="avatar">
+                    </div>
+                    <div class="text-xs text-slate-300/80">1.2k learners • 10 lessons</div>
+                </div>
+            </article>
+
+            <!-- Card 2: Vertical compact with circular progress -->
+            <article class="relative col-span-12 md:col-span-6 xl:col-span-5 rounded-3xl overflow-hidden bg-gradient-to-b from-indigo-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(60%_40%_at_0%,rgba(79,70,229,0.25),transparent_70%)]"></div>
+
+                <div class="p-6 flex flex-col">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-feather="cpu" class="text-indigo-300"></i>
+                        <span class="text-xs uppercase tracking-wider text-indigo-300/80">Data</span>
+                        <span class="text-[10px] text-slate-400/70 ml-auto pr-1">Level: Intermediate</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-1">Machine Learning Fundamentals</h3>
+                    <p class="text-slate-300/85 text-sm mb-4">Supervised vs unsupervised learning, feature engineering, and model evaluation.</p>
+
+                    <div class="flex items-center gap-5">
+                        <div class="relative h-20 w-20">
+                            <svg class="absolute inset-0 h-20 w-20 -rotate-90">
+                                <circle cx="40" cy="40" r="28" stroke="rgba(255,255,255,0.15)" stroke-width="8" fill="none"/>
+                                <circle class="progress-ring" cx="40" cy="40" r="28" stroke="url(#grad2)" stroke-width="8" fill="none" stroke-linecap="round" />
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xs font-bold text-white">68%</span>
+                            </div>
+                            <defs>
+                                <linearGradient id="grad2" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#22d3ee"/>
+                                    <stop offset="100%" stop-color="#8b5cf6"/>
+                                </linearGradient>
+                            </defs>
+                        </div>
+                        <div class="text-xs text-slate-300/70">
+                            <p class="mb-1">12 of 18 lessons done</p>
+                            <div class="h-1.5 w-40 rounded-full bg-white/10 overflow-hidden">
+                                <div class="h-full w-[68%] bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 rounded-xl overflow-hidden border border-white/10">
+                        <img class="h-44 w-full object-cover" src="https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1400&auto=format&fit=crop" alt="Course poster">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-slate-300/80 text-xs">
+                            <i data-feather="clock" class="w-4 h-4"></i>
+                            <span>8h 40m</span>
+                        </div>
+                        <button class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-sm">Continue</button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 3: Slanted poster right -->
+            <article class="relative col-span-12 md:col-span-7 rounded-3xl overflow-hidden bg-gradient-to-br from-fuchsia-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(50%_50%_at_0%_100%,rgba(217,70,239,0.25),transparent_60%)]"></div>
+
+                <div class="relative">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-0">
+                        <div class="md:col-span-3 p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-4">
+                                <i data-feather="music" class="text-fuchsia-300"></i>
+                                <span class="text-xs uppercase tracking-wider text-fuchsia-300/80">Audio</span>
+                                <span class="text-[10px] text-slate-400/70 ml-auto">New • 2025</span>
+                            </div>
+                            <h3 class="text-2xl font-semibold text-white mb-2">Creative Coding with Tone.js</h3>
+                            <p class="text-slate-300/85 mb-5">Build interactive music apps in the browser. Learn scheduling, synthesis, and sampling.</p>
+
+                            <div class="flex items-center gap-4">
+                                <div class="relative h-12 w-12">
+                                    <div class="absolute inset-0 rounded-full bg-white/10 blur-sm"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <span class="text-xs font-semibold text-white">44%</span>
+                                    </div>
+                                    <svg class="absolute inset-0 h-12 w-12 -rotate-90">
+                                        <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="6" fill="none"/>
+                                        <circle class="progress-ring" cx="24" cy="24" r="20" stroke="url(#grad3)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                                    </svg>
+                                    <defs>
+                                        <linearGradient id="grad3" x1="0" y1="0" x2="1" y2="1">
+                                            <stop offset="0%" stop-color="#f472b6"/>
+                                            <stop offset="100%" stop-color="#60a5fa"/>
+                                        </linearGradient>
+                                    </defs>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-200 font-medium">Progress</p>
+                                    <p class="text-xs text-slate-300/70">4 of 9 tracks finished</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex items-center gap-2 text-slate-300/80 text-xs">
+                                <i data-feather="users" class="w-4 h-4"></i>
+                                <span>By Sam Rivera</span>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 relative overflow-hidden">
+                            <div class="absolute inset-0 md:-skew-x-8 md:translate-x-8">
+                                <img class="h-56 md:h-full w-full object-cover" src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1400&auto=format&fit=crop" alt="Course poster">
+                                <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <button class="h-14 w-14 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 flex items-center justify-center">
+                                        <i data-feather="play" class="text-white"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 4: Split layout with tall poster -->
+            <article class="relative col-span-12 lg:col-span-6 rounded-3xl overflow-hidden bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(60%_50%_at_100%_50%,rgba(139,92,246,0.25),transparent_60%)]"></div>
+
+                <div class="flex flex-col md:flex-row">
+                    <div class="md:w-1/2 p-6 md:p-8">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-feather="bar-chart" class="text-violet-300"></i>
+                            <span class="text-xs uppercase tracking-wider text-violet-300/80">Analytics</span>
+                            <span class="text-[10px] text-slate-400/70 ml-auto">Certification</span>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-white mb-2">Practical Data Visualization</h3>
+                        <p class="text-slate-300/85 mb-5">D3.js patterns, chart types, accessibility, and performance for large datasets.</p>
+
+                        <div class="mb-5">
+                            <div class="flex items-center justify-between text-xs text-slate-300/80 mb-1">
+                                <span>Module completion</span>
+                                <span>9/12</span>
+                            </div>
+                            <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                                <div class="h-full w-[75%] bg-gradient-to-r from-violet-400 to-indigo-400 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-sm">Resume</button>
+                            <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm">Preview</button>
+                        </div>
+                    </div>
+
+                    <div class="md:w-1/2 relative">
+                        <img class="h-72 md:h-full w-full object-cover" src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1400&auto=format&fit=crop" alt="Course poster">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                        <span class="absolute top-3 left-3 text-xs px-2 py-1 rounded-full bg-white/10 backdrop-blur border border-white/10">Charts Masterclass</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 5: Floating poster -->
+            <article class="relative col-span-12 lg:col-span-6 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-700/20 to-indigo-700/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(60%_60%_at_80%_10%,rgba(168,85,247,0.25),transparent_60%)]"></div>
+
+                <div class="p-6 md:p-8">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-feather="globe" class="text-purple-300"></i>
+                        <span class="text-xs uppercase tracking-wider text-purple-300/80">Web</span>
+                        <span class="text-[10px] text-slate-400/70 ml-auto">Popular</span>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-white mb-2">Modern Web Animations</h3>
+                    <p class="text-slate-300/85 mb-4">Performance-first animation using CSS, WAAPI, and Scroll-driven animations.</p>
+
+                    <div class="flex items-center gap-4">
+                        <div class="relative h-12 w-12">
+                            <div class="absolute inset-0 rounded-full bg-white/10 blur-sm"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xs font-semibold text-white">83%</span>
+                            </div>
+                            <svg class="absolute inset-0 h-12 w-12 -rotate-90">
+                                <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="6" fill="none"/>
+                                <circle class="progress-ring" cx="24" cy="24" r="20" stroke="url(#grad5)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                            </svg>
+                            <defs>
+                                <linearGradient id="grad5" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#a78bfa"/>
+                                    <stop offset="100%" stop-color="#38bdf8"/>
+                                </linearGradient>
+                            </defs>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-200 font-medium">Progress</p>
+                            <p class="text-xs text-slate-300/70">10 of 12 lessons completed</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex items-center gap-2 text-slate-300/80 text-xs">
+                        <i data-feather="calendar" class="w-4 h-4"></i>
+                        <span>12 days streak</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="relative -mt-28 md:-mt-40 ml-auto w-72 h-44 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                        <img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1529101091764-c3526daf38fe?q=80&w=1400&auto=format&fit=crop" alt="Course poster">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+                        <span class="absolute top-3 left-3 text-xs px-2 py-1 rounded-full bg-white/10 backdrop-blur border border-white/10">Animations</span>
+                        <button class="absolute bottom-3 right-3 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 flex items-center justify-center">
+                            <i data-feather="arrow-right" class="text-white"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 6: Vertical with stacked content -->
+            <article class="relative col-span-12 rounded-3xl overflow-hidden bg-gradient-to-b from-purple-600/25 to-fuchsia-600/25 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(60%_60%_at_0%_0%,rgba(244,114,182,0.25),transparent_60%)]"></div>
+
+                <div class="p-6 md:p-8">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-feather="smartphone" class="text-fuchsia-300"></i>
+                        <span class="text-xs uppercase tracking-wider text-fuchsia-300/80">Mobile</span>
+                        <span class="text-[10px] text-slate-400/70 ml-auto">Advanced</span>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-white mb-2">SwiftUI for iOS 18</h3>
+                    <p class="text-slate-300/85 mb-5">Build stunning, modern iOS apps with SwiftUI, layouts, animations, and data flow.</p>
+
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="flex-1">
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between text-xs text-slate-300/80 mb-1">
+                                    <span>Curriculum progress</span>
+                                    <span>11/14</span>
+                                </div>
+                                <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                                    <div class="h-full w-[78%] bg-gradient-to-r from-fuchsia-400 to-purple-400 rounded-full"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-sm">Continue</button>
+                                <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm">Syllabus</button>
+                            </div>
+                        </div>
+
+                        <div class="w-full md:w-64 rounded-2xl overflow-hidden border border-white/10">
+                            <img class="h-40 w-full object-cover" src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1200&auto=format&fit=crop" alt="Course poster">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        // Glassmorphism Course Cards - Interactions
+
+// Animate rings to their stored data-progress
+document.querySelectorAll('.progress-ring').forEach(ring => {
+  const value = ring.getAttribute('data-progress') || ring.dataset.progress || 0;
+  ring.style.strokeDashoffset = value; // already computed in CSS map
+});
+
+// Add hover-lift + sheen to all cards
+document.querySelectorAll('article').forEach(card => {
+  card.classList.add('hover-lift', 'sheen');
+});
+
+// Optional: small parallax on mouse move for floating poster
+const floating = document.querySelector('.relative.-mt-28');
+if (floating) {
+  const container = floating.closest('article');
+  container.addEventListener('mousemove', (e) => {
+    const rect = container.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    floating.style.transform = `translate(${x * 6}px, ${y * 6}px)`;
+  });
+  container.addEventListener('mouseleave', () => {
+    floating.style.transform = 'translate(0,0)';
+  });
+}
+    </script>
+    <script>feather.replace();</script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

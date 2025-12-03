@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Profile</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
+  <!-- Tailwind + Icons + Libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#8b5cf6',
+              50:'#f5f3ff',100:'#ede9fe',200:'#ddd6fe',300:'#c4b5fd',400:'#a78bfa',500:'#8b5cf6',600:'#7c3aed',700:'#6d28d9',800:'#5b21b6',900:'#4c1d95',950:'#2e1065'
+            },
+            secondary: {
+              DEFAULT:'#06b6d4',
+              50:'#ecfeff',100:'#cffafe',200:'#a5f3fc',300:'#67e8f9',400:'#22d3ee',500:'#06b6d4',600:'#0891b2',700:'#0e7490',800:'#155e75',900:'#164e63',950:'#083344'
+            },
+            dark: {
+              50:'#f9fafb',100:'#f3f4f6',200:'#e5e7eb',300:'#d1d5db',400:'#9ca3af',500:'#6b7280',600:'#4b5563',700:'#374151',800:'#1f2937',850:'#18202c',900:'#111827',950:'#0b0a13'
+            }
+          },
+          boxShadow: {
+            glass: '0 10px 40px rgba(0,0,0,0.25)'
+          },
+          keyframes: {
+            'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            'scale-in': { '0%': { opacity: 0, transform: 'scale(.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+            'pop': { '0%': { transform: 'scale(.9)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+            'slide-up': { '0%': { transform: 'translateY(12px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+            'shimmer': { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+            'float': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+            'wave': { '0%': { transform: 'translateX(0%)' }, '50%': { transform: 'translateX(-25%)' }, '100%': { transform: 'translateX(0%)' } },
+            'bar-fill': { '0%': { width: '0%' }, '100%': { width: 'var(--w)' } }
+          },
+          animation: {
+            'fade-in': 'fade-in .2s ease-out',
+            'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+            'pop': 'pop .18s ease-out',
+            'slide-up': 'slide-up .28s ease-out',
+            'shimmer': 'shimmer 2s linear infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'wave': 'wave 8s linear infinite',
+            'bar-fill': 'bar-fill .9s ease-out var(--delay, 0s) forwards'
+          },
+          backdropBlur: {
+            xs: '2px'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <!-- AOS + Animate.css -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Local CSS -->
+  <style>
+    :root {
+      --color-primary: #8b5cf6;
+      --color-primary-600: #7c3aed;
+      --color-secondary: #06b6d4;
+      --color-accent: #22d3ee;
+      --glass-bg: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --wave-fill: #7dd3fc;
+    }
+
+    * , *::before, *::after { box-sizing: border-box; }
+
+    html, body { height: 100%; background: #0b0a13; color: #e2e8f0; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    .card--glass, .glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px) saturate(130%);
+      -webkit-backdrop-filter: blur(14px) saturate(130%);
+      transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+    }
+
+    .card--glass:hover, .glass-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow:
+        0 14px 34px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(99,102,241,0.08); }
+    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.25); border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.45); }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 text-white">
+  <!-- Background Ornaments -->
+  <div class="fixed inset-0 pointer-events-none">
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute top-1/3 -right-24 w-80 h-80 bg-secondary-500/10 rounded-full blur-3xl animate-float" style="animation-delay: -2s"></div>
+    <div class="absolute -bottom-24 left-1/3 w-80 h-80 bg-primary-400/10 rounded-full blur-3xl animate-float" style="animation-delay: -4s"></div>
+  </div>
+
+  <header class="px-6 pt-6">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+          <i data-feather="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold">
+            <span class="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">Edit Profile</span>
+          </h1>
+          <p id="headerSubtitle" class="text-gray-400 text-sm">Loading your profile...</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="logoutBtn" class="glass px-3 py-2 rounded-lg hover:bg-rose-500/20 text-rose-200 transition-all">
+          <i data-feather="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 pb-12">
+    <section class="mt-6">
+      <div class="glass-card p-6">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-16 h-16 rounded-full bg-gradient-to-r from-primary-400 to-secondary-400 flex items-center justify-center text-white font-bold shadow-lg">
+            <span id="avatarInitial">T</span>
+          </div>
+          <div>
+            <h2 id="displayName" class="text-xl font-bold">Teacher</h2>
+            <p id="displayMeta" class="text-gray-400 text-sm">—</p>
+          </div>
+        </div>
+
+        <form id="profileForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+            <input id="profileName" type="text" required
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+            <input id="profileEmail" type="email" required
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Phone</label>
+            <input id="profilePhone" type="tel"
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Specialty</label>
+            <input id="profileSpecialty" type="text"
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-300 mb-2">New Password (optional)</label>
+            <input id="profilePassword" type="password" placeholder="Leave blank to keep current password"
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+          </div>
+        </form>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <a href="index.html" class="px-4 py-2.5 glass rounded-lg hover:bg-white/10 transition-all">Cancel</a>
+          <button id="saveProfileBtn" class="relative overflow-hidden px-5 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all">
+            <span class="absolute inset-0 opacity-0 hover:opacity-100 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></span>
+            <span class="relative flex items-center gap-2">
+              <i data-feather="save"></i>
+              Save Changes
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function initFirebase() {
+      const existingApp = firebase.apps && firebase.apps[0];
+      if (existingApp) return;
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+        authDomain: "mentora-71f5c.firebaseapp.com",
+        projectId: "mentora-71f5c",
+        storageBucket: "mentora-71f5c.appspot.com",
+        messagingSenderId: "16685388211",
+        appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+        measurementId: "G-BL98PXGK2G"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+    })();
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // State
+    let currentUser = null;
+    let currentTeacherDoc = null;
+
+    // UI refs
+    const headerSubtitle = document.getElementById('headerSubtitle');
+    const avatarInitial = document.getElementById('avatarInitial');
+    const displayName = document.getElementById('displayName');
+    const displayMeta = document.getElementById('displayMeta');
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    const profilePhone = document.getElementById('profilePhone');
+    const profileSpecialty = document.getElementById('profileSpecialty');
+    const profilePassword = document.getElementById('profilePassword');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    async function loadTeacherProfile() {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const deptSnap = await db.collection('departments').get();
+      let found = null;
+      for (const deptDoc of deptSnap.docs) {
+        const classSnap = await db.collection('departments').doc(deptDoc.id).collection('classes').get();
+        for (const classDoc of classSnap.docs) {
+          const tSnap = await db.collection('departments').doc(deptDoc.id).collection('classes').doc(classDoc.id).collection('teachers').where('authUid', '==', user.uid).limit(1).get();
+          if (!tSnap.empty) {
+            found = { teacher: tSnap.docs[0], class: classDoc, department: deptDoc };
+            break;
+          }
+        }
+        if (found) break;
+      }
+
+      currentTeacherDoc = found ? found.teacher : null;
+      const t = currentTeacherDoc?.data() || {};
+      const name = t.name || user.displayName || 'Teacher';
+      const email = user.email || t.email || '';
+      const phone = t.phone || '';
+      const specialty = t.specialty || '';
+
+      headerSubtitle.textContent = `${name} • ${specialty || '—'}`;
+      displayName.textContent = name;
+      displayMeta.textContent = `${email}${specialty ? ' • ' + specialty : ''}`;
+      avatarInitial.textContent = (name || 'T').charAt(0).toUpperCase();
+
+      profileName.value = name;
+      profileEmail.value = email;
+      profilePhone.value = phone;
+      profileSpecialty.value = specialty;
+      profilePassword.value = '';
+    }
+
+    saveProfileBtn.addEventListener('click', async () => {
+      try {
+        const name = profileName.value.trim();
+        const phone = profilePhone.value.trim();
+        const specialty = profileSpecialty.value.trim();
+        const newPassword = profilePassword.value.trim();
+        const email = profileEmail.value.trim();
+
+        if (!currentUser) {
+          alert('You are not authenticated.');
+          return;
+        }
+
+        // Update Auth email if changed
+        if (email && email !== currentUser.email) {
+          await currentUser.updateEmail(email);
+        }
+        // Update Password if provided
+        if (newPassword) {
+          await currentUser.updatePassword(newPassword);
+        }
+        // Update Firestore teacher profile
+        if (currentTeacherDoc) {
+          await currentTeacherDoc.ref.update({
+            name, phone, specialty, email
+          });
+        }
+
+        // Update UI
+        displayName.textContent = name;
+        headerSubtitle.textContent = `${name} • ${specialty || '—'}`;
+        displayMeta.textContent = `${email}${specialty ? ' • ' + specialty : ''}`;
+        avatarInitial.textContent = (name || 'T').charAt(0).toUpperCase();
+
+        alert('Profile updated successfully.');
+        // Optionally redirect back
+        // window.location.href = 'index.html';
+      } catch (err) {
+        alert('Failed to update profile: ' + (err?.message || 'Unknown error'));
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await auth.signOut();
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentUser = user;
+      await loadTeacherProfile();
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      feather.replace();
+      AOS.init({ once: true, duration: 400 });
+    });
+  </script>
+</body>
+</html>

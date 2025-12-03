@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Class Courses Dashboard</title>
+
+  <!-- Tailwind + Icons + Libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
+  <link rel="stylesheet" href="/depy/components/sidebar.css"/>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#8b5cf6' },
+            secondary: { DEFAULT: '#06b6d4' }
+          },
+          boxShadow: {
+            glass: '0 10px 40px rgba(0,0,0,0.25)'
+          },
+          keyframes: {
+            'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            'scale-in': { '0%': { opacity: 0, transform: 'scale(.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+            'pop': { '0%': { transform: 'scale(.9)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+            'slide-up': { '0%': { transform: 'translateY(12px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+            'shimmer': { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+            'float': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+            'wave': { '0%': { transform: 'translateX(0%)' }, '50%': { transform: 'translateX(-25%)' }, '100%': { transform: 'translateX(0%)' } },
+            'bar-fill': { '0%': { width: '0%' }, '100%': { width: 'var(--w)' } }
+          },
+          animation: {
+            'fade-in': 'fade-in .2s ease-out',
+            'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+            'pop': 'pop .18s ease-out',
+            'slide-up': 'slide-up .28s ease-out',
+            'shimmer': 'shimmer 2s linear infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'wave': 'wave 8s linear infinite',
+            'bar-fill': 'bar-fill .9s ease-out var(--delay, 0s) forwards'
+          },
+          backdropBlur: { xs: '2px' }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root { --ring-bg: rgba(255,255,255,0.12); }
+
+    body { font-family: Inter, system-ui, sans-serif; background: linear-gradient(180deg,#0f172a,#0b1220); color: #e6eef8; }
+
+    /* Glass base */
+  .glass-card {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            border-radius: 16px;
+        }
+
+        .glass-card:hover {
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Animated gradient border */
+        .gradient-border {
+            position: relative;
+            z-index: 1;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+            z-index: -1;
+            border-radius: 18px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .glass-card:hover .gradient-border::before {
+            opacity: 1;
+        }
+    /* Sheen effect for cards */
+    .sheen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 45%, transparent 60%);
+      transform: translateX(-100%);
+      transition: transform 900ms ease;
+      pointer-events: none;
+    }
+    .sheen:hover::before { transform: translateX(100%); }
+
+    /* Completion ring progress */
+    .progress-ring { stroke-dasharray: 125.664; transition: stroke-dashoffset 700ms ease; }
+
+    /* Bubble background */
+    .bubble-container { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; overflow: hidden; }
+    .bubble { position: absolute; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.05)); backdrop-filter: blur(1px); animation: float 20s infinite ease-in-out; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+      33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
+      66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
+    }
+
+    /* Weeks chips */
+    .week-chip {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 4px 6px; border-radius: 9999px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10); color: #e2e8f0; font-size: 11px; cursor: pointer; user-select: none;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+    .week-chip input {
+      appearance: none; width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.04); display: inline-block; position: relative;
+    }
+    .week-chip input:checked {
+      background: linear-gradient(180deg, #22d3ee, #8b5cf6);
+      border-color: rgba(255,255,255,0.5);
+    }
+    .week-chip input:checked::after {
+      content: ''; position: absolute; inset: 2px; background: rgba(255,255,255,0.85); border-radius: 2px; mix-blend-mode: overlay;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { height: 10px; width: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    .ring-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:9999px; font-size:11px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color:#e2e8f0;
+    }
+
+    .stat-number { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Background Ornaments + animated bubbles -->
+  <div class="fixed inset-0 pointer-events-none">
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute top-1/3 -right-24 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-float" style="animation-delay:-2s"></div>
+    <div class="absolute -bottom-24 left-1/3 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float" style="animation-delay:-4s"></div>
+  </div>
+  <div class="bubble-container"></div>
+
+  <div class="max-w-[1600px] mx-auto px-6 py-10">
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold">Courses Dashboard</h1>
+        <p id="classMeta" class="text-sm text-slate-300/80 mt-1">Loading...</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="refreshBtn" class="px-3 py-2 glass rounded-lg hover:bg-white/10 transition-all">Refresh</button>
+        <a id="backLink" class="px-3 py-2 glass rounded-lg hover:bg-white/10 transition-all" href="/depy/classes/index.html">Back</a>
+      </div>
+    </header>
+
+    <!-- Stats Row -->
+    <section id="statsRow" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Stat cards injected by JS -->
+    </section>
+
+    <!-- Content Grid: Courses + Radar -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <!-- Courses List -->
+      <div class="xl:col-span-2">
+        <div id="coursesContainer">
+          <div id="coursesGrid" class="flex flex-col gap-6">
+            <!-- Horizontal course cards go here -->
+          </div>
+        </div>
+
+        <div id="emptyState" class="hidden mt-8 glass-card p-8 text-center rounded-2xl">
+          <p class="text-slate-300 mb-3">No courses found for this class.</p>
+          <p class="text-sm text-slate-400">If teachers add courses via their portal they will appear here.</p>
+        </div>
+      </div>
+
+      <!-- Radar / Insights Panel -->
+      <aside class="xl:col-span-1">
+        <div class="glass-card rounded-2xl p-5 h-full">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Course Performance Radar</h3>
+            <span class="ring-badge"><i data-feather="activity" class="w-3.5 h-3.5"></i> Live</span>
+          </div>
+          <div class="relative">
+            <canvas id="radarChart" height="320"></canvas>
+          </div>
+          <!-- <div class="mt-4 text-xs text-slate-300/80">
+            Pentagon compares: Engagement, Completion, Attendance, Assignments, Quizzes
+          </div> -->
+        </div>
+      </aside>
+    </div>
+  </div>
+
+    <div id="sidebar-root"></div>
+    <script src="/depy/classes/classes-sidebar.js"></script>
+
+  <script>
+    // Firebase setup
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+      authDomain: "mentora-71f5c.firebaseapp.com",
+      projectId: "mentora-71f5c",
+      storageBucket: "mentora-71f5c.appspot.com",
+      messagingSenderId: "16685388211",
+      appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+      measurementId: "G-BL98PXGK2G"
+    };
+    (function initFirebase(){
+      if (!window.firebase || !(window.firebase.apps && window.firebase.apps.length)) {
+        try { firebase.initializeApp(firebaseConfig); } catch(e) {}
+      }
+    })();
+    const db = firebase.firestore();
+
+    // State
+    let coursesCache = [];
+    let classIdCache = null;
+    let radarChart = null;
+
+    // Helpers
+    function getQueryParam(name){ return new URLSearchParams(window.location.search).get(name); }
+
+    async function resolveDeptIdForClass(classId){
+      const cached = localStorage.getItem('currentDeptId');
+      if (cached) {
+        try {
+          const exists = await db.collection('departments').doc(cached).collection('classes').doc(classId).get();
+          if (exists && exists.exists) return cached;
+        } catch(e){}
+      }
+      try {
+        const deps = await db.collection('departments').get();
+        for (const d of deps.docs){
+          const classesSnap = await db.collection('departments').doc(d.id).collection('classes').doc(classId).get();
+          if (classesSnap.exists) {
+            localStorage.setItem('currentDeptId', d.id);
+            return d.id;
+          }
+        }
+      } catch(e){}
+      return null;
+    }
+
+    async function findAssignedClassForCurrentUser(){
+      if (!firebase.auth) return null;
+      const user = firebase.auth().currentUser;
+      if (!user) return null;
+
+      try {
+        const deps = await db.collection('departments').get();
+        for (const d of deps.docs){
+          const classesSnap = await db.collection('departments').doc(d.id).collection('classes').get();
+          for (const c of classesSnap.docs){
+            const tSnap = await db.collection('departments').doc(d.id).collection('classes').doc(c.id).collection('teachers').where('authUid','==',user.uid).limit(1).get();
+            if (!tSnap.empty) {
+              localStorage.setItem('currentDeptId', d.id);
+              localStorage.setItem('currentClassId', c.id);
+              return { deptId: d.id, classId: c.id, classDoc: c };
+            }
+          }
+        }
+      } catch(err){}
+      return null;
+    }
+
+    async function showClassPicker(){
+      const pickerId = 'classPickerOverlay';
+      if (document.getElementById(pickerId)) return;
+
+      const overlay = document.createElement('div');
+      overlay.id = pickerId;
+      overlay.className = 'fixed inset-0 z-[9999] grid place-items-center';
+      overlay.style.background = 'rgba(2,6,23,0.6)';
+
+      const panel = document.createElement('div');
+      panel.className = 'glass-card p-6';
+      panel.style.maxWidth = '900px';
+      panel.style.width = '95%';
+      panel.innerHTML = `
+        <h2 class="text-lg font-bold mb-3">Select a class</h2>
+        <p class="text-sm text-slate-300 mb-4">Pick a class to view its courses. You can also click "Find my class" if you're a teacher.</p>
+        <div id="pickerList" style="max-height:50vh;overflow:auto;display:grid;gap:8px"></div>
+        <div class="mt-4 flex gap-2 justify-end">
+          <button id="pickerFindMyClass" class="px-3 py-2 glass rounded-lg hover:bg-white/10">Find my class (teacher)</button>
+          <button id="pickerClose" class="px-3 py-2 glass rounded-lg hover:bg-white/10">Close</button>
+        </div>
+      `;
+
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+
+      const pickerList = panel.querySelector('#pickerList');
+      try {
+        const deps = await db.collection('departments').get();
+        for (const d of deps.docs){
+          const header = document.createElement('div');
+          header.innerHTML = `<div class="font-semibold">Department: ${d.data().name || d.id}</div>`;
+          pickerList.appendChild(header);
+          const classesSnap = await db.collection('departments').doc(d.id).collection('classes').get();
+          for (const c of classesSnap.docs){
+            const btn = document.createElement('button');
+            btn.className = 'glass p-3 text-left rounded-lg hover:bg-white/10';
+            btn.style.width = '100%';
+            btn.textContent = `${c.data().name || 'Unnamed'} — ${c.id.slice(0,8)}`;
+            btn.addEventListener('click', () => {
+              localStorage.setItem('currentDeptId', d.id);
+              localStorage.setItem('currentClassId', c.id);
+              overlay.remove();
+              loadAll();
+            });
+            pickerList.appendChild(btn);
+          }
+        }
+      } catch(err){ pickerList.innerHTML = '<div class="text-sm text-rose-300">Failed to load classes.</div>'; }
+
+      panel.querySelector('#pickerClose').addEventListener('click', () => overlay.remove());
+      panel.querySelector('#pickerFindMyClass').addEventListener('click', async () => {
+        if (!firebase.auth) return alert('Auth unavailable');
+        const res = await findAssignedClassForCurrentUser();
+        if (res) { overlay.remove(); loadAll(); } else { alert('No assigned class found for current user.'); }
+      });
+    }
+
+    // Stats + Radar helpers
+    function computeStats(courses){
+      const n = courses.length || 1;
+      let totalCompletion = 0;
+      let totalCompletedWeeks = 0;
+      let maxWeeksPossible = n * 16;
+      let engagementSum = 0, completionSum = 0, attendanceSum = 0, assignmentsSum = 0, quizzesSum = 0;
+
+      for (const c of courses) {
+        const weeks = c.weeks || {};
+        let completed = 0;
+        for (let i=1;i<=16;i++) if (weeks[i]?.completed) completed++;
+        totalCompletion += (completed / 16);
+        totalCompletedWeeks += completed;
+
+        const metrics = c.metrics || {};
+        // Normalize to 0-100
+        engagementSum += Math.max(0, Math.min(100, Number(metrics.engagement ?? 70)));
+        completionSum += Math.max(0, Math.min(100, Number(metrics.completion ?? Math.round((completed/16)*100))));
+        attendanceSum += Math.max(0, Math.min(100, Number(metrics.attendance ?? 75)));
+        assignmentsSum += Math.max(0, Math.min(100, Number(metrics.assignments ?? 68)));
+        quizzesSum += Math.max(0, Math.min(100, Number(metrics.quizzes ?? 65)));
+      }
+
+      return {
+        totalCourses: courses.length,
+        avgCompletion: Math.round((totalCompletion / n) * 100),
+        totalCompletedWeeks,
+        maxWeeksPossible,
+        avgEngagement: Math.round(engagementSum / n),
+        avgCompletionMetric: Math.round(completionSum / n),
+        avgAttendance: Math.round(attendanceSum / n),
+        avgAssignments: Math.round(assignmentsSum / n),
+        avgQuizzes: Math.round(quizzesSum / n),
+      };
+    }
+
+    function animateCounter(el, target, duration = 900){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) { el.textContent = target; return; }
+      const start = performance.now();
+      function step(now){
+        const p = Math.min((now - start)/duration, 1);
+        const eased = 1 - Math.pow(1-p, 3);
+        el.textContent = Math.round(eased * target);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function renderStats(courses){
+      const s = computeStats(courses);
+      const statsRow = document.getElementById('statsRow');
+      statsRow.innerHTML = `
+        <div class="glass-card rounded-2xl p-5 sheen">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm text-slate-300/80">Total Courses</div>
+              <div id="statCourses" class="text-2xl font-bold stat-number">0</div>
+            </div>
+            <div class="h-12 w-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+              <i data-feather="layers" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 sheen">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm text-slate-300/80">Avg. Completion</div>
+              <div class="flex items-baseline gap-2">
+                <div id="statAvgCompletion" class="text-2xl font-bold stat-number">0</div>
+                <div class="text-xs text-slate-300/70">%</div>
+              </div>
+            </div>
+            <div class="relative h-12 w-12">
+              <svg class="absolute inset-0 h-12 w-12 -rotate-90">
+                <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="6" fill="none"/>
+                <circle id="ringCompletion" class="progress-ring" cx="24" cy="24" r="20" stroke="url(#gradStat1)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <defs>
+                  <linearGradient id="gradStat1" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#8b5cf6"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="absolute inset-0 grid place-items-center">
+                <i data-feather="trending-up" class="w-5 h-5 text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 sheen">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm text-slate-300/80">Weeks Completed</div>
+              <div class="text-2xl font-bold stat-number"><span id="statWeeksDone">0</span><span class="text-base text-slate-300/60">/</span><span id="statWeeksTotal" class="text-base text-slate-300/60">0</span></div>
+            </div>
+            <div class="h-12 w-12 rounded-xl bg-secondary/20 text-secondary flex items-center justify-center">
+              <i data-feather="calendar" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 sheen">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm text-slate-300/80">Performance Index</div>
+              <div class="flex items-baseline gap-2">
+                <div id="statPerformance" class="text-2xl font-bold stat-number">0</div>
+                <div class="text-xs text-slate-300/70">/100</div>
+              </div>
+            </div>
+            <div class="h-12 w-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+              <i data-feather="target" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+      `;
+      feather.replace();
+
+      // Animate values
+      animateCounter(document.getElementById('statCourses'), s.totalCourses);
+      animateCounter(document.getElementById('statAvgCompletion'), s.avgCompletion);
+      animateCounter(document.getElementById('statWeeksDone'), s.totalCompletedWeeks);
+      document.getElementById('statWeeksTotal').textContent = s.maxWeeksPossible;
+      animateCounter(document.getElementById('statPerformance'), Math.round((s.avgEngagement + s.avgCompletionMetric + s.avgAttendance + s.avgAssignments + s.avgQuizzes)/5));
+
+      // Animate ring
+      const ring = document.getElementById('ringCompletion');
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const circumference = 2 * Math.PI * 20;
+      const targetOffset = circumference * (1 - s.avgCompletion/100);
+      if (prefersReduced) {
+        ring.style.strokeDashoffset = String(targetOffset);
+      } else {
+        const start = performance.now();
+        const duration = 900;
+        function step(now){
+          const p = Math.min((now - start)/duration, 1);
+          const eased = 1 - Math.pow(1-p, 3);
+          const current = eased * s.avgCompletion;
+          ring.style.strokeDashoffset = String(circumference * (1 - current/100));
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
+      // Build/update radar
+      buildOrUpdateRadar(s, courses);
+    }
+
+    function buildOrUpdateRadar(stats, courses){
+      const ctx = document.getElementById('radarChart');
+      const labels = ['Engagement','Completion','Attendance','Assignments','Quizzes'];
+      const values = [stats.avgEngagement, stats.avgCompletionMetric, stats.avgAttendance, stats.avgAssignments, stats.avgQuizzes];
+
+      const datasetBase = {
+        label: 'Class Avg',
+        data: values,
+        fill: true,
+        backgroundColor: 'rgba(139, 92, 246, 0.18)',
+        borderColor: '#8b5cf6',
+        pointBackgroundColor: '#8b5cf6',
+        pointBorderColor: '#8b5cf6',
+        pointHoverBackgroundColor: '#06b6d4',
+        pointHoverBorderColor: '#06b6d4'
+      };
+
+      if (!radarChart){
+        radarChart = new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels,
+            datasets: [datasetBase]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: true }
+            },
+            scales: {
+              r: {
+                angleLines: { color: 'rgba(255,255,255,0.12)' },
+                grid: { color: 'rgba(255,255,255,0.12)' },
+                pointLabels: { color: '#e2e8f0', font: { size: 12 } },
+                suggestedMin: 0,
+                suggestedMax: 100,
+                ticks: { display: false }
+              }
+            }
+          }
+        });
+      } else {
+        radarChart.data.labels = labels;
+        radarChart.data.datasets[0].data = values;
+        radarChart.update();
+      }
+
+      // Optionally overlay top 3 course outlines
+      const topCourses = [...courses]
+        .map(c => ({ id: c.id, name: c.name || c.id, value: computeCoursePercent(c) }))
+        .sort((a,b) => b.value - a.value)
+        .slice(0, 3);
+      const palette = ['#06b6d4', '#22d3ee', '#a78bfa'];
+      radarChart.data.datasets = [datasetBase]; // reset
+      topCourses.forEach((tc, idx) => {
+        const metrics = (courses.find(x => x.id === tc.id)?.metrics) || {};
+        radarChart.data.datasets.push({
+          label: tc.name,
+          data: [
+            Math.max(0, Math.min(100, Number(metrics.engagement ?? (70 + idx*5)))),
+            Math.max(0, Math.min(100, Number(metrics.completion ?? tc.value))),
+            Math.max(0, Math.min(100, Number(metrics.attendance ?? (75 + idx*3)))),
+            Math.max(0, Math.min(100, Number(metrics.assignments ?? (68 + idx*4)))),
+            Math.max(0, Math.min(100, Number(metrics.quizzes ?? (65 + idx*6))))
+          ],
+          fill: false,
+          borderColor: palette[idx % palette.length],
+          backgroundColor: 'transparent',
+          pointBackgroundColor: palette[idx % palette.length],
+          borderDash: [6,4]
+        });
+      });
+      radarChart.update();
+    }
+
+    // Course UI helpers
+    function computeCoursePercent(course) {
+      const weeks = course.weeks || {};
+      let completed = 0;
+      for (let i = 1; i <= 16; i++) if (weeks[i]?.completed) completed++;
+      return (completed / 16) * 100;
+    }
+
+    function animateRing(el, percent) {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) {
+        el.style.strokeDashoffset = String(125.664 * (1 - percent/100));
+        return;
+      }
+      const start = performance.now();
+      const duration = 900;
+      function step(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const current = eased * percent;
+        el.style.strokeDashoffset = String(125.664 * (1 - current/100));
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function renderMonthBar(monthIndex, course) {
+      const weeks = course.weeks || {};
+      const ranges = [
+        { label: 'Month 1', start: 1, end: 4, cls: 'from-green-400 to-emerald-500' },
+        { label: 'Month 2', start: 5, end: 8, cls: 'from-blue-400 to-cyan-500' },
+        { label: 'Month 3', start: 9, end: 12, cls: 'from-purple-400 to-fuchsia-500' },
+        { label: 'Month 4', start: 13, end: 16, cls: 'from-amber-400 to-orange-500' }
+      ];
+      const range = ranges[monthIndex - 1];
+      let completed = 0;
+      for (let i = range.start; i <= range.end; i++) if (weeks[i]?.completed) completed++;
+      const pct = Math.round((completed / 4) * 100);
+
+      return `
+        <div class="glass-card p-3 rounded-xl">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-medium text-sm">${range.label}</h4>
+            <span id="month-${monthIndex}-${course.id}" class="text-[10px] px-2 py-0.5 rounded-full ${pct === 100 ? 'bg-green-500/20 text-green-300' : pct >= 50 ? 'bg-green-500/10 text-green-300' : 'bg-gray-500/20 text-gray-300'}">${pct}%</span>
+          </div>
+          <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+            <div id="monthbar-${monthIndex}-${course.id}" class="h-full w-0 bg-gradient-to-r ${range.cls} rounded-full transition-all duration-700" style="--w:${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateMonthBars(courseEl, course) {
+      for (let m = 1; m <= 4; m++) {
+        const bar = courseEl.querySelector(`#monthbar-${m}-${course.id}`);
+        const badge = courseEl.querySelector(`#month-${m}-${course.id}`);
+        if (!bar || !badge) continue;
+        const weeks = course.weeks || {};
+        const ranges = [{s:1,e:4},{s:5,e:8},{s:9,e:12},{s:13,e:16}];
+        const r = ranges[m-1];
+        let completed = 0;
+        for (let i = r.s; i <= r.e; i++) if (weeks[i]?.completed) completed++;
+        const pct = Math.round((completed/4)*100);
+        bar.style.width = pct + '%';
+        badge.textContent = pct + '%';
+        badge.className = `text-[10px] px-2 py-0.5 rounded-full ${pct === 100 ? 'bg-green-500/20 text-green-300' : pct >= 50 ? 'bg-green-500/10 text-green-300' : 'bg-gray-500/20 text-gray-300'}`;
+      }
+    }
+
+    function renderWeekChips(course) {
+      const weeks = course.weeks || {};
+      let html = '';
+      for (let i = 1; i <= 16; i++) {
+        const checked = weeks[i]?.completed ? 'checked' : '';
+        html += `
+          <label class="week-chip">
+            <input type="checkbox" data-week="${i}" ${checked} />
+            <span>W${i}</span>
+          </label>
+        `;
+      }
+      return html;
+    }
+
+    function renderCourses(courses, classId){
+      const grid = document.getElementById('coursesGrid');
+      grid.innerHTML = '';
+      if (!courses.length) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+      } else {
+        document.getElementById('emptyState').classList.add('hidden');
+      }
+
+      for (const course of courses) {
+        const percent = Math.round(computeCoursePercent(course));
+        const duration = course.duration ? `${course.duration}h` : '—';
+        const subject = course.subject || 'General';
+        const level = course.level || 'Intermediate';
+        const img = course.imageUrl || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop';
+
+        const card = document.createElement('article');
+        card.className = 'relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.45)] transition-all duration-500 sheen';
+        card.setAttribute('data-course-id', course.id);
+        // enforce fixed card height (responsive width up to 740px)
+        card.style.width = '100%';
+       
+        card.style.height = '540px';
+        card.style.boxSizing = 'border-box';
+        card.innerHTML = `
+          <div class="absolute inset-0 pointer-events-none">
+            <div class="absolute -top-16 -left-20 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl"></div>
+            <div class="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl"></div>
+          </div>
+          <div class="relative flex flex-col xl:flex-row" style="height:100%;">
+            <!-- Left: Image + quick badges -->
+            <div class="xl:w-[38%] w-full relative" style="height:100%;">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-[1]"></div>
+              <img src="${img}" alt="${course.name || 'Course'}" class="w-full h-full object-cover">
+              <div class="absolute top-3 left-3 z-[2] flex items-center gap-2">
+                <span class="ring-badge">
+                  <i data-feather="database" class="w-3.5 h-3.5"></i>
+                  ${subject}
+                </span>
+                <span class="ring-badge bg-secondary/20 text-secondary-200 border-secondary-300/30">
+                  <i data-feather="bar-chart-2" class="w-3.5 h-3.5"></i>
+                  ${level}
+                </span>
+              </div>
+              <div class="absolute bottom-3 left-3 z-[2] flex items-center gap-2">
+                <span class="ring-badge">
+                  <i data-feather="play-circle" class="w-3.5 h-3.5"></i>
+                  ${duration}
+                </span>
+                <span class="ring-badge">
+                  <i data-feather="clock" class="w-3.5 h-3.5"></i>
+                  16 weeks
+                </span>
+              </div>
+            </div>
+
+            <!-- Right: Content -->
+            <div class="flex-1 p-5 flex flex-col gap-5" style="height:100%;overflow:auto;">
+              <div>
+                <h3 class="text-xl font-bold leading-tight">${course.name || 'Untitled Course'}</h3>
+                <p class="text-slate-300/80 mt-1">${course.description || 'No description provided.'}</p>
+                <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span class="ring-badge"><i data-feather="target" class="w-3.5 h-3.5"></i> ${(course.objectives||[]).slice(0,3).join(', ') || 'Objectives'}</span>
+                  <span class="ring-badge"><i data-feather="book-open" class="w-3.5 h-3.5"></i> ${course.language || 'English'}</span>
+                </div>
+              </div>
+
+              <!-- Progress + ring -->
+              <div class="flex items-center gap-6">
+                <div class="relative h-20 w-20 flex-shrink-0">
+                  <svg class="absolute inset-0 h-20 w-20 -rotate-90">
+                    <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.15)" stroke-width="8" fill="none"/>
+                    <circle class="progress-ring" cx="40" cy="40" r="32" stroke="url(#grad-${course.id})" stroke-width="8" fill="none" stroke-linecap="round" />
+                    <defs>
+                      <linearGradient id="grad-${course.id}" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#8b5cf6"/>
+                        <stop offset="100%" stop-color="#06b6d4"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-sm font-bold text-white"><span class="counter" data-target="${percent}">0</span>%</span>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between text-sm mb-2">
+                    <span class="text-slate-200">Overall Completion</span>
+                    <span class="text-slate-300/80"><span id="completedWeeks-${course.id}">0</span>/16 weeks</span>
+                  </div>
+                  <div class="h-2.5 w-full rounded-full bg-white/10 overflow-hidden border border-white/10">
+                    <div class="h-full w-0 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 bar-anim" data-progress="${percent}"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monthly bars -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                ${renderMonthBar(1, course)}
+                ${renderMonthBar(2, course)}
+                ${renderMonthBar(3, course)}
+                ${renderMonthBar(4, course)}
+              </div>
+
+              <!-- Weeks chips -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-300">Weeks 1-16</span>
+                  <button class="px-2 py-1 glass rounded hover:bg-white/10 toggle-all" data-action="all">Toggle all</button>
+                </div>
+                <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                  ${renderWeekChips(course)}
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex items-center gap-3">
+                <button class="view-btn flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-200 rounded-lg border border-emerald-400/30 hover:bg-emerald-500/30 transition" data-id="${course.id}">
+                  <i data-feather="eye" class="w-4 h-4"></i> View
+                </button>
+                <button class="export-btn px-4 py-2 glass rounded-lg hover:bg-white/10 transition" data-id="${course.id}">
+                  <i data-feather="download" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+
+        // Animate ring and bars after insertion
+        const ring = card.querySelector('.progress-ring');
+        animateRing(ring, percent);
+        const bar = card.querySelector('.bar-anim');
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const completedCount = (() => { const w = course.weeks||{}; let c=0; for(let i=1;i<=16;i++) if(w[i]?.completed) c++; return c; })();
+        const completedWeeksEl = card.querySelector(`#completedWeeks-${course.id}`);
+        completedWeeksEl.textContent = completedCount;
+
+        if (prefersReduced) {
+          bar.style.width = percent + '%';
+        } else {
+          requestAnimationFrame(() => {
+            let start = performance.now();
+            const duration = 900;
+            function step(now) {
+              const p = Math.min((now - start)/duration, 1);
+              const eased = 1 - Math.pow(1-p, 3);
+              bar.style.width = (eased * percent) + '%';
+              if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          });
+        }
+
+        // Animate counter
+        const counter = card.querySelector('.counter');
+        if (counter) {
+          const target = parseInt(counter.getAttribute('data-target'), 10) || 0;
+          if (prefersReduced) {
+            counter.textContent = target;
+          } else {
+            let start = performance.now();
+            const duration = 800;
+            function step(now) {
+              const p = Math.min((now - start)/duration, 1);
+              const eased = 1 - Math.pow(1-p, 3);
+              counter.textContent = Math.round(eased * target);
+              if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          }
+        }
+      }
+
+      feather.replace();
+
+      // Event bindings
+      grid.querySelectorAll('.export-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          const course = courses.find(x => x.id === id);
+          if (!course) return;
+          const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(course, null, 2));
+          const a = document.createElement('a');
+          a.href = dataStr;
+          a.download = `course_${id}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        });
+      });
+
+      grid.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          const url = `./class-course-detail.html?classId=${localStorage.getItem('currentClassId')}&courseId=${id}`;
+          window.open(url, '_blank');
+        });
+      });
+
+      // Week toggles (demo-only: updates local course.weeks; you can wire to Firestore if desired)
+      grid.querySelectorAll('.week-chip input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const courseEl = e.currentTarget.closest('article[data-course-id]');
+          const courseId = courseEl.getAttribute('data-course-id');
+          const course = courses.find(c => c.id === courseId);
+          if (!course) return;
+
+          const weekIndex = parseInt(e.currentTarget.getAttribute('data-week'), 10);
+          if (!course.weeks) course.weeks = {};
+          if (!course.weeks[weekIndex]) course.weeks[weekIndex] = { completed: false, title: `Week ${weekIndex}` };
+          course.weeks[weekIndex].completed = e.currentTarget.checked;
+
+          // Recompute UI for this card
+          const percent = Math.round(computeCoursePercent(course));
+          const ring = courseEl.querySelector('.progress-ring');
+          animateRing(ring, percent);
+          const bar = courseEl.querySelector('.bar-anim');
+          bar.setAttribute('data-progress', String(percent));
+          bar.style.width = percent + '%';
+
+          const counter = courseEl.querySelector('.counter');
+          counter.setAttribute('data-target', String(percent));
+          counter.textContent = percent;
+
+          const completedCount = (() => { const w = course.weeks||{}; let c=0; for(let i=1;i<=16;i++) if(w[i]?.completed) c++; return c; })();
+          const completedWeeksEl = courseEl.querySelector(`[id^="completedWeeks-"]`);
+          if (completedWeeksEl) completedWeeksEl.textContent = completedCount;
+
+          // Update month bars
+          updateMonthBars(courseEl, course);
+
+          // Update stats + radar after change
+          renderStats(coursesCache);
+        });
+      });
+
+      // Toggle all weeks
+      grid.querySelectorAll('.toggle-all').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const courseEl = e.currentTarget.closest('article[data-course-id]');
+          const courseId = courseEl.getAttribute('data-course-id');
+          const course = courses.find(c => c.id === courseId);
+          if (!course) return;
+          const inputs = courseEl.querySelectorAll('.week-chip input');
+
+          const checkedCount = Array.from(inputs).filter(i => i.checked).length;
+          const targetState = !(checkedCount === inputs.length); // if all checked -> uncheck all; else check all
+
+          inputs.forEach(input => {
+            input.checked = targetState;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        });
+      });
+    }
+
+    async function loadAll(){
+      let classId = getQueryParam('classId') || localStorage.getItem('currentClassId');
+      if (!classId) {
+        const assigned = await findAssignedClassForCurrentUser();
+        if (assigned) classId = assigned.classId;
+      }
+      if (!classId) {
+        await showClassPicker();
+        return;
+      }
+      classIdCache = classId;
+      localStorage.setItem('currentClassId', classId);
+
+      const classMeta = document.getElementById('classMeta');
+      classMeta.textContent = `Class ID: ${classId}`;
+
+      const deptId = await resolveDeptIdForClass(classId);
+      if (!deptId) {
+        classMeta.textContent = 'Unable to determine department for this class.';
+        await showClassPicker();
+        return;
+      }
+
+      try {
+        const snap = await db.collection('departments').doc(deptId).collection('classes').doc(classId).collection('courses').orderBy('createdAt','desc').get();
+        const courses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        coursesCache = courses;
+
+        try {
+          const classDoc = await db.collection('departments').doc(deptId).collection('classes').doc(classId).get();
+          if (classDoc && classDoc.exists) {
+            classMeta.textContent = `${classDoc.data().name || 'Class'} • ${classId}`;
+          }
+        } catch(e) {}
+
+        renderStats(courses);
+        renderCourses(courses, classId);
+      } catch(err){
+        console.error('loadAll err', err);
+        classMeta.textContent = 'Failed to load courses.';
+      }
+    }
+
+    // Init
+    document.getElementById('refreshBtn').addEventListener('click', loadAll);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      feather.replace();
+      // Animated background bubbles
+      (function createBubbles() {
+        const container = document.querySelector('.bubble-container');
+        if (!container) return;
+        container.innerHTML = '';
+        const bubbleCount = 18;
+        for (let i = 0; i < bubbleCount; i++) {
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          const size = Math.random() * 120 + 60;
+          const left = Math.random() * 100;
+          const top = Math.random() * 100;
+          const delay = Math.random() * 10;
+          bubble.style.width = `${size}px`;
+          bubble.style.height = `${size}px`;
+          bubble.style.left = `${left}%`;
+          bubble.style.top = `${top}%`;
+          bubble.style.animationDelay = `${delay}s`;
+          container.appendChild(bubble);
+        }
+      })();
+
+      loadAll();
+    });
+  </script>
+</body>
+</html>

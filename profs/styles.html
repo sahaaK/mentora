@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glassmorphic Course Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'hsl(258, 90%, 66%)',   // purple-500 like
+            secondary: 'hsl(280, 100%, 70%)',// fuchsia-500 like
+            ink: {
+              900: '#0c0a1a',
+              800: '#0f0b2e',
+            }
+          },
+          boxShadow: {
+            glass: '0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05)',
+            glow: '0 10px 50px rgba(168,85,247,.35)',
+          },
+          backgroundImage: {
+            'grid': 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --primary: 258 90% 66%; --secondary: 280 100% 70%; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .ring-progress circle { transition: stroke-dashoffset .8s cubic-bezier(.2,.7,.2,1); }
+    .card:hover { transform: translateY(-2px); }
+    .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0); background-size: 18px 18px; }
+  </style>
+</head>
+<body class="min-h-screen bg-ink-900 bg-grid text-white/90 selection:bg-primary/30 selection:text-white">
+  <div class="relative">
+    <div aria-hidden="true" class="pointer-events-none absolute -top-24 left-1/2 -z-10 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 right-[-10%] -z-10 h-[24rem] w-[24rem] rounded-full bg-secondary/20 blur-3xl"></div>
+  </div>
+
+  <main class="mx-auto max-w-7xl p-6 sm:p-8">
+    <header class="mb-8">
+      <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Courses</h1>
+      <p class="mt-2 text-white/70">Six slick, glassy cards with unique styles. Hover to see the magic.</p>
+    </header>
+
+    <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- Card 1: Pill header + progress bar -->
+      <article class="group card relative overflow-hidden rounded-2xl glass shadow-glass hover:shadow-glow transition-all">
+        <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-secondary/10 blur-2xl transition-all group-hover:scale-110"></div>
+        <div class="absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-primary/10 blur-2xl"></div>
+
+        <div class="relative p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                <i data-feather="cpu" class="text-primary"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold leading-tight">Machine Learning Fundamentals</h3>
+                <p class="text-sm text-white/60">with Dr. Ada Nguyen</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+              <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
+              Beginner
+            </span>
+          </div>
+
+          <p class="mt-4 text-sm text-white/70">Build intuition behind algorithms, feature engineering, and model evaluation through hands-on projects.</p>
+
+          <div class="mt-6 grid grid-cols-3 gap-4 text-sm">
+            <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <div class="flex items-center gap-2 text-white/70"><i data-feather="clock" class="h-4 w-4 text-primary"></i> Duration</div>
+              <div class="mt-1 font-semibold">8h 20m</div>
+            </div>
+            <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <div class="flex items-center gap-2 text-white/70"><i data-feather="book-open" class="h-4 w-4 text-secondary"></i> Lessons</div>
+              <div class="mt-1 font-semibold">42</div>
+            </div>
+            <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <div class="flex items-center gap-2 text-white/70"><i data-feather="award" class="h-4 w-4 text-primary"></i> Level</div>
+              <div class="mt-1 font-semibold">Intro</div>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-white/70">Your progress</span>
+              <span class="font-semibold tabular-nums" data-percent>0%</span>
+            </div>
+            <div class="mt-2 h-2.5 w-full rounded-full bg-white/10">
+              <div class="relative h-full overflow-hidden rounded-full">
+                <span class="absolute inset-0 bg-gradient-to-r from-primary via-secondary to-primary bg-[length:200%_100%] animate-[shimmer_2.2s_linear_infinite] opacity-40"></span>
+                <div class="relative h-full rounded-full bg-gradient-to-r from-primary to-secondary shadow-[0_0_16px_rgba(168,85,247,.35)]" data-progress style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">ML • AI</span>
+            <button class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-95">
+              Continue
+              <i data-feather="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2: Radial progress ring + badge -->
+      <article class="group card relative overflow-hidden rounded-2xl glass shadow-glass hover:shadow-glow transition-all">
+        <div class="absolute -right-16 top-0 h-56 w-56 rounded-full bg-secondary/10 blur-2xl"></div>
+        <div class="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-primary/10 blur-2xl"></div>
+
+        <div class="relative p-6">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                <i data-feather="code" class="text-secondary"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold">Modern JavaScript Mastery</h3>
+                <p class="text-sm text-white/60">with Sam Rivera</p>
+              </div>
+            </div>
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+              Best Seller
+            </span>
+          </div>
+
+          <p class="mt-4 text-sm text-white/70">From ES6+ to async patterns, modules, and performance — ship confident, modern JS.</p>
+
+          <div class="mt-6 grid grid-cols-2 gap-6">
+            <div class="relative">
+              <div class="flex items-center gap-3">
+                <div class="relative h-20 w-20">
+                  <svg class="ring-progress absolute inset-0 h-20 w-20" viewBox="0 0 44 44">
+                    <defs>
+                      <linearGradient id="grad-ring-2" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="hsl(var(--primary))" />
+                        <stop offset="100%" stop-color="hsl(var(--secondary))" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="22" cy="22" r="16" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"></circle>
+                    <circle class="progress" cx="22" cy="22" r="16" fill="none" stroke="url(#grad-ring-2)" stroke-width="6" stroke-linecap="round" style="stroke-dasharray: 100; stroke-dashoffset: 100;"></circle>
+                  </svg>
+                  <div class="absolute inset-0 grid place-content-center">
+                    <span class="text-xs font-semibold tabular-nums" data-percent>0%</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-sm font-semibold">Completion</div>
+                  <div class="text-xs text-white/60">Keep the streak!</div>
+                </div>
+              </div>
+            </div>
+            <div class="grid content-between">
+              <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+                <div class="flex items-center gap-2 text-white/70 text-sm"><i data-feather="layers" class="h-4 w-4 text-primary"></i> Modules</div>
+                <div class="mt-1 font-semibold">14</div>
+              </div>
+              <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+                <div class="flex items-center gap-2 text-white/70 text-sm"><i data-feather="activity" class="h-4 w-4 text-secondary"></i> Practice</div>
+                <div class="mt-1 font-semibold">24 tasks</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">JS • ES2023</span>
+            <button class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-95">
+              Continue
+              <i data-feather="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3: Large progress number + stats grid -->
+      <article class="group card relative overflow-hidden rounded-2xl glass shadow-glass hover:shadow-glow transition-all">
+        <div class="absolute right-[-15%] top-[-15%] h-64 w-64 rounded-full bg-primary/10 blur-2xl"></div>
+        <div class="absolute -left-10 bottom-[-10%] h-56 w-56 rounded-full bg-secondary/10 blur-2xl"></div>
+
+        <div class="relative p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                <i data-feather="database" class="text-primary"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold">Data Structures & Algorithms</h3>
+                <p class="text-sm text-white/60">with Priya Kapoor</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+              <span class="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse"></span>
+              Intermediate
+            </span>
+          </div>
+
+          <p class="mt-4 text-sm text-white/70">Master time-space complexity, problem solving patterns, and ace technical interviews.</p>
+
+          <div class="mt-6 flex items-center gap-6">
+            <div class="text-5xl font-extrabold tabular-nums tracking-tight" data-percent>0%</div>
+            <div class="text-sm text-white/70">Course completed</div>
+          </div>
+
+          <div class="mt-6 h-2.5 w-full rounded-full bg-white/10">
+            <div class="h-full w-0 rounded-full bg-gradient-to-r from-primary to-secondary" data-progress></div>
+          </div>
+
+          <div class="mt-6 grid grid-cols-3 gap-4 text-sm">
+            <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <div class="flex items-center gap-2 text-white/70"><i data-feather="users" class="h-4 w-4 text-secondary"></i> Students</div>
+              <div class="mt-1 font-semibold">12,804</div>
+            </div>
+            <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <div class="flex items-center gap-2 text-white/70"><i data-feather="clock" class="h-4 w-4 text-primary"></i> Length</div>
+              <div class="mt-1 font-semibold">18h 10m</div>
+            </div>
+            <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <div class="flex items-center gap-2 text-white/70"><i data-feather="check-circle" class="h-4 w-4 text-secondary"></i> Passed</div>
+              <div class="mt-1 font-semibold">87%</div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">DSA • Coding</span>
+            <button class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-95">
+              Continue
+              <i data-feather="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 4: Icon badge + side progress -->
+      <article class="group card relative overflow-hidden rounded-2xl glass shadow-glass hover:shadow-glow transition-all">
+        <div class="absolute left-[-10%] top-[-10%] h-56 w-56 rounded-full bg-secondary/10 blur-2xl"></div>
+        <div class="absolute right-[-15%] bottom-[-15%] h-64 w-64 rounded-full bg-primary/10 blur-2xl"></div>
+
+        <div class="relative p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                <i data-feather="server" class="text-secondary"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold">Cloud Architecture on AWS</h3>
+                <p class="text-sm text-white/60">with Liam Chen</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-primary/20 to-secondary/20 px-3 py-1 text-xs text-white/80">
+              <i data-feather="cloud" class="h-3.5 w-3.5 text-primary"></i>
+              Cloud
+            </span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-12 gap-4">
+            <div class="col-span-8">
+              <p class="text-sm text-white/70">Design scalable systems, VPCs, IAM, containers, and serverless on AWS.</p>
+              <div class="mt-6 h-2.5 w-full rounded-full bg-white/10">
+                <div class="h-full w-0 rounded-full bg-gradient-to-r from-primary to-secondary" data-progress></div>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-sm">
+                <span class="text-white/70">Progress</span>
+                <span class="font-semibold tabular-nums" data-percent>0%</span>
+              </div>
+            </div>
+            <div class="col-span-4">
+              <div class="h-full rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                <div class="flex items-center gap-2 text-white/70 text-sm"><i data-feather="shield" class="h-4 w-4 text-primary"></i> Security</div>
+                <div class="mt-1 font-semibold">Zero Trust</div>
+                <div class="mt-3 flex items-center gap-2 text-white/70 text-sm"><i data-feather="cpu" class="h-4 w-4 text-secondary"></i> Compute</div>
+                <div class="mt-1 font-semibold">EKS • Lambda</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">AWS • DevOps</span>
+            <button class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-95">
+              Continue
+              <i data-feather="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 5: Top meta pills + compact bar -->
+      <article class="group card relative overflow-hidden rounded-2xl glass shadow-glass hover:shadow-glow transition-all">
+        <div class="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/10 blur-2xl"></div>
+        <div class="absolute -left-10 -bottom-10 h-56 w-56 rounded-full bg-secondary/10 blur-2xl"></div>
+
+        <div class="relative p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                <i data-feather="layout" class="text-primary"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold">UX Design Bootcamp</h3>
+                <p class="text-sm text-white/60">with Mia Santos</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/80">UX</span>
+              <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/80">Research</span>
+              <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/80">Figma</span>
+            </div>
+          </div>
+
+          <p class="mt-4 text-sm text-white/70">Craft delightful products. Learn user research, flows, wireframes, and usability testing.</p>
+
+          <div class="mt-4 grid grid-cols-4 gap-3 text-xs">
+            <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10">
+              <div class="text-white/60">Lectures</div>
+              <div class="mt-0.5 font-semibold">24</div>
+            </div>
+            <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10">
+              <div class="text-white/60">Assignments</div>
+              <div class="mt-0.5 font-semibold">8</div>
+            </div>
+            <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10">
+              <div class="text-white/60">Projects</div>
+              <div class="mt-0.5 font-semibold">3</div>
+            </div>
+            <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10">
+              <div class="text-white/60">Mentors</div>
+              <div class="mt-0.5 font-semibold">1:3</div>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <div class="h-2.5 w-full rounded-full bg-white/10">
+              <div class="h-full w-0 rounded-full bg-gradient-to-r from-primary to-secondary" data-progress></div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-sm">
+              <span class="text-white/70">Your progress</span>
+              <span class="font-semibold tabular-nums" data-percent>0%</span>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">UX • UI</span>
+            <button class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-95">
+              Continue
+              <i data-feather="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 6: Large floating icon + ring -->
+      <article class="group card relative overflow-hidden rounded-2xl glass shadow-glass hover:shadow-glow transition-all">
+        <div class="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-secondary/10 blur-3xl"></div>
+        <div class="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl"></div>
+
+        <div class="relative p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                <i data-feather="bar-chart-2" class="text-secondary"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold">SQL for Analytics</h3>
+                <p class="text-sm text-white/60">with Omar Haddad</p>
+              </div>
+            </div>
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+              Analytics
+            </span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-12 items-center gap-6">
+            <div class="col-span-5">
+              <div class="relative mx-auto h-28 w-28">
+                <svg class="ring-progress absolute inset-0 h-28 w-28" viewBox="0 0 100 100">
+                  <defs>
+                    <linearGradient id="grad-ring-6" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="hsl(var(--primary))" />
+                      <stop offset="100%" stop-color="hsl(var(--secondary))" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"></circle>
+                  <circle class="progress" cx="50" cy="50" r="36" fill="none" stroke="url(#grad-ring-6)" stroke-width="10" stroke-linecap="round" style="stroke-dasharray: 100; stroke-dashoffset: 100;"></circle>
+                </svg>
+                <div class="absolute inset-0 grid place-content-center">
+                  <span class="text-sm font-semibold tabular-nums" data-percent>0%</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-span-7">
+              <p class="text-sm text-white/70">Write performant queries, window functions, and build dashboards that drive decisions.</p>
+              <div class="mt-4 h-2.5 w-full rounded-full bg-white/10">
+                <div class="h-full w-0 rounded-full bg-gradient-to-r from-primary to-secondary" data-progress></div>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-sm">
+                <span class="text-white/70">Progress</span>
+                <span class="font-semibold tabular-nums" data-percent>0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">SQL • BI</span>
+            <button class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-95">
+              Continue
+              <i data-feather="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+// Utility: animate a linear progress bar (width)
+function animateLinearProgress(el, targetPercent, duration = 900) {
+  if (!el) return;
+  const start = performance.now();
+  const from = 0;
+  const to = Math.max(0, Math.min(100, targetPercent));
+  const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+  function frame(now) {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = easeOutCubic(p);
+    const value = from + (to - from) * eased;
+    el.style.width = value + '%';
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// Utility: animate a radial circle progress (stroke-dashoffset)
+function animateRadialProgress(circleEl, targetPercent, duration = 900) {
+  if (!circleEl) return;
+  const circumference = parseFloat(circleEl.getAttribute('stroke-dasharray')) || 2 * Math.PI * parseFloat(circleEl.getAttribute('r') || 16);
+  const start = performance.now();
+  const from = circumference;
+  const to = circumference * (1 - targetPercent / 100);
+  const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+  function frame(now) {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = easeOutCubic(p);
+    const value = from + (to - from) * eased;
+    circleEl.style.strokeDashoffset = String(value);
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// Find and update all percent labels, linear bars, and radial rings inside a card
+function fillCard(card, percent) {
+  const percentEls = card.querySelectorAll('[data-percent]');
+  percentEls.forEach(el => el.textContent = Math.round(percent) + '%');
+
+  const linear = card.querySelectorAll('[data-progress]');
+  linear.forEach(el => animateLinearProgress(el, percent));
+
+  const rings = card.querySelectorAll('.ring-progress .progress');
+  rings.forEach(circle => animateRadialProgress(circle, percent));
+}
+
+// Set different progress values for each card
+window.addEventListener('DOMContentLoaded', () => {
+  const cards = document.querySelectorAll('article.card');
+  const values = [64, 39, 82, 53, 74, 28]; // example progress values
+
+  cards.forEach((card, i) => {
+    const percent = values[i] ?? 0;
+    fillCard(card, percent);
+  });
+});
+  </script>
+  <script>feather.replace();</script>
+</body>
+</html>

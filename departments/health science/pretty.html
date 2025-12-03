@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Glassmorphic Student Cards</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Ctext y='50' x='8' font-size='48'%3E🎓%3C/text%3E%3C/svg%3E" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                500: '#8B5CF6' // violet-500 (undefined -> violet as default)
+              },
+              secondary: {
+                500: '#06B6D4' // cyan-500 (undefined -> cyan as default)
+              }
+            },
+            boxShadow: {
+              glass: '0 10px 40px rgba(0,0,0,0.35)',
+              ring: '0 0 0 1px rgba(255,255,255,0.06) inset, 0 1px 0 rgba(255,255,255,0.08)'
+            },
+            keyframes: {
+              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+              tilt: {
+                '0%': { transform: 'rotateX(0) rotateY(0)' },
+                '100%': { transform: 'rotateX(0) rotateY(0)' }
+              },
+              sweep: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' }
+              }
+            },
+            animation: {
+              float: 'float 8s ease-in-out infinite',
+              tilt: 'tilt 12s ease-in-out infinite',
+              sweep: 'sweep 2.2s linear infinite'
+            },
+            backdropBlur: {
+              xs: '2px'
+            }
+          }
+        },
+        darkMode: 'class'
+      }
+    </script>
+    <link href="https://unpkg.com/feather-icons@4.29.2/dist/feather.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-primary-500/30 selection:text-white">
+  <!-- Background -->
+  <div class="fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-black"></div>
+    <div class="absolute left-1/2 top-0 -translate-x-1/2 h-[60rem] w-[60rem] rounded-full blur-3xl opacity-20"
+         style="background: radial-gradient(closest-side, rgba(124,58,237,0.45), rgba(6,182,212,0.25), transparent 70%)"></div>
+    <div class="absolute bottom-0 right-0 h-[40rem] w-[40rem] rounded-full blur-3xl opacity-20"
+         style="background: radial-gradient(closest-side, rgba(6,182,212,0.45), rgba(16,185,129,0.25), transparent 70%)"></div>
+    <div class="absolute inset-0 noise"></div>
+  </div>
+
+  <header class="sticky top-0 z-10 border-b border-white/5 bg-slate-950/40 backdrop-blur-md">
+    <div class="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-white/10 grid place-items-center ring-1 ring-white/10 shadow-glass">
+          <i data-feather="user-check"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold tracking-tight">Student Profiles</h1>
+          <p class="text-xs text-slate-400">Glassmorphic • Dark • 7 Variants</p>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center gap-2 text-xs text-slate-300">
+        <span class="px-2 py-1 rounded-full bg-white/10 ring-1 ring-white/10">Tailwind</span>
+        <span class="px-2 py-1 rounded-full bg-white/10 ring-1 ring-white/10">Feather Icons</span>
+        <span class="px-2 py-1 rounded-full bg-white/10 ring-1 ring-white/10">No Build</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-6 py-10">
+    <section id="cards" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"></section>
+  </main>
+
+  <footer class="mx-auto max-w-7xl px-6 pb-10 text-center text-xs text-slate-500">
+    Primary color: violet-500 • Secondary color: cyan-500 • Theme: dark mode
+  </footer>
+
+  <script>
+    // Student data + sanitizer
+    function sanitizeStudentData(raw) {
+      return {
+        fullName: raw.fullName || '',
+        phone: raw.phone || '',
+        department: raw.department || '',
+        faculty: raw.faculty || '',
+        graduatedFrom: raw.graduatedFrom || '',
+        grade: raw.grade || '',
+        city: raw.city || '',
+        education: raw.education || '',
+        gender: raw.gender || '',
+        bloodType: raw.bloodType || '',
+        age: parseInt(raw.age || 0, 10),
+        guardianPhone: raw.guardianPhone || '',
+        guardianName: raw.guardianName || '',
+        profileImageUrl: raw.profileImageUrl || '',
+        profileImageData: raw.profileImageData || '',
+        profileImageName: raw.profileImageName || '',
+        profileImageType: raw.profileImageType || '',
+        profileImageSize: raw.profileImageSize || 0,
+        createdAt: new Date()
+      };
+    }
+
+    const students = [
+      sanitizeStudentData({
+        fullName: 'Ava Robinson',
+        phone: '+1 405 222 9012',
+        department: 'Computer Science',
+        faculty: 'Engineering',
+        graduatedFrom: 'Eastview High',
+        grade: 'A',
+        city: 'Austin',
+        education: 'Undergraduate',
+        gender: 'Female',
+        bloodType: 'O+',
+        age: 20,
+        guardianPhone: '+1 405 222 9000',
+        guardianName: 'Michael Robinson',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=47'
+      }),
+      sanitizeStudentData({
+        fullName: 'Liam Nguyen',
+        phone: '+1 415 555 0192',
+        department: 'Mathematics',
+        faculty: 'Science',
+        graduatedFrom: 'Lakeside Prep',
+        grade: 'A-',
+        city: 'Seattle',
+        education: 'Undergraduate',
+        gender: 'Male',
+        bloodType: 'B+',
+        age: 21,
+        guardianPhone: '+1 415 555 0110',
+        guardianName: 'Helen Nguyen',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=15'
+      }),
+      sanitizeStudentData({
+        fullName: 'Sophia Martinez',
+        phone: '+1 212 555 0148',
+        department: 'Business Analytics',
+        faculty: 'Business',
+        graduatedFrom: 'Brooklyn Academy',
+        grade: 'B+',
+        city: 'New York',
+        education: 'Undergraduate',
+        gender: 'Female',
+        bloodType: 'A-',
+        age: 22,
+        guardianPhone: '+1 212 555 0100',
+        guardianName: 'Carlos Martinez',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=32'
+      }),
+      sanitizeStudentData({
+        fullName: 'Noah Patel',
+        phone: '+1 650 555 0167',
+        department: 'Electrical Engineering',
+        faculty: 'Engineering',
+        graduatedFrom: 'Redwood High',
+        grade: 'A',
+        city: 'Palo Alto',
+        education: 'Undergraduate',
+        gender: 'Male',
+        bloodType: 'AB+',
+        age: 23,
+        guardianPhone: '+1 650 555 0102',
+        guardianName: 'Anita Patel',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=23'
+      }),
+      sanitizeStudentData({
+        fullName: 'Mia Chen',
+        phone: '+1 617 555 0191',
+        department: 'Architecture',
+        faculty: 'Design',
+        graduatedFrom: 'Cambridge HS',
+        grade: 'B',
+        city: 'Boston',
+        education: 'Undergraduate',
+        gender: 'Female',
+        bloodType: 'O-',
+        age: 21,
+        guardianPhone: '+1 617 555 0125',
+        guardianName: 'Wei Chen',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=5'
+      }),
+      sanitizeStudentData({
+        fullName: 'Ethan Johnson',
+        phone: '+1 773 555 0177',
+        department: 'Psychology',
+        faculty: 'Health & Social Sciences',
+        graduatedFrom: 'Westside High',
+        grade: 'B+',
+        city: 'Chicago',
+        education: 'Undergraduate',
+        gender: 'Male',
+        bloodType: 'A+',
+        age: 20,
+        guardianPhone: '+1 773 555 0139',
+        guardianName: 'Sarah Johnson',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=38'
+      }),
+      sanitizeStudentData({
+        fullName: 'Isabella Rossi',
+        phone: '+1 305 555 0182',
+        department: 'Marine Biology',
+        faculty: 'Science',
+        graduatedFrom: 'Bayview Academy',
+        grade: 'A-',
+        city: 'Miami',
+        education: 'Undergraduate',
+        gender: 'Female',
+        bloodType: 'B-',
+        age: 22,
+        guardianPhone: '+1 305 555 0144',
+        guardianName: 'Marco Rossi',
+        profileImageUrl: 'https://i.pravatar.cc/160?img=60'
+      })
+    ];
+
+    // Variant palette (unique per card)
+    const variants = [
+      { name: 'Aurora', ring: '239 68 68', ring2: '168 85 247', accent: 'bg-red-500', accent2: 'bg-fuchsia-500' },  // red -> purple
+      { name: 'Zenith', ring: '236 72 153', ring2: '59 130 246', accent: 'bg-pink-500', accent2: 'bg-blue-500' },   // pink -> blue
+      { name: 'Nebula', ring: '234 179 8', ring2: '34 197 94', accent: 'bg-amber-400', accent2: 'bg-emerald-500' },  // yellow -> green
+      { name: 'Ion', ring: '59 130 246', ring2: '16 185 129', accent: 'bg-blue-500', accent2: 'bg-emerald-500' },     // blue -> teal
+      { name: 'Pulse', ring: '168 85 247', ring2: '20 184 166', accent: 'bg-violet-500', accent2: 'bg-cyan-500' },    // violet -> teal
+      { name: 'Solace', ring: '14 165 233', ring2: '168 85 247', accent: 'bg-sky-500', accent2: 'bg-purple-500' },    // sky -> purple
+      { name: 'Vortex', ring: '34 197 94', ring2: '99 102 241', accent: 'bg-green-500', accent2: 'bg-indigo-500' }     // green -> indigo
+    ];
+
+    // Utility helpers
+    function initials(name) {
+      return name.split(' ').filter(Boolean).slice(0, 2).map(s => s[0].toUpperCase()).join('');
+    }
+
+    function gradeToProgress(grade) {
+      const map = { 'A+': 98, 'A': 94, 'A-': 90, 'B+': 85, 'B': 78, 'B-': 72, 'C+': 66, 'C': 60, 'C-': 54, 'D': 45, 'F': 25 };
+      return map[(grade || '').toUpperCase()] ?? 62;
+    }
+
+    function maskPhone(phone) {
+      return phone.replace(/(\+\d{1,3})\s?(\d{3})\d{3}(\d{4})/, '$1 $2-***-$4');
+    }
+
+    function sparklineData(seed, len = 24) {
+      // Simple pseudo-random walk
+      const base = seed * 7 + 13;
+      let arr = [];
+      let v = 50 + (base % 40);
+      for (let i = 0; i < len; i++) {
+        v += (Math.sin((i + base) / 3) * 8) + (Math.random() * 6 - 3);
+        v = Math.max(10, Math.min(100, v));
+        arr.push(v.toFixed(1));
+      }
+      return arr;
+    }
+
+    // Build each variant
+    function buildCard(student, i) {
+      const v = variants[i % variants.length];
+      const prog = gradeToProgress(student.grade);
+      const avaUrl = student.profileImageUrl || '';
+      const genderIcon = student.gender.toLowerCase() === 'female' ? 'woman' : (student.gender.toLowerCase() === 'male' ? 'man' : 'user');
+
+      // Common ring style using CSS variables
+      const ringStyle = `background: conic-gradient(rgb(${v.ring} / .85) 0 ${prog}%, rgba(255,255,255,0.06) ${prog}% 100%), radial-gradient(closest-side, rgba(255,255,255,0.06), rgba(255,255,255,0.02));`;
+
+      // Layout and graph per variant
+      const layouts = {
+        aurora: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <span class="blob pointer-events-none absolute -top-10 -left-10 h-36 w-36 ${v.accent} rounded-full blur-2xl opacity-70 animate-float"></span>
+            <span class="blob pointer-events-none absolute -bottom-10 -right-10 h-36 w-36 ${v.accent2} rounded-full blur-2xl opacity-70 animate-float" style="animation-delay: -1.5s"></span>
+
+            <div class="relative flex items-center gap-4 border-b border-white/10 px-5 py-4">
+              <div class="relative">
+                <div class="absolute inset-0 ${v.accent} opacity-30 blur-md rounded-full"></div>
+                ${avaUrl ? `
+                  <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-16 w-16 rounded-full object-cover ring-2 ring-white/20 shadow-lg" />
+                ` : `
+                  <div class="relative h-16 w-16 rounded-full ${v.accent} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                    <span class="text-xl font-extrabold text-white">${initials(student.fullName)}</span>
+                  </div>
+                `}
+              </div>
+              <div class="min-w-0">
+                <h3 class="truncate text-lg font-bold leading-tight">${student.fullName}</h3>
+                <p class="truncate text-sm text-slate-300">${student.department} • ${student.faculty}</p>
+                <div class="mt-1 flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="calendar"></i> Age ${student.age}</span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="award"></i> ${student.grade}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative p-5 space-y-4">
+              <div>
+                <div class="mb-2 flex items-center justify-between text-xs text-slate-300">
+                  <span class="inline-flex items-center gap-1"><i data-feather="trending-up"></i> Performance</span>
+                  <span class="font-semibold text-white">${prog}%</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div class="h-full ${v.accent} ${v.accent2} bg-gradient-to-r" style="width: ${prog}%"></div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-2">
+                <div class="flex items-center gap-3 text-sm"><i data-feather="book"></i> <span class="text-slate-300">Education:</span><span class="font-medium text-white">${student.education}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i data-feather="map-pin"></i> <span class="text-slate-300">City:</span><span class="font-medium text-white">${student.city}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i data-feather="home"></i> <span class="text-slate-300">Graduated:</span><span class="font-medium text-white">${student.graduatedFrom}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i data-feather="droplet"></i> <span class="text-slate-300">Blood:</span><span class="font-medium text-white">${student.bloodType}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i data-feather="${genderIcon}"></i> <span class="text-slate-300">Gender:</span><span class="font-medium text-white">${student.gender}</span></div>
+              </div>
+
+              <div class="flex flex-wrap gap-2 pt-1">
+                <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="briefcase"></i> ${student.department}</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="users"></i> ${student.faculty}</span>
+              </div>
+            </div>
+
+            <div class="relative flex items-center justify-between gap-3 border-t border-white/10 bg-white/[0.02] px-5 py-3">
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><a href="tel:${student.phone.replace(/[^+\d]/g,'')}" class="hover:text-white transition">${student.phone}</a></div>
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="shield"></i><span class="text-xs">Guardian: ${student.guardianName}</span></div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Aurora • Variant ${i+1}</div>
+          </article>
+        `,
+
+        zenith: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <div class="absolute inset-x-0 top-0 h-1 ${v.accent} ${v.accent2} bg-gradient-to-r"></div>
+
+            <div class="flex flex-col sm:flex-row">
+              <div class="sm:w-72 border-b sm:border-b-0 sm:border-r border-white/10 p-5">
+                <div class="relative flex items-center gap-3">
+                  <div class="relative">
+                    <div class="absolute inset-0 ${v.accent} opacity-25 blur-md rounded-full"></div>
+                    ${avaUrl ? `
+                      <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-16 w-16 rounded-full object-cover ring-2 ring-white/20 shadow-lg" />
+                    ` : `
+                      <div class="relative h-16 w-16 rounded-full ${v.accent} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                        <span class="text-xl font-extrabold text-white">${initials(student.fullName)}</span>
+                      </div>
+                    `}
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="truncate text-lg font-bold">${student.fullName}</h3>
+                    <p class="truncate text-sm text-slate-300">${student.department}</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-3 gap-3">
+                  <div class="rounded-xl bg-white/10 p-3 text-center ring-1 ring-white/10">
+                    <div class="text-xs text-slate-300">Grade</div>
+                    <div class="mt-1 text-base font-semibold">${student.grade}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-center ring-1 ring-white/10">
+                    <div class="text-xs text-slate-300">Age</div>
+                    <div class="mt-1 text-base font-semibold">${student.age}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-center ring-1 ring-white/10">
+                    <div class="text-xs text-slate-300">City</div>
+                    <div class="mt-1 text-base font-semibold">${student.city}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex-1 p-5 space-y-4">
+                <div>
+                  <div class="mb-2 flex items-center justify-between text-xs text-slate-300">
+                    <span class="inline-flex items-center gap-1"><i data-feather="activity"></i> Trend</span>
+                    <span class="font-semibold text-white">${prog}%</span>
+                  </div>
+                  <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full ${v.accent} ${v.accent2} bg-gradient-to-r" style="width: ${prog}%"></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Faculty</div>
+                    <div class="font-semibold">${student.faculty}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Blood</div>
+                    <div class="font-semibold">${student.bloodType}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Education</div>
+                    <div class="font-semibold">${student.education}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Guardian</div>
+                    <div class="font-semibold">${student.guardianName}</div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 pt-1">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="book-open"></i> ${student.education}</span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="globe"></i> ${student.city}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 border-t border-white/10 bg-white/[0.02] px-5 py-3">
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><span>${maskPhone(student.phone)}</span></div>
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="shield"></i><span class="text-xs">${student.guardianName}</span></div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Zenith • Variant ${i+1}</div>
+          </article>
+        `,
+
+        nebula: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <div class="absolute inset-x-0 bottom-0 h-1 ${v.accent2} ${v.accent} bg-gradient-to-r"></div>
+
+            <div class="p-5">
+              <div class="flex items-center gap-4">
+                <div class="relative">
+                  <div class="absolute inset-0 ${v.accent2} opacity-25 blur-md rounded-full"></div>
+                  ${avaUrl ? `
+                    <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-20 w-20 rounded-2xl object-cover ring-2 ring-white/20 shadow-lg" />
+                  ` : `
+                    <div class="relative h-20 w-20 rounded-2xl ${v.accent2} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                      <span class="text-xl font-extrabold text-white">${initials(student.fullName)}</span>
+                    </div>
+                  `}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="truncate text-lg font-bold">${student.fullName}</h3>
+                  <p class="truncate text-sm text-slate-300">${student.department} • ${student.faculty}</p>
+                  <div class="mt-1 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="award"></i> ${student.grade}</span>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="calendar"></i> ${student.age}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 grid grid-cols-1 gap-4">
+                <div>
+                  <div class="mb-2 flex items-center justify-between text-xs text-slate-300">
+                    <span class="inline-flex items-center gap-1"><i data-feather="cpu"></i> Performance Spark</span>
+                    <span class="font-semibold text-white">${prog}%</span>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 ring-1 ring-white/10">
+                    ${sparklineSVG(sparklineData(prog + student.age, 24), v)}
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Guardian</div>
+                    <div class="font-semibold">${student.guardianName}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">City</div>
+                    <div class="font-semibold">${student.city}</div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="home"></i> ${student.graduatedFrom}</span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="droplet"></i> ${student.bloodType}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 border-t border-white/10 bg-white/[0.02] px-5 py-3">
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><a href="tel:${student.phone.replace(/[^+\d]/g,'')}" class="hover:text-white transition">${student.phone}</a></div>
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="shield"></i><span class="text-xs">${student.guardianName}</span></div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Nebula • Variant ${i+1}</div>
+          </article>
+        `,
+
+        ion: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <div class="grid grid-cols-12">
+              <div class="col-span-5 border-r border-white/10 p-5">
+                <div class="flex items-center gap-4">
+                  <div class="relative">
+                    <div class="absolute inset-0 ${v.accent} opacity-30 blur-md rounded-full"></div>
+                    ${avaUrl ? `
+                      <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-16 w-16 rounded-full object-cover ring-2 ring-white/20 shadow-lg" />
+                    ` : `
+                      <div class="relative h-16 w-16 rounded-full ${v.accent} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                        <span class="text-xl font-extrabold text-white">${initials(student.fullName)}</span>
+                      </div>
+                    `}
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="truncate text-lg font-bold">${student.fullName}</h3>
+                    <p class="truncate text-sm text-slate-300">${student.faculty}</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 space-y-2">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-300">Performance</span>
+                    <span class="text-white font-semibold">${prog}%</span>
+                  </div>
+                  <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full ${v.accent} ${v.accent2} bg-gradient-to-r" style="width: ${prog}%"></div>
+                  </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Blood</div>
+                    <div class="font-semibold">${student.bloodType}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Age</div>
+                    <div class="font-semibold">${student.age}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-span-7 p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">Department</div>
+                    <div class="font-semibold">${student.department}</div>
+                  </div>
+                  <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                    <div class="text-slate-300">City</div>
+                    <div class="font-semibold">${student.city}</div>
+                  </div>
+                </div>
+
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300 mb-1 inline-flex items-center gap-1"><i data-feather="shield"></i> Guardian</div>
+                  <div class="font-semibold">${student.guardianName} <span class="text-slate-400">•</span> ${maskPhone(student.guardianPhone)}</div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="book"></i> ${student.education}</span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="home"></i> ${student.graduatedFrom}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 border-t border-white/10 bg-white/[0.02] px-5 py-3">
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><a href="tel:${student.phone.replace(/[^+\d]/g,'')}" class="hover:text-white transition">${student.phone}</a></div>
+              <div class="flex items-center gap-2 text-slate-300"><i data-feather="award"></i><span>${student.grade}</span></div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Ion • Variant ${i+1}</div>
+          </article>
+        `,
+
+        pulse: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <div class="p-5">
+              <div class="flex items-center gap-5">
+                <div class="relative shrink-0">
+                  <div class="absolute inset-0 ${v.accent2} opacity-30 blur-md rounded-full"></div>
+                  ${avaUrl ? `
+                    <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-20 w-20 rounded-2xl object-cover ring-2 ring-white/20 shadow-lg" />
+                  ` : `
+                    <div class="relative h-20 w-20 rounded-2xl ${v.accent2} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                      <span class="text-xl font-extrabold text-white">${initials(student.fullName)}</span>
+                    </div>
+                  `}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="truncate text-lg font-bold">${student.fullName}</h3>
+                  <p class="truncate text-sm text-slate-300">${student.department} • ${student.faculty}</p>
+                </div>
+                <div class="ml-auto">
+                  <div class="h-20 w-20 rounded-full flex items-center justify-center ring-1 ring-white/10" style="${ringStyle}">
+                    <div class="grid place-items-center">
+                      <div class="text-sm font-semibold">${prog}%</div>
+                      <div class="text-[10px] text-slate-300 -mt-1">Progress</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">Age</div>
+                  <div class="font-semibold">${student.age}</div>
+                </div>
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">City</div>
+                  <div class="font-semibold">${student.city}</div>
+                </div>
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">Blood</div>
+                  <div class="font-semibold">${student.bloodType}</div>
+                </div>
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">Grade</div>
+                  <div class="font-semibold">${student.grade}</div>
+                </div>
+              </div>
+
+              <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 bg-white/[0.02] px-1 py-3">
+                <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><span>${maskPhone(student.phone)}</span></div>
+                <div class="flex items-center gap-2 text-slate-300"><i data-feather="shield"></i><span class="text-xs">${student.guardianName}</span></div>
+              </div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Pulse • Variant ${i+1}</div>
+          </article>
+        `,
+
+        solace: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <div class="p-5">
+              <div class="flex items-center gap-4">
+                <div class="relative">
+                  <div class="absolute inset-0 ${v.accent} opacity-25 blur-md rounded-full"></div>
+                  ${avaUrl ? `
+                    <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-14 w-14 rounded-xl object-cover ring-2 ring-white/20 shadow-lg" />
+                  ` : `
+                    <div class="relative h-14 w-14 rounded-xl ${v.accent} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                      <span class="text-lg font-extrabold text-white">${initials(student.fullName)}</span>
+                    </div>
+                  `}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="truncate text-lg font-bold">${student.fullName}</h3>
+                  <p class="truncate text-sm text-slate-300">${student.department}</p>
+                </div>
+                <div class="ml-auto">
+                  <div class="text-right">
+                    <div class="text-xs text-slate-300">Score</div>
+                    <div class="text-xl font-bold">${prog}%</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                <div class="h-full ${v.accent2} ${v.accent} bg-gradient-to-r" style="width: ${prog}%"></div>
+              </div>
+
+              <div class="mt-4 grid grid-cols-3 gap-3">
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">Faculty</div>
+                  <div class="font-semibold">${student.faculty}</div>
+                </div>
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">Blood</div>
+                  <div class="font-semibold">${student.bloodType}</div>
+                </div>
+                <div class="rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/10">
+                  <div class="text-slate-300">Age</div>
+                  <div class="font-semibold">${student.age}</div>
+                </div>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between border-t border-white/10 bg-white/[0.02] px-1 py-3">
+                <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><a href="tel:${student.phone.replace(/[^+\d]/g,'')}" class="hover:text-white transition">${student.phone}</a></div>
+                <div class="flex items-center gap-2 text-slate-300"><i data-feather="shield"></i><span class="text-xs">${student.guardianName}</span></div>
+              </div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Solace • Variant ${i+1}</div>
+          </article>
+        `,
+
+        vortex: () => `
+          <article class="relative group overflow-hidden rounded-2xl bg-white/5 shadow-glass ring-1 ring-white/10 backdrop-blur-md preserve-3d animate-tilt ring-gradient sweep noise"
+                   style="--ring: ${v.ring}; --ring2: ${v.ring2}">
+            <div class="absolute top-0 left-0 right-0 h-2 ${v.accent} ${v.accent2} bg-gradient-to-r"></div>
+            <div class="p-5">
+              <div class="flex items-center gap-4">
+                <div class="relative">
+                  <div class="absolute inset-0 ${v.accent2} opacity-25 blur-md rounded-full"></div>
+                  ${avaUrl ? `
+                    <img alt="${student.fullName} avatar" src="${avaUrl}" class="relative h-16 w-16 rounded-full object-cover ring-2 ring-white/20 shadow-lg" />
+                  ` : `
+                    <div class="relative h-16 w-16 rounded-full ${v.accent2} grid place-items-center ring-2 ring-white/20 shadow-lg">
+                      <span class="text-xl font-extrabold text-white">${initials(student.fullName)}</span>
+                    </div>
+                  `}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="truncate text-lg font-bold">${student.fullName}</h3>
+                  <p class="truncate text-sm text-slate-300">${student.department} • ${student.faculty}</p>
+                  <div class="mt-1 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="award"></i> ${student.grade}</span>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-200 ring-1 ring-white/10"><i data-feather="map-pin"></i> ${student.city}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm text-slate-300">Guardian</div>
+                  <div class="font-semibold">${student.guardianName}</div>
+                </div>
+                <div class="mt-3">
+                  <div class="mb-2 flex items-center justify-between text-xs text-slate-300">
+                    <span class="inline-flex items-center gap-1"><i data-feather="activity"></i> Engagement</span>
+                    <span class="font-semibold text-white">${prog}%</span>
+                  </div>
+                  <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full ${v.accent} ${v.accent2} bg-gradient-to-r" style="width: ${prog}%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 flex items-center justify-between border-t border-white/10 bg-white/[0.02] px-1 py-3">
+                <div class="flex items-center gap-2 text-slate-300"><i data-feather="phone"></i><a href="tel:${student.phone.replace(/[^+\d]/g,'')}" class="hover:text-white transition">${student.phone}</a></div>
+                <div class="flex items-center gap-2 text-slate-300"><i data-feather="book"></i><span class="text-xs">${student.education}</span></div>
+              </div>
+            </div>
+
+            <div class="pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-widest text-white/60">Vortex • Variant ${i+1}</div>
+          </article>
+        `
+      };
+
+      const layoutKeys = ['aurora', 'zenith', 'nebula', 'ion', 'pulse', 'solace', 'vortex'];
+      const key = layoutKeys[i % layoutKeys.length];
+      return layouts[key]();
+    }
+
+    function sparklineSVG(values, v) {
+      const w = 280, h = 70, pad = 6;
+      const min = Math.min(...values), max = Math.max(...values);
+      const scaleX = (i) => pad + (i * (w - 2*pad) / (values.length - 1));
+      const scaleY = (val) => {
+        const t = (val - min) / (max - min || 1);
+        return h - pad - t * (h - 2*pad);
+      };
+      const points = values.map((v, i) => `${scaleX(i)},${scaleY(v)}`).join(' ');
+      const area = [
+        `${scaleX(0)},${h-pad}`,
+        ...values.map((v, i) => `${scaleX(i)},${scaleY(v)}`),
+        `${scaleX(values.length-1)},${h-pad}`
+      ].join(' ');
+
+      return `
+        <svg viewBox="0 0 ${w} ${h}" class="w-full h-16">
+          <defs>
+            <linearGradient id="grad-${v.name}" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="rgb(${v.ring} / .85)"/>
+              <stop offset="100%" stop-color="rgb(${v.ring2} / .85)"/>
+            </linearGradient>
+            <linearGradient id="grad-${v.name}-area" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgb(${v.ring} / .35)"/>
+              <stop offset="100%" stop-color="rgb(${v.ring2} / .05)"/>
+            </linearGradient>
+          </defs>
+          <polyline fill="none" stroke="url(#grad-${v.name})" stroke-width="2" points="${points}" />
+          <polygon fill="url(#grad-${v.name}-area)" points="${area}" />
+        </svg>
+      `;
+    }
+
+    function render() {
+      const container = document.getElementById('cards');
+      if (!container) return;
+      container.innerHTML = students.map((s, i) => buildCard(s, i)).join('');
+      if (window.feather) feather.replace();
+    }
+
+    document.addEventListener('DOMContentLoaded', render);
+  </script>
+<script src="https://huggingface.co/deepsite/deepsite-badge.js"></script>
+</body>
+</html>

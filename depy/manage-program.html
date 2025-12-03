@@ -1,964 +1,1341 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Program Manager</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --glass: rgba(15, 23, 42, 0.55);
-      --glass-strong: rgba(15, 23, 42, 0.8);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
-      background: #0f172a;
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    .glass-card {
-      background: var(--glass);
-      backdrop-filter: blur(18px);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      transition: all 0.35s ease;
-    }
-    .glass-card:hover {
-      background: var(--glass-strong);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    }
-    .gradient-border {
-      position: relative;
-      z-index: 1;
-    }
-    .gradient-border::before {
-      content: '';
-      position: absolute; inset: -2px;
-      /* background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899); */
-      border-radius: 18px;
-      opacity: 0.55;
-      transition: opacity .35s ease;
-      z-index: -1;
-      filter: blur(0.4px);
-    }
-    .glass-card:hover .gradient-border::before { opacity: 0.9; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Welcome to programs</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+    <!-- Tailwind + Icons + Libs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50:  '#f3f6ff',
+                            100: '#e6edff',
+                            200: '#d0dcff',
+                            300: '#a9bfff',
+                            400: '#7d9cff',
+                            500: '#5477ff',
+                            600: '#3b5ef0',
+                            700: '#2d48bf',
+                            800: '#243a97',
+                            900: '#1e317a',
+                            950: '#171f4d'
+                        },
+                        secondary: {
+                            50:  '#faf7ff',
+                            100: '#f3e8ff',
+                            200: '#e9d5ff',
+                            300: '#d8b4fe',
+                            400: '#c084fc',
+                            500: '#a855f7',
+                            600: '#9333ea',
+                            700: '#7e22ce',
+                            800: '#6b21a8',
+                            900: '#581c87',
+                            950: '#3b0764'
+                        }
+                    },
+                    boxShadow: {
+                        glass: '0 10px 40px rgba(0,0,0,0.25)'
+                    },
+                    keyframes: {
+                        'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        'scale-in': { '0%': { opacity: 0, transform: 'scale(.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+                        'pop': { '0%': { transform: 'scale(.9)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                        'slide-up': { '0%': { transform: 'translateY(12px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+                        'bar-fill': { '0%': { height: '0%' }, '100%': { height: 'var(--h)' } }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in .2s ease-out',
+                        'scale-in': 'scale-in .24s cubic-bezier(.2,.9,.3,1)',
+                        'pop': 'pop .18s ease-out',
+                        'slide-up': 'slide-up .28s ease-out',
+                        'bar-fill': 'bar-fill .9s ease-out var(--delay, 0s) forwards'
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <!-- AOS + Animate.css -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-    .bubble-container {
-      position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-    }
-    .bubble {
-      position: absolute; border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.12), rgba(147, 51, 234, 0.06));
-      filter: blur(1px);
-      animation: float 20s infinite ease-in-out;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
-      33% { transform: translateY(-100px) translateX(50px) scale(1.1); }
-      66% { transform: translateY(50px) translateX(-50px) scale(0.9); }
-    }
+    <!-- Local CSS/JS -->
+    
+    
+    <style>
+        /* Glassy card with subtle gradient and blur */
+ body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
 
-    .modal-overlay {
-      position: fixed; inset: 0; display: none; place-items: center;
-      background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
-      z-index: 1000;
-    }
-    .modal-overlay.show { display: grid; }
-    .modal-content {
-      background: var(--glass-strong);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.25rem;
-      width: 95%; max-width: 520px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.35);
-      animation: modalEnter .28s ease-out;
-    }
-    @keyframes modalEnter {
-      from { opacity: 0; transform: translateY(12px) scale(.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
+        /* Glass panel styles */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            border-radius: 16px;
+        }
 
-    .form-input {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text);
-      border-radius: 10px; padding: .7rem .9rem;
-      width: 100%;
-      transition: all .25s ease;
-    }
-    .form-input:focus { outline: none; border-color: rgba(99,102,241,0.55); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
-    .form-label { display:block; margin-bottom:.5rem; color: var(--muted); font-size:.9rem; }
-    .form-select {
-      appearance: none; width: 100%;
-      background: rgba(255,255,255,0.05) url("data:image/svg+xml;utf8,<svg stroke='white' fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right .75rem center / 1em;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text); border-radius: 10px; padding: .7rem .9rem;
-    }
-    .chip {
-      padding: .45rem .7rem; border-radius: 999px; font-size: .8rem;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
-      color: #cbd5e1;
-    }
+        .glass-card:hover {
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
 
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: rgba(99,102,241,0.08); }
-    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 8px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.55); }
-  </style>
+        /* Animated gradient border */
+        .gradient-border {
+            position: relative;
+            z-index: 1;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+            z-index: -1;
+            border-radius: 18px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .glass-card:hover .gradient-border::before {
+            opacity: 1;
+        }
+
+/* Modal transitions */
+.modal-overlay {
+    transition: opacity .28s ease, visibility .28s ease;
+}
+.modal-panel {
+    transition: transform .28s cubic-bezier(.2,.9,.3,1), opacity .28s ease;
+}
+.modal-open .modal-panel {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.modal-open .modal-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+
+/* Floating blob background */
+/* Bubble animation container */
+        .bubble-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.05));
+            backdrop-filter: blur(1px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+@keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            33% {
+                transform: translateY(-100px) translateX(50px) scale(1.1);
+            }
+            66% {
+                transform: translateY(50px) translateX(-50px) scale(0.9);
+            }
+        }
+
+/* Tiny progress bar utility */
+.tiny-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+}
+.tiny-bar > i {
+    display: block;
+    height: 100%;
+    width: var(--w, 50%);
+    background: linear-gradient(90deg, rgba(84,119,255,1) 0%, rgba(84,119,255,.2) 100%);
+    border-radius: inherit;
+    transition: width .7s cubic-bezier(.22,.9,.3,1);
+}
+
+/* Sparkline path animation */
+.spark path {
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: draw 1.6s ease forwards .25s;
+}
+@keyframes draw { to { stroke-dashoffset: 0 } }
+
+/* Particles (floating bubbles) */
+.particles-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+.particle {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(84,119,255,0.8), rgba(139,92,246,0.3) 70%, transparent 72%);
+    border-radius: 50%;
+    mix-blend-mode: screen;
+    opacity: 0.45;
+    animation-name: floatParticle;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+@keyframes floatParticle {
+    0% { transform: translate(0,0) scale(1); opacity: .35; }
+    50% { transform: translate(20px,-30px) scale(1.05); opacity: .6; }
+    100% { transform: translate(0,0) scale(1); opacity: .35; }
+}
+
+/* Form inputs */
+.form-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.form-input:focus {
+    border-color: rgba(84,119,255,0.5);
+    box-shadow: 0 0 0 2px rgba(84,119,255,0.25);
+}
+
+/* Activity card badge colors */
+.badge-full { background-color: rgba(34,197,94,0.2); color: #86efac; }
+.badge-almost { background-color: rgba(249,115,22,0.2); color: #fdba74; }
+.badge-active { background-color: rgba(99,102,241,0.2); color: #c7d2fe; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .particles-container .particle { opacity: .25; }
+}
+    </style>
+    <link rel="stylesheet" href="/depy/components/sidebar.css">
 </head>
-<body class="min-h-screen">
-  <!-- Animated background bubbles -->
-  <div class="bubble-container" id="bubbleContainer"></div>
+<body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <!-- Floating particles -->
+   <div class="bubble-container"></div>
 
-  <!-- Header -->
-  <header class="px-6 py-8">
-    <div class="max-w-7xl mx-auto">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-extrabold text-white">
-            <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-              Program Manager
-            </span>
-          </h1>
-          <p class="text-sm text-slate-400 mt-1">Manage classes, students, and courses for the selected program</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <button id="addStudent" class="glass-card gradient-border px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-            <i data-feather="user-plus"></i> Add Student
-          </button>
-          <button id="addCourse" class="glass-card gradient-border px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-            <i data-feather="book"></i> Add Course
-          </button>
-          <button id="closeBtn" class="glass-card px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
+    <!-- Sidebar (if needed) -->
+    <div id="sidebar-root"></div>
+    <script src="/depy/sidebar.js"></script>
 
-  <main class="max-w-7xl mx-auto px-6 pb-12 space-y-8">
-    <!-- Status -->
-    <div id="status" class="glass-card gradient-border p-6">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-          <i data-feather="loader" class="w-5 h-5 text-indigo-400 animate-spin"></i>
-        </div>
-        <div>
-          <p class="font-semibold">Loading program details…</p>
-          <p class="text-sm text-slate-400">Please wait while we fetch the program information.</p>
-        </div>
-      </div>
-    </div>
-
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="glass-card gradient-border p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-slate-400 text-sm">Active Classes</p>
-            <p id="stat-classes" class="text-2xl font-bold mt-1">0</p>
-          </div>
-          <div class="p-3 rounded-xl bg-indigo-500/20">
-            <i data-feather="book-open" class="w-6 h-6 text-indigo-400"></i>
-          </div>
-        </div>
-      </div>
-      <div class="glass-card gradient-border p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-slate-400 text-sm">Total Students</p>
-            <p id="stat-students" class="text-2xl font-bold mt-1">0</p>
-          </div>
-          <div class="p-3 rounded-xl bg-emerald-500/20">
-            <i data-feather="users" class="w-6 h-6 text-emerald-400"></i>
-          </div>
-        </div>
-      </div>
-      <div class="glass-card gradient-border p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-slate-400 text-sm">Courses</p>
-            <p id="stat-courses" class="text-2xl font-bold mt-1">0</p>
-          </div>
-          <div class="p-3 rounded-xl bg-amber-500/20">
-            <i data-feather="book" class="w-6 h-6 text-amber-400"></i>
-          </div>
-        </div>
-      </div>
-      <div class="glass-card gradient-border p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-slate-400 text-sm">Avg Performance</p>
-            <p id="stat-performance" class="text-2xl font-bold mt-1">0%</p>
-          </div>
-          <div class="p-3 rounded-xl bg-rose-500/20">
-            <i data-feather="activity" class="w-6 h-6 text-rose-400"></i>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Welcome Panel -->
-    <section id="welcomePanel" class="glass-card gradient-border p-0 overflow-hidden hidden">
-      <div class="flex flex-col md:flex-row">
-        <div class="p-6 md:p-8 flex-1">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h2 id="p-name" class="text-2xl md:text-3xl font-bold text-white">Program</h2>
-              <div id="p-meta" class="text-indigo-300 mt-1">Code: PROGRAM</div>
+    <!-- Header -->
+    <header class="px-6 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white animate__animated animate__fadeIn">
+                        <span class="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+                           Welcome to Programs
+                        </span>
+                    </h1>
+                    <p class="text-gray-400 text-sm animate__animated animate__fadeIn animate__delay-1s">
+                        Create and manage your academic classes with style
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input id="searchInput" type="text" placeholder="Search classes..." class="pl-9 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-500"/>
+                    </div>
+                    <button class="glass px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-500/10 transition-all relative animate__animated animate__fadeIn animate__delay-1s">
+                        <i data-feather="bell"></i>
+                        <span class="hidden md:inline">Notifications</span>
+                        <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs">3</div>
+                    </button>
+                    <div class="glass p-2 rounded-full animate__animated animate__fadeIn animate__delay-1s">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-400 to-secondary-400 flex items-center justify-center text-white font-bold shadow-lg">
+                            U
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-2">
-              <span id="p-duration-chip" class="chip">Duration</span>
-              <span id="p-credits-chip" class="chip">Credits</span>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- Top Controls: Program + Year Filters -->
+        <section class="glass rounded-2xl p-5 border border-white/10 shadow-glass mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+                <div class="flex flex-col md:flex-row gap-4 md:items-center">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 mb-2">FILTER BY PROGRAM</h3>
+                        <div id="programsFilter" class="flex flex-wrap gap-2">
+                            <!-- dynamic program chips -->
+                            <button class="chip active px-3 py-1 rounded-full bg-primary-500 text-white text-sm" data-program="">All Programs</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 mb-2">FILTER BY YEAR</h3>
+                        <div id="yearFilter" class="flex flex-wrap gap-2">
+                            <button class="chip active px-3 py-1 rounded-full bg-primary-500 text-white text-sm" data-year="">All Years</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="refreshBtn" class="glass px-3 py-2 rounded-lg hover:bg-white/10 transition-all flex items-center gap-2">
+                        <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                    <button id="createClassBtn" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all shadow-lg">
+                        <i data-feather="plus"></i>
+                        Create New Class
+                    </button>
+                </div>
             </div>
-          </div>
-          <p id="p-desc" class="text-slate-300 mt-4 leading-relaxed">Description goes here.</p>
+        </section>
 
-          <div class="mt-6">
-            <h3 class="text-sm uppercase tracking-wider text-slate-400 mb-3">Specializations</h3>
-            <div id="p-specs" class="flex flex-wrap gap-2"></div>
-          </div>
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <!-- Left Column -->
+            <div class="xl:col-span-5 space-y-6">
+                <!-- Metrics -->
+                <section class="glass rounded-2xl p-6 border border-white/10 shadow-glass">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Program Metrics</h2>
+                        <div class="flex gap-2">
+                            <button class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+                                <i data-feather="calendar" class="w-4 h-4"></i>
+                            </button>
+                            <button class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+                                <i data-feather="more-horizontal" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <div class="flex items-end justify-between mb-2">
+                            <h3 class="font-semibold">Enrollment Growth</h3>
+                            <span id="enrollmentGrowth" class="text-2xl font-bold">+12.4%</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-4">Compared to last semester</p>
+                        <!-- Sparkline Chart -->
+                        <div class="spark h-20">
+                            <svg viewBox="0 0 300 80" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="sparkGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#5477ff" stop-opacity=".9"/>
+                                        <stop offset="100%" stop-color="#5477ff" stop-opacity=".1"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,60 C40,40 60,50 100,35 C140,20 160,30 200,25 C240,20 260,28 300,18"
+                                      fill="none" stroke="#7d9cff" stroke-width="2.5"/>
+                                <path d="M0,80 L0,60 C40,40 60,50 100,35 C140,20 160,30 200,25 C240,20 260,28 300,18 L300,80 Z"
+                                      fill="url(#sparkGrad)" opacity=".25"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-4">Program Distribution</h3>
+                        <div id="programDistributionGrid" class="grid grid-cols-2 gap-4">
+                            <!-- dynamic program distribution cards -->
+                        </div>
+                    </div>
+                </section>
 
-          <div class="mt-6 text-sm text-slate-400">
-            <span class="mr-4"><strong class="text-slate-200">Created:</strong> <span id="p-created">—</span></span>
-            <span><strong class="text-slate-200">Department:</strong> <span id="p-dept">—</span></span>
-          </div>
-        </div>
-        <div class="md:w-72 w-full relative">
-          <img id="p-image" alt="Program Image" class="w-full h-48 md:h-full object-cover"/>
-          <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-slate-900/60 to-transparent"></div>
-        </div>
-      </div>
-    </section>
+                <!-- Recent Activities Grid -->
+                <section class="glass rounded-2xl p-6 border border-white/10 shadow-glass">
+                    <div class="flex items-center justify-between mb-5">
+                        <h2 class="text-xl font-bold">Recent Activities</h2>
+                        <button class="text-sm text-primary-300 hover:text-primary-200">View all</button>
+                    </div>
+                    <div id="recentActivitiesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- dynamic recent activities cards -->
+                    </div>
+                </section>
+            </div>
 
-  
+            <!-- Right Column -->
+            <div class="xl:col-span-7 space-y-6">
+                <!-- Pentagonal Diagram -->
+                <section class="glass rounded-2xl p-6 border border-white/10 shadow-glass">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold">Program Overview</h2>
+                        <div class="flex gap-2">
+                            <button id="pentagonPlay" class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+                                <i data-feather="play"></i>
+                            </button>
+                            <button id="pentagonReset" class="glass p-2 rounded-lg hover:bg-white/10 transition-all">
+                                <i data-feather="rotate-ccw"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
+                        <div class="lg:col-span-3">
+                            <canvas id="pentagonCanvas" class="w-full aspect-square"></canvas>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <div id="pentagonLegend" class="space-y-3">
+                                <!-- dynamic legend -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-    <!-- Class Management -->
-    <section class="glass-card gradient-border p-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h2 class="text-xl font-bold">Class Management</h2>
-        <button id="addClassBtn" class="glass-card gradient-border px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-          <i data-feather="plus"></i> Add Class
-        </button>
-      </div>
+                <!-- Classes Grid -->
+                <section>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold">Classes</h2>
+                        <div class="text-sm text-gray-400">
+                            <span id="classCount">0</span> total
+                        </div>
+                    </div>
+                    <div id="classesGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <!-- class cards will be rendered dynamically -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
 
-      <div class="flex flex-wrap gap-3 mb-6">
-        <select id="yearFilter" class="form-select max-w-[220px]">
-          <option value="">All Years</option>
-          <option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Year 6</option>
-        </select>
-        <select id="semesterFilter" class="form-select max-w-[220px]">
-          <option value="">All Semesters</option>
-          <option>Semester 1</option><option>Semester 2</option>
-        </select>
-        <button id="filterBtn" class="glass-card gradient-border px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-          <i data-feather="filter"></i> Filter
-        </button>
-      </div>
+    <!-- Create Class Modal -->
+    <div id="createClassModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="modal-overlay absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        <div class="modal-panel relative w-full max-w-4xl glass rounded-2xl shadow-glass scale-95 border border-white/10 overflow-hidden">
+            <button id="closeModal" class="absolute top-4 right-4 z-20 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition">
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+            <!-- Floating blobs -->
+            <div class="pointer-events-none absolute -top-16 -right-16 w-72 h-72 blob bg-primary-500/30 rounded-full"></div>
+            <div class="pointer-events-none absolute -bottom-20 -left-12 w-80 h-80 blob bg-secondary-500/20 rounded-full"></div>
 
-      <div id="classesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <!-- Class cards will appear here -->
-      </div>
-    </section>
-  </main>
-
-  <!-- Add Class Modal -->
-  <div id="addClassModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold">Create New Class</h3>
-        <button id="closeModalBtn" class="glass-card p-2 rounded-lg hover:bg-white/10">
-          <i data-feather="x"></i>
-        </button>
-      </div>
-      <form id="classForm" class="space-y-4">
-        <div>
-          <label class="form-label" for="className">Class Name</label>
-          <input id="className" class="form-input" type="text" placeholder="e.g. MBBS Year 1 - Section A" required/>
+            <div class="grid grid-cols-1 lg:grid-cols-3 relative">
+                <!-- Sidebar Image -->
+                <div class="relative h-64 lg:h-[32rem] overflow-hidden">
+                    <img id="posterPreview" src="http://static.photos/education/640x360/1" alt="Class Poster" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/30 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 class="text-xl font-bold tracking-tight">Class Poster</h3>
+                        <p class="text-slate-300 text-sm mt-1">This will be displayed in class listings</p>
+                    </div>
+                </div>
+                <!-- Form Content -->
+                <div class="lg:col-span-2 p-6 md:p-8 space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Create New Class</h2>
+                        <p class="text-gray-400">Fill in the details to create a new class</p>
+                    </div>
+                    <form id="createClassForm" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Class Name</label>
+                            <input type="text" id="className" class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="e.g. Data Structures and Algorithms">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Program</label>
+                                <select id="programSelect" class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">Select Program</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Year</label>
+                                <select id="yearSelect" class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">Select Year</option>
+                                    <option>Year 1</option>
+                                    <option>Year 2</option>
+                                    <option>Year 3</option>
+                                    <option>Year 4</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Max Capacity</label>
+                                <input type="number" id="capacity" class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="e.g. 30">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Instructor</label>
+                                <input type="text" id="instructor" class="w-full form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="e.g. Prof. Johnson">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Poster Image</label>
+                            <div class="flex gap-3">
+                                <input type="text" id="posterUrl" class="flex-1 form-input px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Paste image URL or leave blank for random">
+                                <button type="button" id="randomPoster" class="glass px-4 py-3 rounded-lg hover:bg-white/10 transition-all">
+                                    <i data-feather="shuffle" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" class="w-full flex justify-center items-center gap-2 py-3.5 px-6 rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 focus:outline-none transition-all duration-200">
+                                <i data-feather="plus-circle" class="w-5 h-5"></i>
+                                Create Class
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label" for="classYear">Year</label>
-            <select id="classYear" class="form-select" required>
-              <option value="">Select Year</option>
-              <option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Year 6</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label" for="classSemester">Semester</label>
-            <select id="classSemester" class="form-select" required>
-              <option value="">Select Semester</option>
-              <option>Semester 1</option><option>Semester 2</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label" for="classType">Class Type</label>
-            <select id="classType" class="form-select" required>
-              <option value="">Select Type</option>
-              <option>YEAR 1</option><option>YEAR 2</option><option>YEAR 3</option><option>YEAR 4</option><option>YEAR 5</option><option>YEAR 6</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label" for="classSchedule">Schedule</label>
-            <input id="classSchedule" class="form-input" type="text" placeholder="e.g. Mon/Wed/Fri 09:00–11:00" required/>
-          </div>
-        </div>
-        <div>
-          <label class="form-label" for="classImage">Class Image URL (optional)</label>
-          <input id="classImage" class="form-input" type="text" placeholder="Leave blank for default image"/>
-        </div>
-        <div class="pt-2">
-          <button type="submit" class="w-full glass-card gradient-border py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-            <i data-feather="save"></i> Save Class
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <!-- View Class Modal Container -->
-  <div id="viewClassModalContainer"></div>
+    <script>
+        // small helpers available globally
+        function generateRandomPosterUrl() {
+            const categories = ['education','technology','science','business','engineering','medical','workspace','abstract'];
+            const cat = categories[Math.floor(Math.random()*categories.length)];
+            return `https://picsum.photos/seed/${cat}/640/360`;
+        }
+    </script>
 
-  <script>
-    // Firebase config (from your existing app)
-    const firebaseConfig = {
-      apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
-      authDomain: "mentora-71f5c.firebaseapp.com",
-      projectId: "mentora-71f5c",
-      storageBucket: "mentora-71f5c.appspot.com",
-      messagingSenderId: "16685388211",
-      appId: "1:16685388211:web:7eed812660439dec7b3bc6",
-      measurementId: "G-BL98PXGK2G"
+    <script>
+        // Init icons
+        feather.replace();
+
+     
+        // Create bubbles
+        (function createBubbles() {
+            const container = document.querySelector('.bubble-container');
+            const bubbleCount = 15;
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                const size = Math.random() * 100 + 50;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const delay = Math.random() * 10;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.top = `${top}%`;
+                bubble.style.animationDelay = `${delay}s`;
+                
+                container.appendChild(bubble);
+            }
+        }
+)();
+    </script>
+    <script>
+        // Firebase config + persistence
+const firebaseConfig = {
+    apiKey: "AIzaSyCPV_mXojZBR-Dew8RuZSi9jv9X6rc_D90",
+    authDomain: "mentora-71f5c.firebaseapp.com",
+    projectId: "mentora-71f5c",
+    storageBucket: "mentora-71f5c.appspot.com",
+    messagingSenderId: "16685388211",
+    appId: "1:16685388211:web:7eed812660439dec7b3bc6",
+    measurementId: "G-BL98PXGK2G"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// State
+let programs = [];
+let classes = [];
+let selectedProgramId = '';
+let selectedYear = '';
+
+// UI refs
+const createClassBtn = document.getElementById('createClassBtn');
+const createClassModal = document.getElementById('createClassModal');
+const closeModal = document.getElementById('closeModal');
+const modalOverlay = createClassModal.querySelector('.modal-overlay');
+const createClassForm = document.getElementById('createClassForm');
+const randomPoster = document.getElementById('randomPoster');
+const posterPreview = document.getElementById('posterPreview');
+const posterUrl = document.getElementById('posterUrl');
+const programSelect = document.getElementById('programSelect');
+const yearSelect = document.getElementById('yearSelect');
+const refreshBtn = document.getElementById('refreshBtn');
+const searchInput = document.getElementById('searchInput');
+
+// Recent activities
+const recentActivitiesGrid = document.getElementById('recentActivitiesGrid');
+
+// Pentagon canvas
+const pentagonCanvas = document.getElementById('pentagonCanvas');
+const pentagonPlayBtn = document.getElementById('pentagonPlay');
+const pentagonResetBtn = document.getElementById('pentagonReset');
+const pentagonLegend = document.getElementById('pentagonLegend');
+
+// Utility
+function generateRandomPosterUrl() {
+    const categories = ['education','technology','science','business','engineering','medical','workspace','abstract'];
+    const cat = categories[Math.floor(Math.random()*categories.length)];
+    return `https://picsum.photos/seed/${cat}/640/360`;
+}
+
+// Fetch programs
+async function fetchPrograms() {
+    const deptId = localStorage.getItem('currentDeptId');
+    if (!deptId) {
+        programs = [
+            { id: 'p-cs', name: 'Computer Science', duration: 4 },
+            { id: 'p-biz', name: 'Business', duration: 4 },
+            { id: 'p-eng', name: 'Engineering', duration: 4 },
+            { id: 'p-med', name: 'Medicine', duration: 5 }
+        ];
+        renderProgramFilters();
+        populateProgramSelect();
+        return;
+    }
+
+    try {
+        const snapshot = await db.collection('departments').doc(deptId).collection('programs').get();
+        programs = [];
+        snapshot.forEach(doc => programs.push({ id: doc.id, ...doc.data() }));
+        renderProgramFilters();
+        populateProgramSelect();
+    } catch (err) {
+        console.error('Error fetching programs', err);
+    }
+}
+
+// Fetch classes and apply filters
+async function fetchClasses() {
+    const deptId = localStorage.getItem('currentDeptId');
+    try {
+        if (!deptId) {
+            // Demo data for dev
+            const now = new Date();
+            const older = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
+            classes = [
+                { id: 'c1', name: 'Advanced Algorithms', programId: 'p-cs', year: '3', maxCapacity: 30, imageUrl: generateRandomPosterUrl(), instructor: 'Prof. Johnson', students: 24, createdAt: now.toISOString() },
+                { id: 'c2', name: 'Financial Markets', programId: 'p-biz', year: '2', maxCapacity: 45, imageUrl: generateRandomPosterUrl(), instructor: 'Dr. Smith', students: 45, createdAt: older.toISOString() },
+                { id: 'c3', name: 'Thermodynamics', programId: 'p-eng', year: '2', maxCapacity: 35, imageUrl: generateRandomPosterUrl(), instructor: 'Prof. Williams', students: 18, createdAt: now.toISOString() }
+            ];
+            renderAll();
+            return;
+        }
+
+        let query = db.collection('departments').doc(deptId).collection('classes');
+        if (selectedProgramId) query = query.where('programId','==', selectedProgramId);
+        const snapshot = await query.get();
+        classes = [];
+        snapshot.forEach(doc => classes.push({ id: doc.id, ...doc.data() }));
+
+        // Apply year filter locally
+        let filtered = classes;
+        if (selectedYear) filtered = filtered.filter(c => String(c.year) === String(selectedYear));
+
+        renderAll(filtered);
+    } catch (err) {
+        console.error('Error fetching classes', err);
+    }
+}
+
+// Render program chips
+function renderProgramFilters() {
+    const container = document.getElementById('programsFilter');
+    if (!container) return;
+    container.innerHTML = '<button class="chip'+(selectedProgramId? '':' active')+'" data-program="">All Programs</button>' +
+        programs.map(p => `<button class="chip ${selectedProgramId===p.id? 'active':''}" data-program="${p.id}">${p.name}</button>`).join('');
+
+    container.querySelectorAll('.chip').forEach(btn => {
+        btn.onclick = function() {
+            selectedProgramId = this.getAttribute('data-program') || '';
+            container.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            // Reset year filter when switching program
+            selectedYear = '';
+            renderYearFilters();
+            fetchClasses();
+        }
+    });
+}
+
+// Populate program select in modal
+function populateProgramSelect() {
+    if (!programSelect) return;
+    programSelect.innerHTML = '<option value="">Select Program</option>' + programs.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+// Render year chips
+function renderYearFilters() {
+    const container = document.getElementById('yearFilter');
+    if (!container) return;
+    const years = ['', '1','2','3','4','5'];
+    container.innerHTML = years.map(y => `<button class="chip ${selectedYear===String(y)? 'active':''}" data-year="${y}">${y? 'Year '+y : 'All Years'}</button>`).join('');
+    container.querySelectorAll('.chip').forEach(btn => {
+        btn.onclick = function() {
+            selectedYear = this.getAttribute('data-year') || '';
+            container.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+            this.classList.add('active');
+            fetchClasses();
+        }
+    });
+}
+
+// Render classes grid
+function renderClasses(list = classes) {
+        const container = document.getElementById('classesGrid');
+        const classCount = document.getElementById('classCount');
+        if (!container) return;
+
+        // Simple search filter
+        const q = (searchInput?.value || '').toLowerCase().trim();
+        let filtered = list;
+        if (q) {
+                filtered = list.filter(c => (c.name||'').toLowerCase().includes(q) || (c.instructor||'').toLowerCase().includes(q));
+        }
+
+        if (!filtered.length) {
+                container.innerHTML = `<div class="glass rounded-2xl p-8 text-center col-span-full">
+                        <i data-feather="book" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-2">No Classes Found</h3>
+                        <p class="text-gray-400 mb-4">Try adjusting filters or search term</p>
+                </div>`;
+                feather.replace();
+                if (classCount) classCount.textContent = '0';
+                return;
+        }
+
+        if (classCount) classCount.textContent = String(filtered.length);
+
+        // Ensure previous per-card charts are destroyed to avoid leaks
+        window._classCharts = window._classCharts || {};
+        Object.keys(window._classCharts).forEach(k => {
+                try { window._classCharts[k].destroy(); } catch(e) {}
+        });
+        window._classCharts = {};
+
+        const cards = [];
+        for (let i = 0; i < filtered.length; i++) {
+                const c = filtered[i];
+                const program = programs.find(p => p.id === c.programId) || { name: c.program || 'Unknown' };
+                const students = c.students != null ? c.students : Math.floor(Math.random() * (c.maxCapacity || 30));
+                const capacity = c.maxCapacity || 30;
+                const percent = capacity ? Math.round((students / capacity) * 100) : 0;
+                const created = c.createdAt ? new Date(c.createdAt) : new Date();
+                const isNew = (Date.now() - created.getTime()) < (30 * 24 * 60 * 60 * 1000);
+
+                // Labs and pass rate (fallback/demo values when not present)
+                const labs = c.labs || 6;
+                const labsCompleted = c.labsCompleted || Math.max(1, Math.min(labs, Math.floor((percent/100) * labs) || Math.floor(Math.random()*(labs-2)+1)));
+                const passRate = c.passRate != null ? c.passRate : (70 + Math.floor(Math.random()*28));
+
+                // Safe id for DOM
+                const safeId = String(c.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+                const chartId = `chart_${safeId}`;
+
+                cards.push(`
+                <section class="col-span-12 xl:col-span-6 relative">
+                    <div class="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-2xl shadow-soft hover:shadow-glow transition-all duration-500">
+                        <div class="absolute -inset-1 rounded-3xl bg-gradient-to-r from-primary-500/30 via-fuchsia-500/20 to-cyan-400/20 opacity-40 blur-2xl group-hover:opacity-80 transition duration-700"></div>
+                        <div class="relative p-5 md:p-6">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div>
+                                    <h2 class="text-xl md:text-2xl font-semibold">${c.name}</h2>
+                                    <p class="text-slate-400">${program.name} • Year ${c.year || 'N/A'}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-primary-500/10 border border-primary-400/20 text-primary-300">
+                                        <span class="h-2 w-2 rounded-full bg-primary-500"></span> ${percent>=100? 'Full' : percent>80? 'Almost Full' : 'Active'}
+                                    </span>
+                                    <span class="text-xs text-slate-400 border border-white/10 rounded-full px-3 py-1 bg-white/5">Class ID: ${c.id}</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 grid grid-cols-5 gap-4">
+                                <div class="col-span-5 md:col-span-2 relative">
+                                    <div class="relative h-44 md:h-full overflow-hidden rounded-2xl border border-white/10">
+                                        <img src="${c.imageUrl || generateRandomPosterUrl()}" alt="Class poster" class="h-full w-full object-cover opacity-90">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent"></div>
+                                        <div class="absolute bottom-3 left-3 flex items-center gap-2">
+                                            <img src="${c.instructorAvatar || `https://i.pravatar.cc/64?u=${encodeURIComponent(c.instructor || c.id)}`}" alt="Teacher" class="h-9 w-9 rounded-full ring-2 ring-white/20">
+                                            <div>
+                                                <p class="text-sm font-medium">${c.instructor || 'Instructor'}</p>
+                                                <p class="text-xs text-slate-300/80">Instructor</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-span-5 md:col-span-3">
+                                    <div class="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <div class="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                                                <p class="text-slate-400 text-xs">Students</p>
+                                                <p class="text-2xl font-bold mt-1">${students}</p>
+                                            </div>
+                                            <div class="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                                                <p class="text-slate-400 text-xs">Labs</p>
+                                                <p class="text-2xl font-bold mt-1">${labs}</p>
+                                            </div>
+                                            <div class="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                                                <p class="text-slate-400 text-xs">Pass Rate</p>
+                                                <p class="text-2xl font-bold mt-1">${passRate}%</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <div class="flex items-center justify-between text-xs text-slate-300">
+                                                <span>Top Students</span>
+                                                <span class="text-slate-400">View all</span>
+                                            </div>
+                                            <div class="mt-3 flex -space-x-2">
+                                                <img class="h-8 w-8 rounded-full ring-2 ring-slate-900" src="https://i.pravatar.cc/48?img=${(i%70)+10}" alt="">
+                                                <img class="h-8 w-8 rounded-full ring-2 ring-slate-900" src="https://i.pravatar.cc/48?img=${(i%60)+20}" alt="">
+                                                <img class="h-8 w-8 rounded-full ring-2 ring-slate-900" src="https://i.pravatar.cc/48?img=${(i%50)+30}" alt="">
+                                                <div class="h-8 w-8 rounded-full ring-2 ring-slate-900 bg-white/10 flex items-center justify-center text-[10px] text-slate-300">+${Math.max(0, Math.floor(Math.random()*6))}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium">Lab Progress</h3>
+                                    <span class="text-xs text-slate-400">Stacked</span>
+                                </div>
+                                <div class="mt-3">
+                                    <canvas id="${chartId}" height="140" data-class-id="${c.id}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                `);
+        }
+
+        container.innerHTML = cards.join('');
+        feather.replace();
+
+        // Initialize per-card charts and per-course sliders
+        // Destroy previous course charts container if any
+        window._courseCharts = window._courseCharts || {};
+        Object.keys(window._courseCharts).forEach(k => { try { window._courseCharts[k].destroy(); } catch(e){} });
+        window._courseCharts = {};
+
+        filtered.forEach((c, idx) => {
+                const safeId = String(c.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+                const chartId = `chart_${safeId}`;
+                const canvas = document.getElementById(chartId);
+                if (!canvas) return;
+
+                // destroy existing
+                window._classCharts = window._classCharts || {};
+                if (window._classCharts[chartId]) {
+                        try { window._classCharts[chartId].destroy(); } catch(e){}
+                }
+
+                // Demo dataset (use class-provided values when available)
+                const labs = c.labs || 6;
+                const completed = c.labsCompletedArray || Array.from({length: labs}, () => Math.floor(Math.random()*12)+4);
+                const pending = c.labsPendingArray || completed.map(v => Math.max(0, Math.floor((Math.random()*4))));
+
+                const ctx = canvas.getContext('2d');
+                try {
+                        window._classCharts[chartId] = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                        labels: Array.from({length: completed.length}, (_,i)=> `Lab ${i+1}`),
+                                        datasets: [
+                                                { label: 'Completed', data: completed, backgroundColor: 'rgba(139,92,246,0.9)', borderRadius: 6, borderSkipped: false },
+                                                { label: 'Pending', data: pending, backgroundColor: 'rgba(139,92,246,0.25)', borderRadius: 6, borderSkipped: false }
+                                        ]
+                                },
+                                options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#e2e8f0', bodyColor: '#cbd5e1' } },
+                                        scales: { x: { stacked: true, grid: { display: false }, ticks: { color: 'rgba(203,213,225,0.8)' } }, y: { stacked: true, grid: { color: 'rgba(148,163,184,0.12)' }, ticks: { color: 'rgba(203,213,225,0.8)' } } }
+                                }
+                        });
+                } catch (err) { console.error('Chart init failed', err); }
+            });
+
+            // Initialize per-class course sliders and per-course progress charts
+            filtered.forEach((c) => {
+                const safeId = String(c.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+                const sliderId = `courseSlider_${safeId}`;
+                const leftBtnId = `coursePrev_${safeId}`;
+                const rightBtnId = `courseNext_${safeId}`;
+
+                // Prepare courses data (fallback demo when missing)
+                const coursesArr = Array.isArray(c.courses) && c.courses.length ? c.courses : (
+                    (function demoCourses(){
+                        const out = [];
+                        const n = c.courses && c.courses.length ? c.courses.length : 4;
+                        for (let i=0;i<Math.max(1,n);i++) out.push({ id: `${c.id}-crs-${i+1}`, name: ['Algorithms','Databases','Networks','Security'][i%4] || `Course ${i+1}`, progress: Math.floor(40 + Math.random()*55) });
+                        return out;
+                    })()
+                );
+
+                // Render small doughnut charts per course
+                coursesArr.forEach((course, j) => {
+                    const cid = `course_${safeId}_${j}`;
+                    const canvas = document.getElementById(cid);
+                    if (!canvas) return;
+                    // destroy any existing
+                    if (window._courseCharts[cid]) { try { window._courseCharts[cid].destroy(); } catch(e){} }
+                    const ctx = canvas.getContext('2d');
+                    try {
+                        window._courseCharts[cid] = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Completed','Remaining'],
+                                datasets: [{ data: [course.progress || 0, 100 - (course.progress||0)], backgroundColor: ['rgba(139,92,246,0.95)','rgba(139,92,246,0.12)'], hoverOffset: 4 }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '70%',
+                                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                            }
+                        });
+                    } catch (err) { console.error('course chart init failed', err); }
+                });
+
+                // Setup slider buttons
+                const slider = document.getElementById(sliderId);
+                const prev = document.getElementById(leftBtnId);
+                const next = document.getElementById(rightBtnId);
+                if (slider && (prev || next)) {
+                    // Smooth scroll helpers
+                    const step = Math.max(slider.clientWidth * 0.6, 220);
+                    prev?.addEventListener('click', () => slider.scrollBy({ left: -step, behavior: 'smooth' }));
+                    next?.addEventListener('click', () => slider.scrollBy({ left: step, behavior: 'smooth' }));
+                    // Optional: mouse drag for slider (desktop)
+                    let isDown = false, startX, scrollLeft;
+                    slider.addEventListener('mousedown', (e) => { isDown = true; slider.classList.add('cursor-grabbing'); startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+                    slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('cursor-grabbing'); });
+                    slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('cursor-grabbing'); });
+                    slider.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 1.5; slider.scrollLeft = scrollLeft - walk; });
+                }
+            });
+}
+
+// Recent activities (grid of small cards)
+function renderRecentActivities(list = classes) {
+    if (!recentActivitiesGrid) return;
+
+    // Choose most recent 4 classes by createdAt
+    const recent = [...list]
+        .filter(c => !!c.createdAt)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 4);
+
+    recentActivitiesGrid.innerHTML = recent.map((c, i) => {
+        const program = programs.find(p => p.id === c.programId)?.name || 'General';
+        const students = c.students || 0;
+        const capacity = c.maxCapacity || 0;
+        const daysAgo = Math.floor((Date.now() - new Date(c.createdAt).getTime()) / (24*60*60*1000));
+        return `
+            <div class="glass rounded-xl p-4 border border-white/10 shadow-glass animate__animated animate__fadeInUp" style="animation-delay: ${i*80}ms">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs text-gray-400">${daysAgo === 0 ? 'Today' : `${daysAgo} days ago`}</span>
+                    <span class="text-xs px-2 py-1 rounded-full bg-white/5">${program}</span>
+                </div>
+                <div class="font-semibold">${c.name}</div>
+                <div class="text-xs text-gray-400">${students}/${capacity} enrolled</div>
+                <div class="mt-2 text-xs text-gray-300">Instructor: ${c.instructor || '—'}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Update stats and distribution
+function updateStatsAndDistribution(list = classes) {
+    const total = list.length;
+    const totalCapacity = list.reduce((s, c) => s + (c.maxCapacity||0), 0) || 0;
+    const students = list.reduce((s, c) => s + (c.students || 0), 0) || 0;
+    const enrollRate = totalCapacity ? Math.round((students / totalCapacity) * 100) : 0;
+
+    // Update "Enrollment Growth" text (demo: derive from enrollment rate changes)
+    const enrollmentGrowthEl = document.getElementById('enrollmentGrowth');
+    if (enrollmentGrowthEl) {
+        // naive fake growth: base on rate vs 100
+        const growth = Math.max(0, Math.round((enrollRate - 50) / 5)); // just a fun number
+        enrollmentGrowthEl.textContent = `+${growth}%`;
+    }
+
+    // Program distribution
+    const countsByProgram = programs.map(p => ({ id: p.id, name: p.name, count: list.filter(c => c.programId === p.id).length }));
+    const totalForDist = countsByProgram.reduce((s, x) => s + x.count, 0) || 1;
+    countsByProgram.sort((a,b)=> b.count - a.count);
+
+    const grid = document.getElementById('programDistributionGrid');
+    if (grid) {
+        grid.innerHTML = countsByProgram.map((p, i) => {
+            const pct = Math.round((p.count / totalForDist) * 100);
+            const activeCls = i === 0 ? 'border-primary-500/50 ring-2 ring-primary-400/10' : '';
+            return `
+                <div class="glass rounded-xl p-4 ${activeCls}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-3 h-3 rounded-full ${i===0? 'bg-primary-500' : i===1? 'bg-secondary-500' : i===2? 'bg-cyan-500' : 'bg-pink-500'}"></div>
+                        <span class="text-sm">${p.name}</span>
+                        <span class="ml-auto text-xs text-gray-400">${p.count} classes</span>
+                    </div>
+                    <div class="text-2xl font-bold">${pct}%</div>
+                    <div class="tiny-bar mt-2"><i style="--w: ${pct}%"></i></div>
+                </div>`;
+        }).join('');
+    }
+
+    // Also update pentagon
+    renderPentagon(countsByProgram);
+}
+
+// Pentagonal (radar-style) canvas visualization
+let pentagonAnim = null;
+function renderPentagon(programCounts) {
+    if (!pentagonCanvas) return;
+    const ctx = pentagonCanvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = pentagonCanvas.getBoundingClientRect();
+    pentagonCanvas.width = rect.width * dpr;
+    pentagonCanvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const radius = Math.min(rect.width, rect.height) * 0.38;
+
+    // Build dataset (top 5)
+    const top = programCounts
+        .sort((a,b) => b.count - a.count)
+        .slice(0,5);
+    const labels = top.map(x => x.name);
+    const values = top.map(x => x.count);
+    const maxVal = Math.max(1, ...values);
+    const n = labels.length;
+
+    // Legend
+    pentagonLegend.innerHTML = labels.map((lbl, idx) => {
+        const val = values[idx];
+        const pct = maxVal ? Math.round((val / maxVal) * 100) : 0;
+        const colors = ['bg-primary-500','bg-secondary-500','bg-cyan-500','bg-pink-500','bg-yellow-500'];
+        return `
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="inline-block w-3 h-3 rounded-full ${colors[idx%colors.length]}"></span>
+                    <span class="text-sm text-gray-300">${lbl}</span>
+                </div>
+                <div class="text-sm text-gray-400">${val} classes</div>
+            </div>
+        `;
+    }).join('');
+
+    // Clear
+    ctx.clearRect(0,0,rect.width,rect.height);
+
+    // Grid
+    const levels = 4;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    for (let l = 1; l <= levels; l++) {
+        const r = (radius / levels) * l;
+        ctx.beginPath();
+        for (let i=0; i<n; i++) {
+            const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            const x = cx + r * Math.cos(angle);
+            const y = cy + r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    // Axes + labels
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '12px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i=0; i<n; i++) {
+        const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+        const x = cx + (radius + 14) * Math.cos(angle);
+        const y = cy + (radius + 14) * Math.sin(angle);
+        // axis line
+        const ax = cx + radius * Math.cos(angle);
+        const ay = cy + radius * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(ax, ay);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.stroke();
+        // label
+        ctx.fillText(labels[i], x, y);
+    }
+
+    // Data polygon with animation
+    const points = values.map((val, i) => {
+        const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+        const r = radius * (val / maxVal);
+        return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+    });
+
+    // Animate drawing
+    if (pentagonAnim) cancelAnimationFrame(pentagonAnim);
+    const start = performance.now();
+    const duration = 800;
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function frame(now) {
+        const p = Math.min(1, (now - start) / duration);
+        const e = easeOutCubic(p);
+
+        // Clear
+        ctx.clearRect(0,0,rect.width,rect.height);
+
+        // Re-draw grid and labels (same as above)
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        for (let l = 1; l <= levels; l++) {
+            const r = (radius / levels) * l;
+            ctx.beginPath();
+            for (let i=0; i<n; i++) {
+                const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+                const x = cx + r * Math.cos(angle);
+                const y = cy + r * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+        // Axes + labels
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.font = '12px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i=0; i<n; i++) {
+            const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            const x = cx + (radius + 14) * Math.cos(angle);
+            const y = cy + (radius + 14) * Math.sin(angle);
+            const ax = cx + radius * Math.cos(angle);
+            const ay = cy + radius * Math.sin(angle);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(ax, ay);
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.stroke();
+            ctx.fillText(labels[i], x, y);
+        }
+
+        // Draw data polygon up to progress e
+        const currentPoints = [];
+        for (let i=0; i<n; i++) {
+            const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            const targetR = radius * (values[i] / maxVal);
+            const r = targetR * e;
+            currentPoints.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+        }
+
+        // Fill
+        const gradient = ctx.createLinearGradient(cx, cy - radius, cx, cy + radius);
+        gradient.addColorStop(0, 'rgba(168,85,247,0.35)');
+        gradient.addColorStop(1, 'rgba(84,119,255,0.20)');
+        ctx.beginPath();
+        currentPoints.forEach((pt, i) => i===0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Stroke
+        ctx.beginPath();
+        currentPoints.forEach((pt, i) => i===0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(168,85,247,0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Points
+        currentPoints.forEach(pt => {
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 3, 0, Math.PI*2);
+            ctx.fillStyle = '#c084fc';
+            ctx.fill();
+        });
+
+        if (p < 1) pentagonAnim = requestAnimationFrame(frame);
+    }
+    pentagonAnim = requestAnimationFrame(frame);
+}
+
+// Create class to Firestore
+async function createClassToDb(formData) {
+    const deptId = localStorage.getItem('currentDeptId');
+    if (!deptId) {
+        // Local demo
+        const id = 'local-' + Math.random().toString(36).slice(2,9);
+        classes.push({ id, ...formData, students: 0, createdAt: new Date().toISOString() });
+        renderAll();
+        return;
+    }
+    try {
+        await db.collection('departments').doc(deptId).collection('classes').add({
+            ...formData,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (err) {
+        console.error('Failed to create class:', err);
+        throw err;
+    }
+}
+
+// Open/Close modal
+function openModal() {
+    createClassModal.classList.add('modal-open');
+    createClassModal.classList.remove('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = 'hidden';
+    // Preselect program if any
+    try {
+        if (selectedProgramId) {
+            programSelect.value = selectedProgramId;
+        }
+    } catch(e) {}
+}
+function closeModalFunc() {
+    createClassModal.classList.remove('modal-open');
+    createClassModal.classList.add('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = '';
+}
+function setRandomPoster() {
+    const randomUrl = generateRandomPosterUrl();
+    posterPreview.src = randomUrl;
+    posterUrl.value = randomUrl;
+}
+
+// Global helper
+function viewClassDetails(id) {
+    window.open(`class-dashboard.html?classId=${id}`, '_blank');
+}
+
+// Render pipeline
+function renderAll(list = classes) {
+    renderClasses(list);
+    renderRecentActivities(list);
+    updateStatsAndDistribution(list);
+}
+
+// Event listeners
+createClassBtn?.addEventListener('click', openModal);
+closeModal?.addEventListener('click', closeModalFunc);
+modalOverlay?.addEventListener('click', closeModalFunc);
+randomPoster?.addEventListener('click', setRandomPoster);
+refreshBtn?.addEventListener('click', () => fetchClasses());
+searchInput?.addEventListener('input', () => renderAll(classes));
+
+// Pentagon controls
+pentagonPlayBtn?.addEventListener('click', () => renderPentagon(
+    programs.map(p => ({ id: p.id, name: p.name, count: classes.filter(c => c.programId === p.id).length }))
+));
+pentagonResetBtn?.addEventListener('click', () => renderPentagon(
+    programs.map(p => ({ id: p.id, name: p.name, count: classes.filter(c => c.programId === p.id).length }))
+));
+
+// Form submission
+createClassForm?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const className = document.getElementById('className').value.trim();
+    const programId = programSelect.value;
+    const yearValue = (document.getElementById('yearSelect').value || '').replace(/[^0-9]/g, '');
+    const capacityValue = parseInt(document.getElementById('capacity').value, 10) || 0;
+    const instructorValue = document.getElementById('instructor').value.trim();
+    const posterValue = posterUrl.value || generateRandomPosterUrl();
+
+    if (!className || !programId || !yearValue) {
+        alert('Please fill class name, program and year.');
+        return;
+    }
+
+    const payload = {
+        name: className,
+        programId,
+        year: yearValue,
+        maxCapacity: capacityValue,
+        instructor: instructorValue,
+        imageUrl: posterValue
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    // DOM references
-    const statusEl = document.getElementById('status');
-    const welcomePanel = document.getElementById('welcomePanel');
-    const pName = document.getElementById('p-name');
-    const pMeta = document.getElementById('p-meta');
-    const pDesc = document.getElementById('p-desc');
-    const pCreated = document.getElementById('p-created');
-    const pDept = document.getElementById('p-dept');
-    const pSpecs = document.getElementById('p-specs');
-    const pImage = document.getElementById('p-image');
-    const pDurationChip = document.getElementById('p-duration-chip');
-    const pCreditsChip = document.getElementById('p-credits-chip');
-
-    const statClasses = document.getElementById('stat-classes');
-    const statStudents = document.getElementById('stat-students');
-    const statCourses = document.getElementById('stat-courses');
-    const statPerformance = document.getElementById('stat-performance');
-
-    const addClassBtn = document.getElementById('addClassBtn');
-    const addClassModal = document.getElementById('addClassModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const classForm = document.getElementById('classForm');
-    const classesContainer = document.getElementById('classesContainer');
-
-    const yearFilter = document.getElementById('yearFilter');
-    const semesterFilter = document.getElementById('semesterFilter');
-    const filterBtn = document.getElementById('filterBtn');
-
-    let programId = null;
-    let deptId = null;
-    let performanceChart = null;
-
-    // Background bubbles
-    function createBubbles() {
-      const container = document.getElementById('bubbleContainer');
-      const count = 18;
-      for (let i = 0; i < count; i++) {
-        const b = document.createElement('div');
-        b.className = 'bubble';
-        const size = Math.random() * 120 + 60;
-        b.style.width = b.style.height = size + 'px';
-        b.style.left = (Math.random() * 100) + '%';
-        b.style.top = (Math.random() * 100) + '%';
-        b.style.animationDelay = (Math.random() * 10) + 's';
-        b.style.animationDuration = (18 + Math.random() * 14) + 's';
-        container.appendChild(b);
-      }
+    try {
+        await createClassToDb(payload);
+        alert(`Class "${className}" created successfully!`);
+        closeModalFunc();
+        createClassForm.reset();
+        setRandomPoster();
+        fetchClasses();
+    } catch (err) {
+        alert('Failed to create class: ' + (err.message || err));
     }
+});
 
-    // Helpers
-    const dateToStr = (d) => d ? new Date(d.toDate ? d.toDate() : d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-
-    function typeColorClass(type) {
-      const map = {
-        'YEAR 1': 'bg-indigo-500/20 text-indigo-300',
-        'YEAR 2': 'bg-emerald-500/20 text-emerald-300',
-        'YEAR 3': 'bg-purple-500/20 text-purple-300',
-        'YEAR 4': 'bg-rose-500/20 text-rose-300',
-        'YEAR 5': 'bg-amber-500/20 text-amber-300',
-        'YEAR 6': 'bg-amber-500/20 text-amber-300'
-      };
-      return map[type] || 'bg-amber-500/20 text-amber-300';
+// Escape closes modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && createClassModal && !createClassModal.classList.contains('opacity-0')) {
+        closeModalFunc();
     }
+});
 
-    function defaultClassImage() {
-      const pool = [1,2,3,4,5,6,7,8,9,10];
-      const i = pool[Math.floor(Math.random() * pool.length)];
-      return `http://static.photos/medical/320x240/${i}`;
-    }
-
-    // Modal
-    function openModal() {
-      addClassModal.classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeModal() {
-      addClassModal.classList.remove('show');
-      document.body.style.overflow = '';
-      classForm.reset();
-    }
-
-    // Render class card
-    function createClassCard(cls, studentsCount = 0, coursesCount = 0) {
-      const defaultImg = cls.image || defaultClassImage();
-      const studentCount = studentsCount || Math.floor(Math.random() * 20) + 30;
-      const courseCount = coursesCount || Math.floor(Math.random() * 4) + 4;
-
-      return `
-        <div class="glass-card gradient-border overflow-hidden">
-          <div class="flex flex-col md:flex-row">
-            <div class="p-6 flex-1">
-              <div class="flex justify-between items-start mb-3">
-                <div>
-                  <h3 class="text-xl font-bold">${cls.name}</h3>
-                  <p class="text-slate-300 text-sm">${cls.year} • ${cls.semester}</p>
-                </div>
-                <span class="px-2 py-1 ${typeColorClass(cls.type)} rounded-full text-xs">${cls.type}</span>
-              </div>
-
-              <div class="space-y-2 mb-4 text-sm">
-                <div class="flex items-center gap-2">
-                  <i data-feather="users" class="w-4 h-4 text-emerald-400"></i>
-                  <span>${studentCount} Students</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <i data-feather="book" class="w-4 h-4 text-amber-400"></i>
-                  <span>${courseCount} Courses</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <i data-feather="clock" class="w-4 h-4 text-rose-400"></i>
-                  <span>${cls.schedule || '—'}</span>
-                </div>
-              </div>
-
-              <button class="w-full glass-card mt-2 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 view-class-btn" data-id="${cls.id}">
-                <i data-feather="eye"></i> View Class
-              </button>
-            </div>
-            <div class="w-full md:w-40 h-40 md:h-auto relative overflow-hidden">
-              <img src="${defaultImg}" alt="${cls.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"/>
-              <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-slate-900/60 to-transparent"></div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    // Firestore paths
-    const programRef = () => db.collection('departments').doc(deptId).collection('programs').doc(programId);
-    const classesCollRef = () => programRef().collection('classes');
-
-    // Load classes with optional filters
-    function loadClasses(year = '', semester = '') {
-      let query = classesCollRef();
-
-      // Filter by year/semester
-      if (year) query = query.where('year', '==', year);
-      if (semester) query = query.where('semester', '==', semester);
-
-      query.orderBy('createdAt', 'desc').get().then(async (snap) => {
-        classesContainer.innerHTML = '';
-        if (snap.empty) {
-          classesContainer.innerHTML = `
-            <div class="glass-card p-8 text-center col-span-3">
-              <i data-feather="alert-circle" class="w-12 h-12 text-rose-400 mx-auto mb-4"></i>
-              <h3 class="text-xl font-bold mb-2">No Classes Found</h3>
-              <p class="text-slate-400">Create your first class to get started</p>
-            </div>
-          `;
-          feather.replace();
-          return;
-        }
-
-        const docs = snap.docs;
-        // Preload student/course counts for accuracy
-        const enriched = await Promise.all(docs.map(async (docSnap) => {
-          const c = docSnap.data();
-          c.id = docSnap.id;
-          // Attempt to fetch subcollections counts if exist
-          const [studentsSnap, coursesSnap] = await Promise.all([
-            docSnap.ref.collection('students').get(),
-            docSnap.ref.collection('courses').get()
-          ]);
-          c._studentsCount = studentsSnap.size;
-          c._coursesCount = coursesSnap.size;
-          return c;
-        }));
-
-        // Render
-        enriched.forEach(cls => {
-          classesContainer.innerHTML += createClassCard(cls, cls._studentsCount, cls._coursesCount);
-        });
-        feather.replace();
-
-        // Wire view buttons (placeholder for now)
-        document.querySelectorAll('.view-class-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            // Inject and open view class modal
-            injectAndViewClassModal(id);
-          });
-        });
-      }).catch(err => {
-        console.error('Error loading classes', err);
-        classesContainer.innerHTML = `
-          <div class="glass-card p-6 text-center col-span-3">
-            <p class="text-rose-400">Failed to load classes. Please try again.</p>
-          </div>
-        `;
-      });
-    }
-
-    // Compute program stats
-    async function computeStats() {
-      const classesSnap = await classesCollRef().get();
-      const classes = classesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      let totalStudents = 0;
-      let totalCourses = 0;
-
-      // Use parallel fetches for subcollections
-      const subCounts = await Promise.all(classesSnap.docs.map(async (doc) => {
-        const [studentsSnap, coursesSnap] = await Promise.all([
-          doc.ref.collection('students').get(),
-          doc.ref.collection('courses').get()
-        ]);
-        return { students: studentsSnap.size, courses: coursesSnap.size };
-      }));
-
-      subCounts.forEach(sc => { totalStudents += sc.students; totalCourses += sc.courses; });
-
-      // Avg performance: weighted by students in class if available
-      let perfNumerator = 0, perfDenominator = 0;
-      classes.forEach((cls, i) => {
-        const students = subCounts[i]?.students || 0;
-        const performance = typeof cls.performance === 'number' ? cls.performance : Math.floor(Math.random() * 21) + 70; // fallback 70–90
-        perfNumerator += performance * Math.max(students, 1);
-        perfDenominator += Math.max(students, 1);
-      });
-
-      const avgPerformance = perfDenominator ? Math.round(perfNumerator / perfDenominator) : 0;
-
-      return {
-        classesCount: classes.length,
-        totalStudents,
-        totalCourses,
-        avgPerformance
-      };
-    }
-
-    // Initialize chart
-    function renderPerformanceChart() {
-      const ctx = document.getElementById('performanceChart').getContext('2d');
-      const labels = Array.from({ length: 12 }, (_, i) => `W${i + 1}`);
-      const data = labels.map(() => Math.floor(Math.random() * 21) + 70);
-
-      if (performanceChart) {
-        performanceChart.destroy();
-      }
-
-      performanceChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Avg Score',
-            data,
-            tension: 0.35,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.15)',
-            fill: true,
-            pointRadius: 3,
-            pointBackgroundColor: '#8b5cf6',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(148,163,184,0.15)' },
-              ticks: { color: '#94a3b8' }
-            },
-            y: {
-              grid: { color: 'rgba(148,163,184,0.15)' },
-              ticks: { color: '#94a3b8', callback: (v) => v + '%' },
-              min: 60, max: 100
-            }
-          }
-        }
-      });
-    }
-
-    // Event listeners
-    document.getElementById('closeBtn').addEventListener('click', () => window.close());
-    addClassBtn.addEventListener('click', openModal);
-    closeModalBtn.addEventListener('click', closeModal);
-    addClassModal.addEventListener('click', (e) => { if (e.target === addClassModal) closeModal(); });
-
-    filterBtn.addEventListener('click', () => {
-      loadClasses(yearFilter.value, semesterFilter.value);
-    });
-
-    classForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('className').value.trim();
-      const year = document.getElementById('classYear').value;
-      const semester = document.getElementById('classSemester').value;
-      const type = document.getElementById('classType').value;
-      const schedule = document.getElementById('classSchedule').value.trim();
-      const image = document.getElementById('classImage').value.trim();
-
-      if (!name || !year || !semester || !type || !schedule) return;
-
-      const btn = classForm.querySelector('button[type="submit"]');
-      btn.innerHTML = '<i data-feather="loader" class="animate-spin w-4 h-4"></i> Saving...';
-      btn.disabled = true;
-
-      try {
-        await classesCollRef().add({
-          name, year, semester, type, schedule,
-          image: image || '',
-          performance: Math.floor(Math.random() * 21) + 70,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        closeModal();
-        loadClasses(yearFilter.value, semesterFilter.value);
-
-        // Update stats quickly (optional: refetch all)
-        const stats = await computeStats();
-        statClasses.textContent = stats.classesCount;
-        statStudents.textContent = stats.totalStudents;
-        statCourses.textContent = stats.totalCourses;
-        statPerformance.textContent = stats.avgPerformance + '%';
-      } catch (err) {
-        console.error('Error adding class', err);
-        alert('Failed to create class. Please try again.');
-      } finally {
-        btn.innerHTML = '<i data-feather="save"></i> Save Class';
-        btn.disabled = false;
-        feather.replace();
-      }
-    });
-
-    document.getElementById('addStudent').addEventListener('click', () => alert('Add Student flow not implemented in this demo.'));
-    document.getElementById('addCourse').addEventListener('click', () => alert('Add Course flow not implemented in this demo.'));
-
-    // Auth + Program load
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        statusEl.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="alert-circle" class="w-5 h-5 text-rose-400"></i></div>
-            <div><p class="font-semibold">Not signed in</p><p class="text-sm text-slate-400">Redirecting to login…</p></div>
-          </div>`;
-        feather.replace();
-        setTimeout(() => window.location.href = 'index.html', 800);
-        return;
-      }
-
-      deptId = localStorage.getItem('currentDeptId');
-      if (!deptId) {
-        statusEl.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center"><i data-feather="alert-triangle" class="w-5 h-5 text-amber-400"></i></div>
-            <div><p class="font-semibold">No department selected</p><p class="text-sm text-slate-400">Please open this page from the Dean portal.</p></div>
-          </div>`;
-        feather.replace();
-        return;
-      }
-
-      // Parse program id from URL
-      const params = new URLSearchParams(window.location.search);
-      programId = params.get('id');
-      if (!programId) {
-        statusEl.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="alert-circle" class="w-5 h-5 text-rose-400"></i></div>
-            <div><p class="font-semibold">Missing program id</p><p class="text-sm text-slate-400">Provide ?id=PROGRAM_ID in the URL.</p></div>
-          </div>`;
-        feather.replace();
-        return;
-      }
-
-      try {
-        const doc = await programRef().get();
-        if (!doc.exists) {
-          statusEl.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="x-circle" class="w-5 h-5 text-rose-400"></i></div>
-              <div><p class="font-semibold">Program not found</p><p class="text-sm text-slate-400">The requested program could not be located.</p></div>
-            </div>`;
-          feather.replace();
-          return;
-        }
-
-        const program = doc.data();
-        // Fill welcome panel
-        pName.textContent = program.name || 'Program';
-        pMeta.textContent = program.code ? `Code: ${program.code}` : '';
-        pDesc.textContent = program.description || '—';
-        pDurationChip.textContent = program.duration ? (program.duration === 1 ? 'Duration: 1 Year' : `Duration: ${program.duration} Years`) : 'Duration: —';
-        pCreditsChip.textContent = program.credits ? `${program.credits} Credits` : 'Credits: —';
-        pCreated.textContent = program.created ? dateToStr(program.created) : '—';
-        pDept.textContent = deptId || '—';
-        pSpecs.innerHTML = '';
-        (program.specializations || []).forEach(s => {
-          const el = document.createElement('span');
-          el.className = 'chip';
-          el.textContent = s;
-          pSpecs.appendChild(el);
-        });
-        pImage.src = program.imageUrl || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1400&auto=format&fit=crop';
-
-        // Hide status, show panel
-        statusEl.classList.add('hidden');
-        welcomePanel.classList.remove('hidden');
-
-        // Load classes
-        loadClasses();
-
-        // Compute and render stats
-        const stats = await computeStats();
-        statClasses.textContent = stats.classesCount;
-        statStudents.textContent = stats.totalStudents;
-        statCourses.textContent = stats.totalCourses;
-        statPerformance.textContent = stats.avgPerformance + '%';
-
-        // Chart
-        renderPerformanceChart();
-
-      } catch (err) {
-        console.error(err);
-        statusEl.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center"><i data-feather="x-circle" class="w-5 h-5 text-rose-400"></i></div>
-            <div><p class="font-semibold">Error loading program</p><p class="text-sm text-slate-400">${err.message || err}</p></div>
-          </div>`;
-      } finally {
-        feather.replace();
-      }
-    });
-
-    // Function to inject and open view class modal
-    async function injectAndViewClassModal(classId) {
-      // Fetch the class data
-      const classDoc = await classesCollRef().doc(classId).get();
-      if (!classDoc.exists) {
-        alert('Class not found');
-        return;
-      }
-      
-      const classData = classDoc.data();
-      
-      // Fetch students and courses count
-      const [studentsSnap, coursesSnap] = await Promise.all([
-        classDoc.ref.collection('students').get(),
-        classDoc.ref.collection('courses').get()
-      ]);
-      
-      // Inject the modal HTML into the container
-      const modalContainer = document.getElementById('viewClassModalContainer');
-      modalContainer.innerHTML = `
-        <div id="viewClassModal" class="modal-overlay show">
-          <div class="modal-content max-w-4xl">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-lg font-bold">Class Details</h3>
-              <button id="closeViewModalBtn" class="glass-card p-2 rounded-lg hover:bg-white/10">
-                <i data-feather="x"></i>
-              </button>
-            </div>
-            
-            <div class="space-y-6">
-              <div class="glass-card p-6">
-                <div class="flex flex-col md:flex-row gap-6">
-                  <div class="flex-1">
-                    <h2 class="text-2xl font-bold mb-2">${classData.name}</h2>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                      <span class="chip">${classData.year}</span>
-                      <span class="chip">${classData.semester}</span>
-                      <span class="chip">${classData.type}</span>
-                    </div>
-                    
-                    <div class="space-y-3">
-                      <div class="flex items-center gap-3">
-                        <i data-feather="users" class="w-5 h-5 text-emerald-400"></i>
-                        <span>${studentsSnap.size} Students</span>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <i data-feather="book" class="w-5 h-5 text-amber-400"></i>
-                        <span>${coursesSnap.size} Courses</span>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <i data-feather="clock" class="w-5 h-5 text-rose-400"></i>
-                        <span>${classData.schedule || '—'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="md:w-48">
-                    <img src="${classData.image || defaultClassImage()}" 
-                         alt="${classData.name}" 
-                         class="w-full h-32 object-cover rounded-lg">
-                  </div>
-                </div>
-              </div>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card p-6">
-                  <h3 class="font-bold mb-4">Students</h3>
-                  <div id="studentsList" class="space-y-3 max-h-60 overflow-y-auto">
-                    ${studentsSnap.empty ? 
-                      '<p class="text-slate-400 text-center py-4">No students enrolled</p>' : 
-                      '<p class="text-slate-400 text-center py-4">Loading students...</p>'
-                    }
-                  </div>
-                </div>
-                
-                <div class="glass-card p-6">
-                  <h3 class="font-bold mb-4">Courses</h3>
-                  <div id="coursesList" class="space-y-3 max-h-60 overflow-y-auto">
-                    ${coursesSnap.empty ? 
-                      '<p class="text-slate-400 text-center py-4">No courses assigned</p>' : 
-                      '<p class="text-slate-400 text-center py-4">Loading courses...</p>'
-                    }
-                  </div>
-                </div>
-              </div>
-              
-              <div class="flex justify-end gap-3">
-                <button id="manageStudentsBtn" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity">
-                  Manage Students
-                </button>
-                <button id="manageCoursesBtn" class="glass-card px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition-opacity">
-                  Manage Courses
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // Replace icons
-      feather.replace();
-      
-      // Add event listeners
-      document.getElementById('closeViewModalBtn').addEventListener('click', closeViewClassModal);
-      document.getElementById('viewClassModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('viewClassModal')) closeViewClassModal();
-      });
-      
-      document.getElementById('manageStudentsBtn').addEventListener('click', () => {
-        alert('Manage Students functionality would go here');
-        closeViewClassModal();
-      });
-      
-      document.getElementById('manageCoursesBtn').addEventListener('click', () => {
-        alert('Manage Courses functionality would go here');
-        closeViewClassModal();
-      });
-      
-      // Load students and courses data
-      loadStudentsAndCourses(classDoc.ref, studentsSnap, coursesSnap);
-    }
-    
-    // Function to close view class modal
-    function closeViewClassModal() {
-      const modal = document.getElementById('viewClassModal');
-      if (modal) {
-        modal.remove();
-      }
-      document.body.style.overflow = '';
-    }
-    
-    // Function to load students and courses data
-    async function loadStudentsAndCourses(classRef, studentsSnap, coursesSnap) {
-      // Load students
-      if (!studentsSnap.empty) {
-        const studentsList = document.getElementById('studentsList');
-        studentsList.innerHTML = '';
-        
-        // In a real app, you might need to fetch additional student details
-        studentsSnap.docs.forEach(doc => {
-          const student = doc.data();
-          const studentElement = document.createElement('div');
-          studentElement.className = 'flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg';
-          studentElement.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <i data-feather="user" class="w-4 h-4 text-indigo-400"></i>
-            </div>
-            <div>
-              <p class="font-medium">${student.name || 'Unnamed Student'}</p>
-              <p class="text-xs text-slate-400">${student.email || 'No email'}</p>
-            </div>
-          `;
-          studentsList.appendChild(studentElement);
-        });
-        feather.replace();
-      }
-      
-      // Load courses
-      if (!coursesSnap.empty) {
-        const coursesList = document.getElementById('coursesList');
-        coursesList.innerHTML = '';
-        
-        // In a real app, you might need to fetch additional course details
-        coursesSnap.docs.forEach(doc => {
-          const course = doc.data();
-          const courseElement = document.createElement('div');
-          courseElement.className = 'flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg';
-          courseElement.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
-              <i data-feather="book" class="w-4 h-4 text-amber-400"></i>
-            </div>
-            <div>
-              <p class="font-medium">${course.name || 'Unnamed Course'}</p>
-              <p class="text-xs text-slate-400">${course.code || 'No code'}</p>
-            </div>
-          `;
-          coursesList.appendChild(courseElement);
-        });
-        feather.replace();
-      }
-    }
-
-    // Init
-    createBubbles();
+// Init
+document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
-  </script>
+
+    // AOS init (if you want scroll animations)
+    try { AOS.init({ once: true }); } catch(e) {}
+
+    renderYearFilters();
+
+    try {
+        if (auth && typeof auth.onAuthStateChanged === 'function') {
+            auth.onAuthStateChanged((user) => {
+                fetchPrograms();
+                fetchClasses();
+            });
+        } else {
+            fetchPrograms();
+            fetchClasses();
+        }
+    } catch (err) {
+        fetchPrograms();
+        fetchClasses();
+    }
+});
+    </script>
 </body>
 </html>
